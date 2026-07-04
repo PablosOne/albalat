@@ -3,6 +3,7 @@ import Base from '@/layouts/Base.astro';
 import Nav from '@/components/Nav.astro';
 import Stage from '@/components/Stage.astro';
 import { site } from '@/data/site';
+import { laneSwitch } from '@/lib/transitions';
 ---
 <Base
   locale="en"
@@ -10,7 +11,7 @@ import { site } from '@/data/site';
   description="Eulogio Albalat's digital stage: classical guitar, recordings, videos, private classes, and concerts."
 >
   <Nav locale="en" />
-  <main id="main-content">
+  <main id="main-content" transition:name="page-lane" transition:animate={laneSwitch}>
     <Stage locale="en" />
   </main>
 </Base>

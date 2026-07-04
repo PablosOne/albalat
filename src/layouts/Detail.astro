@@ -1,0 +1,33 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import type { Locale } from '@/i18n';
+import { laneSwitch } from '@/lib/transitions';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  ogImage?: string;
+  jsonLd?: object;
+}
+
+const { locale, title, description, ogImage, jsonLd } = Astro.props;
+---
+<Base
+  locale={locale}
+  title={title}
+  description={description}
+  ogImage={ogImage}
+  jsonLd={jsonLd}
+>
+  <Nav locale={locale} />
+  <main
+    id="main-content"
+    class="min-h-dvh bg-stage text-ink"
+    transition:name="page-lane"
+    transition:animate={laneSwitch}
+  >
+    <slot />
+  </main>
+</Base>

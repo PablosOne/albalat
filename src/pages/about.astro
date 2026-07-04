@@ -1,0 +1,88 @@
+---
+import Detail from '@/layouts/Detail.astro';
+import { site } from '@/data/site';
+
+const locale = 'es';
+const aboutStation = site.stations.find((station) => station.id === 'about');
+const title = `${site.fullName} - ${aboutStation?.heading.es ?? 'Biografía'}`;
+const description = aboutStation?.tagline?.es ?? 'Biografía de Eulogio Albalat, guitarrista clásico.';
+const pageURL = new URL('/about', Astro.site);
+const imageURL = new URL(site.about.portrait.src, Astro.site);
+const email = site.socials.find((social) => social.href.startsWith('mailto:'))?.href.replace('mailto:', '');
+const sameAs = site.socials
+  .map((social) => social.href)
+  .filter((href) => href.startsWith('http'));
+const profileLinks = site.socials.filter((social) => social.href.startsWith('http'));
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': `${pageURL}#person`,
+      name: site.fullName,
+      jobTitle: site.role.es,
+      url: pageURL.toString(),
+      image: imageURL.toString(),
+      email,
+      sameAs,
+    },
+    {
+      '@type': 'MusicGroup',
+      '@id': `${pageURL}#artist`,
+      name: site.fullName,
+      url: pageURL.toString(),
+      image: imageURL.toString(),
+      member: { '@id': `${pageURL}#person` },
+      sameAs,
+    },
+  ],
+};
+---
+<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <section class="px-6 pb-20 pt-32 md:px-10 md:pb-28 md:pt-40">
+    <div class="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+      <div class="max-w-3xl">
+        <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">
+          {site.about.eyebrow.es}
+        </p>
+        <h1 class="mt-6 font-display text-5xl font-light leading-tight text-ink md:text-7xl">
+          {site.fullName}
+        </h1>
+        <p class="mt-5 text-lg text-ink-muted md:text-xl">
+          {site.role.es}
+        </p>
+        <div class="mt-12 space-y-7 text-lg leading-8 text-ink/85 md:text-xl md:leading-9">
+          {site.about.paragraphs.es.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+        {profileLinks.length > 0 && (
+          <div class="mt-12 flex flex-wrap gap-3">
+            {profileLinks.map((social) => (
+              <a
+                href={social.href}
+                class="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink-muted transition-colors duration-200 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {social.label}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <figure class="relative mt-2 overflow-hidden border border-ink/10 bg-ink/5">
+        <img
+          src={site.about.portrait.src}
+          alt={site.about.portrait.alt.es}
+          class="aspect-[4/5] w-full object-cover opacity-90"
+          width="760"
+          height="950"
+          loading="eager"
+        />
+        <figcaption class="border-t border-ink/10 px-5 py-4 font-mono text-xs uppercase tracking-wide text-ink-muted">
+          {site.role.es}
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+</Detail>

@@ -2,7 +2,7 @@
  * Core content model for the site: the guitarist's identity, socials, and
  * the seven "stations" that populate the horizontal stage on Home.
  *
- * Pure data — no components, no styling. See docs/superpowers/plans/
+ * Pure data - no components, no styling. See docs/superpowers/plans/
  * 2026-07-04-albalat-website.md (Task 1.1) for the originating spec.
  */
 
@@ -10,6 +10,11 @@ export interface Bilingual {
   es: string;
   en: string;
 }
+
+export type BilingualParagraphs = {
+  es: string[];
+  en: string[];
+};
 
 /**
  * Distinguishes the hero station (large, name-and-role display, first on
@@ -23,9 +28,18 @@ export interface Station {
   kind: StationKind;
   heading: Bilingual;
   tagline?: Bilingual;
-  body?: { es: string[]; en: string[] };
+  body?: BilingualParagraphs;
   href?: string;
   accent?: string;
+}
+
+export interface AboutContent {
+  eyebrow: Bilingual;
+  paragraphs: BilingualParagraphs;
+  portrait: {
+    src: string;
+    alt: Bilingual;
+  };
 }
 
 export const site = {
@@ -38,7 +52,38 @@ export const site = {
   socials: [
     // TODO-CONTENT: replace with Eulogio's real contact email/socials once provided.
     { label: 'Email', href: 'mailto:contacto@example.com' },
+    { label: 'YouTube', href: 'https://www.youtube.com/c/EulogioAlbalat' },
+    { label: 'Spotify', href: 'https://open.spotify.com/artist/2WrurcoEYPTTdAqWX2ulpe' },
   ],
+
+  about: {
+    eyebrow: {
+      es: 'Biografía',
+      en: 'About',
+    },
+    paragraphs: {
+      // TODO-CONTENT: replace with Eulogio's real bio detail (training,
+      // milestones, venues, recordings) once provided. These paragraphs avoid
+      // invented specifics and stay at a truthful general level.
+      es: [
+        'La guitarra clásica ha sido el hilo conductor de una vida entre el estudio, la interpretación y la enseñanza.',
+        'Su trabajo se articula alrededor del sonido, la respiración de la frase y la relación íntima entre intérprete, instrumento y oyente.',
+        'En este espacio se reunirá su actividad artística: grabaciones, vídeos, notas sobre la guitarra y vías de contacto para clases privadas o propuestas de concierto.',
+      ],
+      en: [
+        'The classical guitar has been the throughline of a life spent between study, performance, and teaching.',
+        'His work is shaped by sound, phrasing, and the intimate relationship between performer, instrument, and listener.',
+        'This space will gather his artistic activity: recordings, videos, notes on the guitar, and contact routes for private classes or concert proposals.',
+      ],
+    },
+    portrait: {
+      src: '/images/eulogio-portrait-placeholder.webp',
+      alt: {
+        es: 'TODO-ASSET: retrato provisional hasta recibir una fotografía real de Eulogio Albalat.',
+        en: 'TODO-ASSET: placeholder portrait until a real photograph of Eulogio Albalat is provided.',
+      },
+    },
+  } satisfies AboutContent,
 
   stations: [
     {
@@ -65,16 +110,13 @@ export const site = {
         en: 'A life devoted to the classical guitar.',
       },
       body: {
-        // TODO-CONTENT: replace with Eulogio's real bio detail (training,
-        // milestones, venues, recordings) once provided — keep the current
-        // text as a general-truths placeholder until then.
         es: [
           'La guitarra clásica ha sido el hilo conductor de una vida entre el estudio, la interpretación y la enseñanza.',
           'Esa dedicación se reparte hoy entre los escenarios, el aula y la grabación, siempre al servicio del repertorio del instrumento.',
         ],
         en: [
           'The classical guitar has been the throughline of a life spent between study, performance, and teaching.',
-          'That dedication is shared today across the stage, the studio, and the classroom, always in service of the instrument’s repertoire.',
+          "That dedication is shared today across the stage, the studio, and the classroom, always in service of the instrument's repertoire.",
         ],
       },
       href: '/about',

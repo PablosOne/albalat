@@ -16,7 +16,7 @@ Branch: phase-0-foundation
 - Task 1.2: pending
 - Task 1.3: complete
 - Task 1.4: complete
-- Task 1.5: pending
+- Task 1.5: complete
 - Task 1.6: pending
 
 ## Log
@@ -30,3 +30,4 @@ Branch: phase-0-foundation
 - Task 1.2: complete (commits c96e189..efbbb5d, review clean)
 - Task 1.3: complete (home stage assembled for es/en; checks/build/tests/browser smoke pass)
 - Task 1.4: complete (signature string + spotlight animation; reduced-motion browser smoke pass)
+- Task 1.5: complete (detail layout, About pages, lane-switch transition, YouTube/Spotify links wired)

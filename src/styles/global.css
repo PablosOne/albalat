@@ -66,3 +66,66 @@ html {
     transform: none;
   }
 }
+
+@keyframes laneStageOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-18vw) rotate(-7deg);
+  }
+}
+
+@keyframes laneDetailIn {
+  from {
+    opacity: 0;
+    transform: translateY(18vh) rotate(7deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes laneDetailOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(14vh) rotate(5deg);
+  }
+}
+
+@keyframes laneStageIn {
+  from {
+    opacity: 0;
+    transform: translateX(-14vw) rotate(-5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes laneStageOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes laneDetailIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes laneDetailOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes laneStageIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
