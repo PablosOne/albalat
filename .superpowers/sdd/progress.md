@@ -18,3 +18,6 @@ Branch: phase-0-foundation
 - Task 1.4: pending
 - Task 1.5: pending
 - Task 1.6: pending
+
+## Log
+- Task 0.1: complete (commits 5a6767c..a562d20, review clean)
