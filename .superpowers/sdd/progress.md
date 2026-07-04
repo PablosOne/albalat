@@ -21,3 +21,4 @@ Branch: phase-0-foundation
 
 ## Log
 - Task 0.1: complete (commits 5a6767c..a562d20, review clean)
+- Task 0.2: complete (commits dc5910c..13c07a5, review clean)
