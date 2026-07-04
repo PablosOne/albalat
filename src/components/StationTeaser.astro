@@ -5,9 +5,8 @@ import type { Locale } from '@/i18n';
 // Non-hero stations participate in the generic scroll-triggered reveal:
 // showcase.desktop.ts calls revealPanel(panel) on scroll-enter, which fades
 // up every `[data-reveal]` descendant (see the pre-hide rule appended to
-// global.css). The whole card is the CTA — heading + tagline are its
-// accessible content, no new i18n copy needed; the arrow glyph is a purely
-// visual affordance.
+// global.css). The whole card is the CTA; the string SVG is a progressive
+// enhancement animated by lib/string.ts.
 interface Props {
   station: Station;
   locale: Locale;
@@ -34,6 +33,11 @@ const href = locale === 'en' && station.href
     class="font-mono text-sm text-accent inline-flex items-center gap-2 transition-transform duration-300 group-hover:translate-x-1"
     aria-hidden="true"
   >
-    →
+    &rarr;
   </span>
+  <svg
+    data-string
+    class="absolute -bottom-20 left-0 h-16 w-full text-accent/50 transition-colors duration-300 group-hover:text-accent/80"
+    aria-hidden="true"
+  ></svg>
 </a>
