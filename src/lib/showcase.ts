@@ -38,8 +38,9 @@ export async function initShowcase(): Promise<() => void> {
 
   const panels = track.querySelectorAll<HTMLElement>('[data-showcase-panel]');
   const isMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`).matches;
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (isMobile) {
+  if (isMobile || prefersReduced) {
     const { initShowcaseMobile } = await import('./showcase.mobile');
     return initShowcaseMobile(track, panels);
   }
