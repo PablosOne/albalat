@@ -27,3 +27,4 @@ Branch: phase-0-foundation
 - Task 0.5: complete (commits 6c797d6..b2e9425, review clean)
 - Task 0.6: deferred — needs user's GitHub push consent + Cloudflare Pages dashboard (their account). Proceeding to Phase 1; revisit before launch.
 - Task 1.1: complete (commits a97787f..d15cb2d, review clean)
+- Task 1.2: complete (commits c96e189..efbbb5d, review clean)
