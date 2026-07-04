@@ -14,7 +14,7 @@ Branch: phase-0-foundation
 ## Phase 1 — The Stage + About
 - Task 1.1: pending
 - Task 1.2: pending
-- Task 1.3: pending
+- Task 1.3: complete
 - Task 1.4: pending
 - Task 1.5: pending
 - Task 1.6: pending
@@ -28,3 +28,4 @@ Branch: phase-0-foundation
 - Task 0.6: deferred — needs user's GitHub push consent + Cloudflare Pages dashboard (their account). Proceeding to Phase 1; revisit before launch.
 - Task 1.1: complete (commits a97787f..d15cb2d, review clean)
 - Task 1.2: complete (commits c96e189..efbbb5d, review clean)
+- Task 1.3: complete (home stage assembled for es/en; checks/build/tests/browser smoke pass)

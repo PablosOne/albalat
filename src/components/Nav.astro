@@ -1,0 +1,74 @@
+---
+import type { Locale } from '@/i18n';
+import { useTranslations } from '@/i18n';
+import { site } from '@/data/site';
+import LangToggle from './LangToggle.astro';
+import Wordmark from './Wordmark.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const pathname = Astro.url.pathname;
+
+function localizePath(path: string): string {
+  if (locale === 'es') return path;
+  return path === '/' ? '/en/' : `/en${path}`;
+}
+
+const navItems = site.stations
+  .filter((station) => station.kind !== 'hero' && station.href)
+  .map((station) => ({
+    id: station.id,
+    label: t(`nav.${station.id}`),
+    href: localizePath(station.href!),
+  }));
+
+const homeHref = localizePath('/');
+---
+<a
+  href="#main-content"
+  class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-stage"
+>
+  {t('a11y.skipToContent')}
+</a>
+
+<Wordmark />
+
+<nav
+  class="fixed left-1/2 top-4 z-50 flex w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 items-center justify-between gap-3 rounded-full border border-ink/10 bg-stage/70 px-3 py-2 shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-md md:top-5 md:w-auto md:max-w-none md:px-4"
+  aria-label={t('nav.home')}
+>
+  <a
+    href={homeHref}
+    class:list={[
+      'hidden rounded-full px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:inline-flex',
+      pathname === homeHref ? 'text-accent' : 'text-ink-muted',
+    ]}
+    aria-current={pathname === homeHref ? 'page' : undefined}
+  >
+    {t('nav.home')}
+  </a>
+
+  <div class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-none">
+    {navItems.map((item) => {
+      const isCurrent = pathname === item.href || (item.href !== '/' && pathname.startsWith(`${item.href}/`));
+      return (
+        <a
+          href={item.href}
+          class:list={[
+            'whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+            isCurrent ? 'text-accent' : 'text-ink-muted',
+          ]}
+          aria-current={isCurrent ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      );
+    })}
+  </div>
+
+  <LangToggle locale={locale} />
+</nav>

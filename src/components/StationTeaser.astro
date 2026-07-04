@@ -13,9 +13,12 @@ interface Props {
   locale: Locale;
 }
 const { station, locale } = Astro.props;
+const href = locale === 'en' && station.href
+  ? (station.href === '/' ? '/en/' : `/en${station.href}`)
+  : station.href;
 ---
 <a
-  href={station.href}
+  href={href}
   class="group relative flex w-full flex-col justify-center gap-5 text-ink no-underline"
 >
   <h2 data-reveal="heading" class="font-display text-4xl md:text-6xl font-light tracking-tight">

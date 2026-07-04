@@ -1,0 +1,16 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Stage from '@/components/Stage.astro';
+import { site } from '@/data/site';
+---
+<Base
+  locale="en"
+  title={`${site.fullName} - ${site.role.en}`}
+  description="Eulogio Albalat's digital stage: classical guitar, recordings, videos, private classes, and concerts."
+>
+  <Nav locale="en" />
+  <main id="main-content">
+    <Stage locale="en" />
+  </main>
+</Base>

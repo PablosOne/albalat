@@ -1,10 +1,16 @@
 ---
 import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Stage from '@/components/Stage.astro';
+import { site } from '@/data/site';
 ---
 <Base
   locale="es"
-  title="Eulogio Albalat — Guitarrista clásico"
-  description="Sitio web de Eulogio Albalat, guitarrista clásico."
+  title={`${site.fullName} - ${site.role.es}`}
+  description="El escenario digital de Eulogio Albalat: guitarra clasica, grabaciones, videos, clases y conciertos."
 >
-  <h1>Albalat</h1>
+  <Nav locale="es" />
+  <main id="main-content">
+    <Stage locale="es" />
+  </main>
 </Base>
