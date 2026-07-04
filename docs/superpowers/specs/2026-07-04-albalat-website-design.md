@@ -153,6 +153,17 @@ The site must **rank**, **read as authoritative**, and **turn visitors into inqu
 - **Analytics (privacy-first, free):** **Cloudflare Web Analytics** (no cookies, no banner) to measure section reach, CTA clicks, and form submissions; goal events on inquiry submit and outbound streaming clicks.
 - **Measured funnels:** Home reach → section engagement → CTA click → inquiry submit / stream click.
 
+### Voice & tone (all copy, both languages)
+
+Every string — headings, body, CTAs, form labels, confirmations, 404, meta descriptions — follows one voice: **professional, elegant, and polite, while human.**
+
+- **Professional:** accurate, confident, credible; the vocabulary of a working classical musician, never salesy or hype.
+- **Elegant:** restrained and refined; concise sentences, no filler, no exclamation-mark enthusiasm; a concert-program register.
+- **Polite:** warm and courteous, especially in CTAs and forms ("I'd be glad to hear about your event" over "Book now!"); gratitude in confirmations.
+- **Human:** first person where natural (his voice), approachable, never stiff or corporate; genuine warmth about the instrument and the music.
+- **Bilingual parity of tone:** the Spanish and English must feel *equally* natural and native — not a literal translation of each other. Same meaning and register, idiomatic in each language.
+- Conversion copy stays inviting, not pushy: it opens a conversation rather than pressures a sale.
+
 ### Professional polish
 
 - Consistent design system (spacing, type scale, motion timing), refined micro-interactions, no jank; pixel-careful responsive behavior; on-brand 404; favicon/app-icon set; accessible color contrast (WCAG AA). The site should feel like a concert program, not a template.
