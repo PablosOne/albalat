@@ -127,7 +127,7 @@ export const site = {
       },
       tagline: {
         es: 'Clases privadas para todos los niveles, a medida de cada alumno.',
-        en: 'Private lessons for every level, tailored to each student.',
+        en: 'Private classes for every level, tailored to each student.',
       },
       href: '/classes',
     },
