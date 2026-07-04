@@ -1,0 +1,5 @@
+{
+  "nav": { "home": "Home", "about": "About", "music": "Music", "videos": "Videos", "guitar": "The Guitar", "classes": "Classes & Concerts", "contact": "Contact" },
+  "cta": { "listen": "Listen", "bookConcert": "Book a concert", "bookClass": "Book a private class" },
+  "a11y": { "skipToContent": "Skip to content", "toggleLang": "Español" }
+}
