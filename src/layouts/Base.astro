@@ -38,5 +38,15 @@ const { locale } = Astro.props;
   </head>
   <body>
     <slot />
+    <script>
+      import { initScroll } from '@/lib/scroll';
+      import { heroEntrance } from '@/lib/motion';
+      import { initShowcase } from '@/lib/showcase';
+      import { initAnchorScroll } from '@/lib/anchorScroll';
+      initScroll(); initAnchorScroll();
+      const run = () => { heroEntrance(); initShowcase(); };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+      else run();
+    </script>
   </body>
 </html>
