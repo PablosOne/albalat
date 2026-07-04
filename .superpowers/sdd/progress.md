@@ -24,3 +24,4 @@ Branch: phase-0-foundation
 - Task 0.2: complete (commits dc5910c..13c07a5, review clean)
 - Task 0.3: complete (commits 978d842..919934c, review clean)
 - Task 0.4: complete (commits 48288a3..35696ac, review clean)
+- Task 0.5: complete (commits 6c797d6..b2e9425, review clean)
