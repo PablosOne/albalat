@@ -52,3 +52,17 @@ html {
   color: var(--ink);
   font-family: var(--font-sans);
 }
+
+/* Reveal initial state — pre-hide non-hero reveal targets so GSAP's fromTo
+   on scroll-enter has a visibly different starting state. The hero panel
+   is exempt: it renders statically (see StationHero.astro). */
+[data-showcase-panel]:not([data-showcase-panel-id="hero"]) [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-showcase-panel]:not([data-showcase-panel-id="hero"]) [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}

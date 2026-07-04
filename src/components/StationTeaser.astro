@@ -1,0 +1,36 @@
+---
+import type { Station } from '@/data/site';
+import type { Locale } from '@/i18n';
+
+// Non-hero stations participate in the generic scroll-triggered reveal:
+// showcase.desktop.ts calls revealPanel(panel) on scroll-enter, which fades
+// up every `[data-reveal]` descendant (see the pre-hide rule appended to
+// global.css). The whole card is the CTA — heading + tagline are its
+// accessible content, no new i18n copy needed; the arrow glyph is a purely
+// visual affordance.
+interface Props {
+  station: Station;
+  locale: Locale;
+}
+const { station, locale } = Astro.props;
+---
+<a
+  href={station.href}
+  class="group relative flex w-full flex-col justify-center gap-5 text-ink no-underline"
+>
+  <h2 data-reveal="heading" class="font-display text-4xl md:text-6xl font-light tracking-tight">
+    {station.heading[locale]}
+  </h2>
+  {station.tagline && (
+    <p data-reveal="body" class="font-sans text-lg md:text-xl text-ink-muted max-w-prose">
+      {station.tagline[locale]}
+    </p>
+  )}
+  <span
+    data-reveal="cta"
+    class="font-mono text-sm text-accent inline-flex items-center gap-2 transition-transform duration-300 group-hover:translate-x-1"
+    aria-hidden="true"
+  >
+    →
+  </span>
+</a>

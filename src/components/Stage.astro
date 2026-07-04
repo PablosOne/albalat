@@ -1,0 +1,89 @@
+---
+import type { Locale } from '@/i18n';
+import { site, type Station } from '@/data/site';
+import {
+  getPanelScrollWeight,
+  getPanelGapAfter,
+  getPanelPadding,
+  SHOWCASE_PANEL_MAX_WIDTH_PX,
+} from '@/lib/config';
+import StationHero from './StationHero.astro';
+import StationTeaser from './StationTeaser.astro';
+import HUD from './HUD.astro';
+
+// The track sizes itself to its children: each station emits an explicit
+// width (capped on ultrawide via SHOWCASE_PANEL_MAX_WIDTH_PX, except hero)
+// and is `flex-shrink-0`, so `width: max-content` always equals the sum of
+// panel widths + gaps. Doing the layout in CSS — rather than computing a
+// `calc(...vw + ...px)` total here — keeps the track width in lockstep
+// with the per-panel cap without duplicating the formula.
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+// `site.stations` is declared with `satisfies Station[]`, which validates
+// the literal against `Station[]` without widening it — so each element's
+// inferred type only carries the properties present in its own literal
+// (e.g. no `accent` on stations that don't set one). Widen here so every
+// station is treated uniformly as `Station` for the optional fields below.
+const stations: Station[] = site.stations;
+---
+<section
+  class="relative w-full overflow-hidden"
+  aria-label={site.fullName}
+  data-showcase
+>
+  <div
+    class="relative z-10 flex"
+    data-showcase-track
+    style="width: max-content;"
+  >
+    {stations.map((station, i) => {
+      const isLast = i === stations.length - 1;
+      const isHero = station.kind === 'hero';
+
+      // Width stays in vw because panels are viewport-aligned (1.0 = 100vw).
+      // On ultrawide monitors every non-hero panel caps at weight × MAX_WIDTH_PX
+      // so content stops growing into empty space; hero is exempt (always 100vw).
+      // Gap and padding are emitted in CSS pixels so seams read identically
+      // across every desktop width.
+      //
+      // The showcase scroll engine (showcase.desktop.ts, anchorScroll.ts) reads
+      // the gap back as `data-showcase-panel-gap-after-px` and converts to a
+      // fraction of vw at runtime using `window.innerWidth`.
+      const scrollWeight = getPanelScrollWeight('md', station.id);
+      const widthVw = scrollWeight * 100;
+      const widthCss = isHero
+        ? `${widthVw}vw`
+        : `calc(${scrollWeight} * min(100vw, ${SHOWCASE_PANEL_MAX_WIDTH_PX}px))`;
+      const gapPx = isLast ? 0 : getPanelGapAfter(station.id);
+      const padPx = getPanelPadding(station.id);
+
+      const layerClass = isHero ? 'z-40 bg-[var(--color-stage)]' : 'z-30 bg-[var(--color-stage)]';
+
+      const styleAttr = [
+        `width: ${widthCss}`,
+        gapPx > 0 ? `margin-right: ${gapPx}px` : null,
+        `padding-left: ${padPx}px`,
+        `padding-right: ${padPx}px`,
+        station.accent ? `--color-accent: ${station.accent}` : null,
+      ].filter(Boolean).join('; ');
+
+      return (
+        <article
+          class:list={['relative h-dvh flex-shrink-0 flex items-center', layerClass]}
+          data-showcase-panel
+          data-showcase-panel-id={station.id}
+          data-showcase-panel-weight={scrollWeight}
+          data-showcase-panel-gap-after-px={gapPx}
+          style={styleAttr}
+        >
+          {isHero
+            ? <StationHero station={station} locale={locale} />
+            : <StationTeaser station={station} locale={locale} />}
+        </article>
+      );
+    })}
+  </div>
+  <HUD />
+</section>
