@@ -71,6 +71,8 @@ Reuse gfdu's foundation; copy libs/components where possible and reskin.
 | Forms | **Web3Forms** (free, no backend) → email |
 | Images | **Astro `<Image>` / sharp**, WebP |
 | Hosting/CI | **Cloudflare Pages** (git-connected, auto-deploy, free, custom domain) |
+| Analytics | **Cloudflare Web Analytics** (free, cookieless, no consent banner) |
+| SEO | `@astrojs/sitemap`, JSON-LD, hreflang, OG images, `robots.txt` |
 | Testing | **Vitest** (unit: data integrity, i18n parity) + **Playwright** (smoke: nav, lane-switch, reduced-motion) |
 
 ### Ports from gfdu (copy + adapt, don't rewrite)
@@ -128,6 +130,33 @@ Content lives in structured, typed data files (gfdu's `site.ts` philosophy). Lon
 - Bilingual labels; inline success/error states; graceful no-JS fallback.
 - Emails route to your father's address.
 
+## 8b. SEO, conversion & professionalism
+
+The site must **rank**, **read as authoritative**, and **turn visitors into inquiries/streams**. These are requirements, not polish.
+
+### SEO (technical + content)
+
+- **Real crawlable routes** per section (the horizontal effect is presentation only); one clear `<h1>` per page, semantic heading order.
+- **Per-page metadata** driven from data: unique `<title>`, meta description, canonical URL, and **`hreflang`** pairs for `/es/` ↔ `/en/` (both directions + `x-default`).
+- **Open Graph + Twitter cards** on every page (title, description, per-page image — album cover for album pages, portrait for Home/About) so shared links look professional.
+- **Structured data (JSON-LD):** `MusicGroup`/`Person` (Eulogio, with `sameAs` → Spotify/Apple/YouTube/socials) on Home/About; `MusicAlbum` + `MusicRecording` on album pages; `VideoObject` for videos; `Event` for announced concerts (later); `Course`/`Service` for classes; `BreadcrumbList` on detail pages.
+- **`sitemap.xml`** (via `@astrojs/sitemap`, locale-aware) + `robots.txt`.
+- **Performance = SEO:** static output, self-hosted fonts (no CDN, `font-display: swap`), WebP/AVIF via sharp, lazy-loaded embeds (facade → load iframe on click, so third-party players don't tank LCP/CLS), preconnect only when needed. Target **Lighthouse ≥ 95** across Performance/SEO/Best-Practices/Accessibility and green Core Web Vitals.
+- **Keyword/content intent:** copy targets the real search intents — "clases de guitarra clásica [ciudad]", "guitarrista clásico para conciertos/bodas/eventos", artist + album names. Titles/descriptions written to those, bilingually.
+
+### Conversion
+
+- **Clear primary actions, always reachable:** persistent, tasteful CTAs for **Book a concert**, **Book a private class**, and **Listen** (Spotify/Apple/YouTube) — in the nav and contextually at the end of relevant sections.
+- **Low-friction inquiry:** short forms (name, email, one message), instant inline validation, clear success confirmation, and an **alternative direct contact** (email / WhatsApp) for those who won't fill a form.
+- **Trust signals:** professional portrait, bio credentials, discography as a body of work, embedded players (social proof of real recordings), selected press/quotes/publications when available.
+- **Streaming conversion:** every album offers **all three platforms** so the visitor uses their own — plus a prominent "Follow/Listen" so a browse becomes a follow.
+- **Analytics (privacy-first, free):** **Cloudflare Web Analytics** (no cookies, no banner) to measure section reach, CTA clicks, and form submissions; goal events on inquiry submit and outbound streaming clicks.
+- **Measured funnels:** Home reach → section engagement → CTA click → inquiry submit / stream click.
+
+### Professional polish
+
+- Consistent design system (spacing, type scale, motion timing), refined micro-interactions, no jank; pixel-careful responsive behavior; on-brand 404; favicon/app-icon set; accessible color contrast (WCAG AA). The site should feel like a concert program, not a template.
+
 ## 9. Error handling & resilience
 
 - **Embeds:** each album/video renders even if an embed fails — always show cover + external link as fallback (never a blank iframe).
@@ -139,17 +168,18 @@ Content lives in structured, typed data files (gfdu's `site.ts` philosophy). Lon
 
 - **Unit (Vitest):** data-file integrity (required fields, valid embed URLs), i18n key parity, `useTranslations` fallback.
 - **Smoke (Playwright):** horizontal nav advances stations; lane-switch navigates to correct page; reduced-motion renders vertical stack; language toggle preserves section; forms validate.
+- **SEO/perf gates:** Lighthouse CI (or Playwright + Lighthouse) asserting each page has a unique title/description/canonical, valid hreflang pairs, JSON-LD present and parseable, and scores ≥ 95 on Performance/SEO/Accessibility/Best-Practices before launch.
 
 ## 11. Phased delivery
 
 Each phase is independently shippable to Cloudflare Pages.
 
-- **Phase 0 — Foundation.** Scaffold Astro; copy gfdu stack + libs; Tailwind theme (palette/fonts); Astro i18n routing + JSON messages + ported parity script; `Base` layout; deploy skeleton to Cloudflare Pages.
+- **Phase 0 — Foundation.** Scaffold Astro; copy gfdu stack + libs; Tailwind theme (palette/fonts); Astro i18n routing + JSON messages + ported parity script; `Base` layout with **SEO primitives** (per-page title/description/canonical/hreflang/OG component, JSON-LD helper, sitemap, robots.txt); Cloudflare Web Analytics; deploy skeleton to Cloudflare Pages.
 - **Phase 1 — The Stage + About.** Horizontal stage hub (Home) with station teasers, signature string/resonance animation, spotlight hero; lane-switch View Transition; About page. Bilingual wired end-to-end.
 - **Phase 2 — Music.** Discography by album/CD; Spotify + Apple Music + YouTube integration; featured recording on Home. (The heart of the library.)
 - **Phase 3 — Videos + The Guitar.** YouTube gallery; editorial knowledge hub.
 - **Phase 4 — Classes & Bookings + Contact.** Inquiry forms (Web3Forms); Contact page.
-- **Phase 5 — Polish & launch.** Reduced-motion/mobile passes, a11y, SEO/meta/sitemap, performance, optional Photos gallery, custom domain, launch.
+- **Phase 5 — Polish, SEO/conversion & launch.** Reduced-motion/mobile passes, a11y (WCAG AA); complete JSON-LD/OG/hreflang audit and Lighthouse ≥ 95 gate; lazy embed facades; conversion pass (CTA placement, funnels, analytics goal events); favicon/app-icon set; on-brand 404; optional Photos gallery; custom domain; launch.
 
 ## 12. Open questions (non-blocking)
 
