@@ -198,6 +198,8 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
             });
           };
           onScrollY(); // sync to the reset scrollTop=0 before the listener is live
+          state.detachY?.();
+          state.detachY = undefined;
           scroller.addEventListener('scroll', onScrollY, { passive: true });
           state.detachY = () => scroller.removeEventListener('scroll', onScrollY);
         }
