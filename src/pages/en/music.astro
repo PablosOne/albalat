@@ -1,8 +1,10 @@
 ---
-import AlbumStoryPlayer from '@/components/AlbumStoryPlayer.astro';
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Stage from '@/components/Stage.astro';
 import { discography } from '@/data/discography';
 import { site } from '@/data/site';
-import Detail from '@/layouts/Detail.astro';
+import { laneSwitch } from '@/lib/transitions';
 
 const locale = 'en';
 const title = `${site.fullName} - Music`;
@@ -69,6 +71,9 @@ const jsonLd = {
   ],
 };
 ---
-<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
-  <AlbumStoryPlayer albums={discography} locale={locale} />
-</Detail>
+<Base locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <Nav locale="en" />
+  <main id="main-content" transition:name="page-lane" transition:animate={laneSwitch}>
+    <Stage locale="en" initialDetail="music" />
+  </main>
+</Base>

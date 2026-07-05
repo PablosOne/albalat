@@ -1,15 +1,15 @@
 ---
-import InquiryForm from '@/components/InquiryForm.astro';
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Stage from '@/components/Stage.astro';
 import { site } from '@/data/site';
-import Detail from '@/layouts/Detail.astro';
+import { laneSwitch } from '@/lib/transitions';
 
 const locale = 'es';
 const title = `${site.fullName} - Clases, conciertos y contacto`;
 const description = 'Clases privadas de guitarra clasica, conciertos y contacto directo con Eulogio Albalat.';
 const pageURL = new URL('/classes/', Astro.site);
-const profileLinks = site.socials.filter((social) => social.href.startsWith('http'));
 const email = site.socials.find((social) => social.href.startsWith('mailto:'))?.href.replace('mailto:', '') ?? 'hello@eulogioalbalat.com';
-const mailCharCount = email.length;
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -51,91 +51,9 @@ const jsonLd = {
   ],
 };
 ---
-<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
-  <section class="relative overflow-hidden px-6 pb-20 pt-32 md:px-10 md:pb-28 md:pt-40">
-    <div class="pointer-events-none absolute inset-x-0 top-24 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent"></div>
-    <div class="pointer-events-none absolute right-[-12vw] top-28 h-[38rem] w-[38rem] rounded-full border border-accent/20"></div>
-    <div class="pointer-events-none absolute right-[-5vw] top-48 h-[24rem] w-[24rem] rounded-full border border-ink/10"></div>
-
-    <div class="mx-auto grid max-w-7xl grid-cols-12 gap-y-10 gap-x-0 lg:gap-x-16 xl:gap-x-20">
-      <div class="col-span-12 min-w-0 lg:col-span-6">
-        <p class="font-mono text-xs font-medium uppercase tracking-[0.22em] text-accent">Clases · conciertos · contacto</p>
-        <h1 class="contact-heading mt-7 max-w-3xl font-display font-light leading-[0.9] text-ink">
-          Abrir una conversacion musical.
-        </h1>
-
-        <a
-          href={`mailto:${email}`}
-          class="contact-email mt-10 block max-w-full font-display leading-none text-ink underline decoration-1 underline-offset-[0.16em] transition-colors duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          style={`--mail-chars: ${mailCharCount};`}
-        >
-          {email}
-        </a>
-
-        <p class="mt-9 max-w-xl text-xl leading-8 text-ink-muted">
-          Para clases privadas, recitales o propuestas especiales, lo mas util es empezar por el contexto: nivel, repertorio, fecha, lugar y tipo de escucha.
-        </p>
-
-        <div class="mt-12 grid gap-4 sm:grid-cols-2">
-          <article class="relative min-h-44 overflow-hidden border border-ink/10 p-5">
-            <span class="font-mono text-xs uppercase tracking-[0.2em] text-accent">01</span>
-            <h2 class="mt-7 font-display text-4xl font-light text-ink">Clase privada</h2>
-            <p class="mt-4 text-sm leading-6 text-ink-muted">Tecnica, sonido, lectura y repertorio con una direccion de estudio clara.</p>
-          </article>
-          <article class="relative min-h-44 overflow-hidden border border-ink/10 p-5">
-            <span class="font-mono text-xs uppercase tracking-[0.2em] text-accent">02</span>
-            <h2 class="mt-7 font-display text-4xl font-light text-ink">Concierto</h2>
-            <p class="mt-4 text-sm leading-6 text-ink-muted">Programas de guitarra clasica para ciclos, espacios culturales y eventos privados.</p>
-          </article>
-        </div>
-
-        {profileLinks.length > 0 && (
-          <ul class="mt-10 flex flex-wrap gap-4">
-            {profileLinks.map((social) => (
-              <li>
-                <a class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-muted transition-colors hover:text-ink" href={social.href} target="_blank" rel="noreferrer">
-                  {social.label} ->
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <aside class="relative z-10 col-span-12 min-w-0 border-t border-ink/10 pt-8 lg:col-span-6 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-4 xl:pl-16">
-        <p class="font-display text-[clamp(2.5rem,5.8vw,6rem)] font-light leading-none text-ink">
-          Consulta
-        </p>
-        <p class="mt-5 max-w-md text-base leading-7 text-ink-muted">
-          El formulario envia el mensaje por Web3Forms cuando la clave publica esta configurada. El email directo queda siempre disponible.
-        </p>
-        <div class="mt-10">
-          <InquiryForm locale={locale} intent="class" />
-        </div>
-      </aside>
-    </div>
-  </section>
-</Detail>
-
-<style>
-  .contact-email {
-    overflow-wrap: anywhere;
-    font-size: clamp(1.9rem, 8vw, 3.4rem);
-  }
-
-  .contact-heading {
-    overflow-wrap: anywhere;
-    font-size: clamp(3.5rem, 15vw, 5.2rem);
-    text-wrap: balance;
-  }
-
-  @media (min-width: 1024px) {
-    .contact-email {
-      font-size: min(3.2rem, calc(100% / (var(--mail-chars) * 0.58)));
-    }
-
-    .contact-heading {
-      font-size: clamp(5rem, 6.2vw, 6.8rem);
-    }
-  }
-</style>
+<Base locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <Nav locale="es" />
+  <main id="main-content" transition:name="page-lane" transition:animate={laneSwitch}>
+    <Stage locale="es" initialDetail="classes" />
+  </main>
+</Base>

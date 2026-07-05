@@ -1,8 +1,10 @@
 ---
-import Detail from '@/layouts/Detail.astro';
-import VideoGallery from '@/components/VideoGallery.astro';
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Stage from '@/components/Stage.astro';
 import { site } from '@/data/site';
 import { videos } from '@/data/videos';
+import { laneSwitch } from '@/lib/transitions';
 
 const locale = 'es';
 const title = `${site.fullName} - Videos`;
@@ -42,6 +44,9 @@ const jsonLd = {
   ],
 };
 ---
-<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
-  <VideoGallery videos={videos} locale={locale} />
-</Detail>
+<Base locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <Nav locale="es" />
+  <main id="main-content" transition:name="page-lane" transition:animate={laneSwitch}>
+    <Stage locale="es" initialDetail="videos" />
+  </main>
+</Base>

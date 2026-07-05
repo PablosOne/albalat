@@ -1,17 +1,15 @@
 ---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Stage from '@/components/Stage.astro';
 import { guitarNotes } from '@/data/guitar-notes';
 import { site } from '@/data/site';
-import Detail from '@/layouts/Detail.astro';
+import { laneSwitch } from '@/lib/transitions';
 
 const locale = 'es';
 const title = `${site.fullName} - La guitarra`;
 const description = 'Notas de Eulogio Albalat sobre tecnica, sonido, cuerdas e instrumentos de guitarra clasica.';
 const pageURL = new URL('/guitar/', Astro.site);
-const kindLabels = {
-  trick: 'Tecnica',
-  sound: 'Sonido',
-  guitars: 'Instrumentos',
-};
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -44,29 +42,9 @@ const jsonLd = {
   ],
 };
 ---
-<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
-  <section class="px-6 pb-20 pt-32 md:px-10 md:pb-28 md:pt-40">
-    <div class="mx-auto max-w-6xl">
-      <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">La guitarra</p>
-      <h1 class="mt-6 max-w-4xl font-display text-5xl font-light leading-tight text-ink md:text-7xl">
-        Tecnica, sonido e instrumento como una sola conversacion.
-      </h1>
-      <p class="mt-8 max-w-3xl text-lg leading-8 text-ink-muted md:text-xl">
-        Un cuaderno editorial para reunir observaciones sobre el estudio, la produccion del sonido y la eleccion de la guitarra clasica.
-      </p>
-
-      <div class="mt-16 grid gap-6 lg:grid-cols-3">
-        {guitarNotes.map((note) => (
-          <article class="border border-ink/10 bg-ink/[0.03] p-6">
-            <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">{kindLabels[note.kind]}</p>
-            <h2 class="mt-5 font-display text-3xl font-light leading-tight text-ink">{note.title.es}</h2>
-            <p class="mt-4 text-base leading-7 text-ink-muted">{note.summary.es}</p>
-            <div class="mt-7 space-y-5 text-base leading-7 text-ink/85">
-              {note.body.es.map((paragraph) => <p>{paragraph}</p>)}
-            </div>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
-</Detail>
+<Base locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <Nav locale="es" />
+  <main id="main-content" transition:name="page-lane" transition:animate={laneSwitch}>
+    <Stage locale="es" initialDetail="guitar" />
+  </main>
+</Base>
