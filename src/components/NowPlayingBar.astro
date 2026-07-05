@@ -19,7 +19,6 @@ const copy = {
   hidden
   role="region"
   aria-label={copy.region}
-  data-copy={JSON.stringify(copy)}
   class="fixed inset-x-0 bottom-0 z-50 border-t border-ink/15 bg-[#0d0c0a]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] transition-transform duration-300 data-[visible=false]:translate-y-full"
 >
   <div data-np-embed hidden class="border-b border-ink/10 bg-black"></div>
@@ -74,6 +73,26 @@ const copy = {
     return `${m}:${String(r).padStart(2, '0')}`;
   };
 
+  // Full bilingual copy dictionary, inlined here (not read from a data-* attribute on
+  // the bar element) because that element carries transition:persist="now-playing":
+  // Astro's view-transition swap keeps the OLD persisted node and discards the freshly
+  // fetched page's node entirely, so any attribute serialized onto it (e.g. data-copy)
+  // is frozen at whatever locale was active when the bar was first mounted. The
+  // <html lang> attribute, by contrast, is updated on every navigation by Astro's
+  // swapRootAttributes step (it lives outside the persisted subtree), so we resolve
+  // the active locale from document.documentElement.lang instead.
+  const COPY: Record<'es' | 'en', Record<string, string>> = {
+    es: { region: 'Reproductor', play: 'Reproducir', pause: 'Pausar', prev: 'Anterior', next: 'Siguiente',
+          full: 'Pista completa', spotify: 'Abrir en Spotify', apple: 'Abrir en Apple Music', close: 'Cerrar',
+          hint: 'Vista previa - pista completa en Spotify / Apple Music', seek: 'Buscar en la pista' },
+    en: { region: 'Player', play: 'Play', pause: 'Pause', prev: 'Previous', next: 'Next',
+          full: 'Full track', spotify: 'Open in Spotify', apple: 'Open in Apple Music', close: 'Close',
+          hint: 'Preview - full track on Spotify / Apple Music', seek: 'Seek within track' },
+  };
+
+  const currentLocale = (): 'es' | 'en' =>
+    document.documentElement.lang.startsWith('en') ? 'en' : 'es';
+
   let copy: Record<string, string> = {};
   let refreshDynamicCopy: (() => void) | null = null;
 
@@ -96,11 +115,12 @@ const copy = {
     if (!bar) return;
 
     // The bar node is transition:persist'd across client-side navigations, so it is
-    // never re-created. Re-read the current page's locale copy and re-apply it to the
+    // never re-created. Re-derive the current page's locale from document.documentElement.lang
+    // (kept fresh by Astro on every navigation) and re-apply the matching copy to the
     // static chrome on every astro:page-load — independent of the one-time listener
     // binding below — so the bar's labels don't stay stuck in the locale that was
     // active when the node was first mounted.
-    copy = JSON.parse(bar.dataset.copy || '{}');
+    copy = COPY[currentLocale()];
     applyStaticCopy(bar);
     refreshDynamicCopy?.();
 
