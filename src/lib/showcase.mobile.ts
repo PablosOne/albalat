@@ -9,10 +9,27 @@ import { revealPanel, revealProblemCard } from '@/lib/motion';
 export function initShowcaseMobile(
   track: HTMLElement,
   panels: NodeListOf<HTMLElement>,
+  mode: 'carousel' | 'stack' = 'stack',
 ): () => void {
-  track.style.width = '100%';
-  track.style.flexDirection = 'column';
-  panels.forEach(p => { p.style.width = '100vw'; });
+  const section = track.closest<HTMLElement>('[data-showcase]');
+
+  track.style.width = mode === 'carousel' ? 'max-content' : '100%';
+  track.style.flexDirection = mode === 'carousel' ? 'row' : 'column';
+  track.style.scrollSnapType = mode === 'carousel' ? 'x mandatory' : '';
+
+  if (section) {
+    section.style.overflowX = mode === 'carousel' ? 'auto' : 'hidden';
+    section.style.overflowY = mode === 'carousel' ? 'hidden' : 'visible';
+    section.style.scrollSnapType = mode === 'carousel' ? 'x mandatory' : '';
+    section.style.scrollBehavior = 'smooth';
+    section.style.setProperty('-webkit-overflow-scrolling', 'touch');
+  }
+
+  panels.forEach(p => {
+    p.style.width = '100vw';
+    p.style.marginRight = '0';
+    p.style.scrollSnapAlign = mode === 'carousel' ? 'start' : '';
+  });
 
   // Reveal IO — fires once per panel, then unobserves.
   const revealIo = new IntersectionObserver((entries) => {
@@ -50,5 +67,20 @@ export function initShowcaseMobile(
   return () => {
     revealIo.disconnect();
     activeIo.disconnect();
+    track.style.width = '';
+    track.style.flexDirection = '';
+    track.style.scrollSnapType = '';
+    if (section) {
+      section.style.overflowX = '';
+      section.style.overflowY = '';
+      section.style.scrollSnapType = '';
+      section.style.scrollBehavior = '';
+      section.style.removeProperty('-webkit-overflow-scrolling');
+    }
+    panels.forEach(p => {
+      p.style.width = '';
+      p.style.marginRight = '';
+      p.style.scrollSnapAlign = '';
+    });
   };
 }

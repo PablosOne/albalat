@@ -57,7 +57,7 @@ const stations: Station[] = site.stations;
         ? `${widthVw}vw`
         : `calc(${scrollWeight} * min(100vw, ${SHOWCASE_PANEL_MAX_WIDTH_PX}px))`;
       const gapPx = isLast ? 0 : getPanelGapAfter(station.id);
-      const padPx = getPanelPadding(station.id);
+      const padPx = isHero ? 0 : getPanelPadding(station.id);
 
       const layerClass = isHero ? 'z-40 bg-[var(--color-stage)]' : 'z-30 bg-[var(--color-stage)]';
 
@@ -86,5 +86,5 @@ const stations: Station[] = site.stations;
       );
     })}
   </div>
-  <HUD />
+  <HUD locale={locale} />
 </section>

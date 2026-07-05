@@ -16,9 +16,18 @@ interface Props {
 }
 const { station, locale } = Astro.props;
 ---
-<div class="relative w-full h-full flex items-center justify-center px-6 text-center overflow-hidden" data-hero-stage>
+<div class="relative w-full h-full flex items-center justify-center px-6 text-center overflow-hidden" data-hero-stage data-station-title={station.heading[locale]}>
   <div class="absolute inset-0 -z-10 pointer-events-none" data-hero-spotlight aria-hidden="true"></div>
-  <div class="relative z-10 flex flex-col items-center gap-4 md:gap-6">
+  <div class="hero-stage__strings" data-parallax-x="-0.18" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="hero-stage__wash" data-parallax-x="0.08" aria-hidden="true"></div>
+  <div class="relative z-10 flex flex-col items-center gap-4 md:gap-6" data-parallax-x="0.04">
     <h1 class="font-display text-6xl md:text-8xl font-light tracking-tight text-ink">
       {site.fullName}
     </h1>

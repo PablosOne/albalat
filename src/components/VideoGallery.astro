@@ -1,0 +1,94 @@
+---
+import VideoCard from '@/components/VideoCard.astro';
+import type { Locale } from '@/i18n';
+import { getVideosByCategory, type Video } from '@/data/videos';
+
+interface Props {
+  videos: Video[];
+  locale: Locale;
+}
+
+const { videos, locale } = Astro.props;
+const [featured] = videos;
+const groups = getVideosByCategory(locale)
+  .map((group) => ({
+    ...group,
+    videos: group.videos.filter((video) => video.id !== featured?.id),
+  }))
+  .filter((group) => group.videos.length > 0);
+
+const copy = {
+  es: {
+    eyebrow: 'Videos',
+    title: 'Sala de interpretaciones',
+    intro: 'Grabaciones y momentos de concierto presentados como una galeria de escucha visual.',
+    featured: 'Proyeccion destacada',
+  },
+  en: {
+    eyebrow: 'Videos',
+    title: 'Performance screening room',
+    intro: 'Recordings and concert moments arranged as a visual listening gallery.',
+    featured: 'Featured screening',
+  },
+} as const;
+---
+<section class="relative overflow-hidden px-6 pb-24 pt-32 md:px-10 md:pb-32 md:pt-40">
+  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(198,146,62,0.18),transparent_28%),linear-gradient(180deg,rgba(244,239,231,0.035),transparent_28%)]"></div>
+  <div class="pointer-events-none absolute left-0 right-0 top-[29rem] h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent"></div>
+
+  <div class="relative mx-auto max-w-6xl">
+    <header class="max-w-3xl">
+      <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">
+        {copy[locale].eyebrow}
+      </p>
+      <h1 class="mt-6 font-display text-5xl font-light leading-tight text-ink md:text-7xl">
+        {copy[locale].title}
+      </h1>
+      <p class="mt-5 max-w-2xl text-lg leading-8 text-ink-muted md:text-xl">
+        {copy[locale].intro}
+      </p>
+    </header>
+
+    {featured && (
+      <div class="mt-14">
+        <div class="mb-5 flex items-center gap-4">
+          <span class="grid size-3 place-items-center rounded-full border border-accent/70">
+            <span class="size-1 rounded-full bg-accent"></span>
+          </span>
+          <p class="font-mono text-xs font-medium uppercase tracking-wide text-ink-muted">
+            {copy[locale].featured}
+          </p>
+          <span class="h-px flex-1 bg-[repeating-linear-gradient(90deg,rgba(198,146,62,0.5)_0_1px,transparent_1px_10px)]"></span>
+        </div>
+        <VideoCard video={featured} locale={locale} featured />
+      </div>
+    )}
+
+    <div class="mt-20 space-y-20">
+      {groups.map((group, groupIndex) => (
+        <section class="relative" aria-labelledby={`video-group-${groupIndex}`}>
+          <div class="mb-8 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:items-center">
+            <h2 id={`video-group-${groupIndex}`} class="font-display text-3xl font-light text-ink">
+              {group.category}
+            </h2>
+            <div class="relative h-[13px]">
+              <span class="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-ink/12"></span>
+              <span class="absolute left-0 top-1/2 size-[13px] -translate-y-1/2 rounded-full border border-accent/70 bg-stage"></span>
+              <span class="absolute left-8 right-0 top-1/2 h-px -translate-y-1/2 bg-[repeating-linear-gradient(90deg,rgba(244,239,231,0.22)_0_1px,transparent_1px_12px)]"></span>
+            </div>
+          </div>
+          <div class="grid gap-9 md:grid-cols-2">
+            {group.videos.map((video, videoIndex) => (
+              <div class:list={[
+                'relative',
+                (groupIndex + videoIndex) % 2 === 1 ? 'md:mt-16' : '',
+              ]}>
+                <VideoCard video={video} locale={locale} />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  </div>
+</section>

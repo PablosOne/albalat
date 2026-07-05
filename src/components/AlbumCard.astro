@@ -1,0 +1,38 @@
+---
+import type { Album } from '@/data/discography';
+
+interface Props {
+  album: Album;
+  locale: 'es' | 'en';
+  index: number;
+}
+
+const { album, locale, index } = Astro.props;
+const note = album.notes[locale];
+---
+<a
+  href={`#${album.id}`}
+  class="album-card group grid min-w-[18rem] grid-cols-[72px_minmax(0,1fr)] gap-4 border border-ink/10 bg-ink/[0.045] p-3 text-left transition-all duration-300 hover:border-accent/70 hover:bg-ink/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-w-0"
+  data-album-card={album.id}
+>
+  <img
+    src={album.cover}
+    alt={`TODO-ASSET cover placeholder for ${album.title}`}
+    width="144"
+    height="144"
+    loading={index === 0 ? 'eager' : 'lazy'}
+    class="aspect-square w-full object-cover"
+  />
+  <span class="min-w-0">
+    <span class="flex items-center justify-between gap-3 font-mono text-[0.68rem] uppercase tracking-wide text-ink-muted">
+      <span>{String(index + 1).padStart(2, '0')}</span>
+      <span>{album.year}</span>
+    </span>
+    <strong class="mt-2 line-clamp-2 block text-base font-medium leading-snug text-ink group-hover:text-accent">
+      {album.title}
+    </strong>
+    <span class="mt-2 line-clamp-2 block text-xs leading-5 text-ink-muted">
+      {note}
+    </span>
+  </span>
+</a>

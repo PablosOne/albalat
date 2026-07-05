@@ -16,10 +16,18 @@ interface RunningString {
   cleanup: () => void;
 }
 
+interface HudEls {
+  station: HTMLElement;
+  index: HTMLElement;
+  progress: HTMLElement | null;
+  links: HTMLAnchorElement[];
+}
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const POINT_COUNT = 72;
 const WIDTH = 1000;
 const MID_Y = 50;
+const MOBILE_MEDIA = '(max-width: 767px)';
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -134,12 +142,122 @@ function mountSpotlight(root: HTMLElement, gsap: Gsap): () => void {
   };
 }
 
+function readStationTitle(panel: HTMLElement): string {
+  const titled = panel.querySelector<HTMLElement>('[data-station-title]');
+  const title = titled?.dataset.stationTitle?.trim();
+  if (title) return title;
+
+  const heading = panel.querySelector<HTMLElement>('h1, h2');
+  return heading?.textContent?.trim() || panel.dataset.showcasePanelId || '';
+}
+
+function mostVisiblePanel(panels: HTMLElement[]): HTMLElement | null {
+  let best: HTMLElement | null = null;
+  let bestArea = -1;
+
+  panels.forEach((panel) => {
+    const rect = panel.getBoundingClientRect();
+    const width = Math.max(0, Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0));
+    const height = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
+    const area = width * height;
+    if (area > bestArea) {
+      best = panel;
+      bestArea = area;
+    }
+  });
+
+  return best;
+}
+
+function updateStackProgress(section: HTMLElement, progress: HTMLElement): void {
+  const rect = section.getBoundingClientRect();
+  const total = Math.max(1, section.offsetHeight - window.innerHeight);
+  const p = Math.min(1, Math.max(0, -rect.top / total));
+  progress.style.transform = `scaleX(${p})`;
+}
+
+function updateCarouselProgress(section: HTMLElement, progress: HTMLElement): void {
+  const max = Math.max(1, section.scrollWidth - section.clientWidth);
+  const p = Math.min(1, Math.max(0, section.scrollLeft / max));
+  progress.style.transform = `scaleX(${p})`;
+}
+
+function initHudStatus(): () => void {
+  const hud = document.querySelector<HTMLElement>('[data-hud]');
+  const section = document.querySelector<HTMLElement>('[data-showcase]');
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'));
+  const station = hud?.querySelector<HTMLElement>('[data-hud-station]');
+  const index = hud?.querySelector<HTMLElement>('[data-hud-index]');
+  if (!hud || !section || !panels.length || !station || !index) return () => {};
+
+  const els: HudEls = {
+    station,
+    index,
+    progress: hud.querySelector<HTMLElement>('[data-hud-progress]'),
+    links: Array.from(hud.querySelectorAll<HTMLAnchorElement>('[data-hud-station-link]')),
+  };
+  const mobileQuery = window.matchMedia(MOBILE_MEDIA);
+  const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let frame = 0;
+  let activeId = '';
+
+  const write = () => {
+    frame = 0;
+    const active = mostVisiblePanel(panels);
+    if (!active) return;
+
+    const id = active.dataset.showcasePanelId || '';
+    if (id !== activeId) {
+      activeId = id;
+      const stationNumber = Math.max(0, panels.indexOf(active));
+      els.index.textContent = stationNumber === 0 ? '00' : String(stationNumber).padStart(2, '0');
+      els.station.textContent = readStationTitle(active);
+      els.links.forEach((link) => {
+        const isActive = link.dataset.hudStationLink === id;
+        if (isActive) link.setAttribute('aria-current', 'true');
+        else link.removeAttribute('aria-current');
+      });
+    }
+
+    if (els.progress && (mobileQuery.matches || reduceQuery.matches)) {
+      if (mobileQuery.matches && !reduceQuery.matches) updateCarouselProgress(section, els.progress);
+      else updateStackProgress(section, els.progress);
+    }
+  };
+
+  const schedule = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(write);
+  };
+
+  schedule();
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule);
+  window.addEventListener('hashchange', schedule);
+  section.addEventListener('scroll', schedule, { passive: true });
+  mobileQuery.addEventListener('change', schedule);
+  reduceQuery.addEventListener('change', schedule);
+
+  return () => {
+    if (frame) cancelAnimationFrame(frame);
+    window.removeEventListener('scroll', schedule);
+    window.removeEventListener('resize', schedule);
+    window.removeEventListener('hashchange', schedule);
+    section.removeEventListener('scroll', schedule);
+    mobileQuery.removeEventListener('change', schedule);
+    reduceQuery.removeEventListener('change', schedule);
+  };
+}
+
 export function initSignature(): () => void {
-  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {};
+  if (typeof window === 'undefined') return () => {};
+
+  const cleanupHud = initHudStatus();
+  if (prefersReducedMotion()) return cleanupHud;
 
   const strings = Array.from(document.querySelectorAll<SVGSVGElement>('svg[data-string]'));
   const spotlights = Array.from(document.querySelectorAll<HTMLElement>('[data-hero-spotlight]'));
-  if (!strings.length && !spotlights.length) return () => {};
+  if (!strings.length && !spotlights.length) return cleanupHud;
 
   let active = true;
   let cleanupFns: Array<() => void> = [];
@@ -169,6 +287,7 @@ export function initSignature(): () => void {
 
   return () => {
     active = false;
+    cleanupHud();
     cleanupFns.forEach((cleanup) => cleanup());
     cleanupFns = [];
   };

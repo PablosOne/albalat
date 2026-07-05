@@ -1,0 +1,47 @@
+---
+import Detail from '@/layouts/Detail.astro';
+import VideoGallery from '@/components/VideoGallery.astro';
+import { site } from '@/data/site';
+import { videos } from '@/data/videos';
+
+const locale = 'en';
+const title = `${site.fullName} - Videos`;
+const description = 'Videos by Eulogio Albalat: performances, concerts, and classical guitar recordings.';
+const pageURL = new URL('/en/videos/', Astro.site);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${pageURL}#breadcrumb`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: new URL('/en/', Astro.site).toString(),
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Videos',
+          item: pageURL.toString(),
+        },
+      ],
+    },
+    ...videos.map((video) => ({
+      '@type': 'VideoObject',
+      '@id': `${pageURL}#${video.id}`,
+      name: video.title.en,
+      description: video.description?.en ?? video.title.en,
+      thumbnailUrl: [`https://i.ytimg.com/vi/${video.youtubeId}/maxresdefault.jpg`],
+      embedUrl: `https://www.youtube-nocookie.com/embed/${video.youtubeId}`,
+      uploadDate: video.date,
+      inLanguage: 'en',
+    })),
+  ],
+};
+---
+<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <VideoGallery videos={videos} locale={locale} />
+</Detail>

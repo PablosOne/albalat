@@ -42,7 +42,7 @@ export async function initShowcase(): Promise<() => void> {
 
   if (isMobile || prefersReduced) {
     const { initShowcaseMobile } = await import('./showcase.mobile');
-    return initShowcaseMobile(track, panels);
+    return initShowcaseMobile(track, panels, prefersReduced ? 'stack' : 'carousel');
   }
 
   const { initShowcaseDesktop } = await import('./showcase.desktop');

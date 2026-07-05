@@ -1,0 +1,59 @@
+---
+import MediaEmbedFacade from '@/components/MediaEmbedFacade.astro';
+import type { Locale } from '@/i18n';
+import type { Video } from '@/data/videos';
+
+interface Props {
+  video: Video;
+  locale: Locale;
+  featured?: boolean;
+}
+
+const { video, locale, featured = false } = Astro.props;
+const playLabel = locale === 'es' ? 'Reproducir video' : 'Play video';
+const dateLabel = video.date
+  ? new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(new Date(`${video.date}T00:00:00Z`))
+  : undefined;
+---
+<article
+  class:list={[
+    'group relative',
+    featured
+      ? 'grid gap-7 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:items-end'
+      : 'flex flex-col gap-4',
+  ]}
+  data-video-card={video.id}
+>
+  <MediaEmbedFacade
+    youtubeId={video.youtubeId}
+    title={video.title[locale]}
+    label={playLabel}
+    class={featured ? 'border border-accent/25' : 'border border-ink/10'}
+  />
+
+  <div class={featured ? 'pb-2' : ''}>
+    <div class="mb-3 flex items-center gap-3 font-mono text-[11px] font-medium uppercase tracking-wide text-accent">
+      <span>{video.category[locale]}</span>
+      {dateLabel && (
+        <>
+          <span class="h-px w-8 bg-gradient-to-r from-accent/70 to-transparent"></span>
+          <time datetime={video.date}>{dateLabel}</time>
+        </>
+      )}
+    </div>
+    <h2 class:list={[
+      'font-display font-light leading-tight text-ink',
+      featured ? 'text-4xl md:text-6xl' : 'text-2xl md:text-3xl',
+    ]}>
+      {video.title[locale]}
+    </h2>
+    {video.description && (
+      <p class:list={[
+        'mt-4 leading-7 text-ink-muted',
+        featured ? 'max-w-xl text-lg' : 'text-base',
+      ]}>
+        {video.description[locale]}
+      </p>
+    )}
+  </div>
+</article>

@@ -12,6 +12,7 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const pathname = Astro.url.pathname;
+const isHome = pathname === '/' || pathname === '/en/';
 
 function localizePath(path: string): string {
   if (locale === 'es') return path;
@@ -23,7 +24,7 @@ const navItems = site.stations
   .map((station) => ({
     id: station.id,
     label: t(`nav.${station.id}`),
-    href: localizePath(station.href!),
+    href: isHome ? `#${station.id}` : localizePath(station.href!),
   }));
 
 const homeHref = localizePath('/');

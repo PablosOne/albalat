@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-labelledby="title desc">
+  <title id="title">TODO-ASSET placeholder album cover for Federico Moreno Torroba guitar music</title>
+  <desc id="desc">Temporary record sleeve artwork for Eulogio Albalat until the official cover is provided.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f3e8d1"/>
+      <stop offset=".48" stop-color="#c88d45"/>
+      <stop offset="1" stop-color="#242f36"/>
+    </linearGradient>
+    <radialGradient id="disc" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#f8ead2"/>
+      <stop offset=".12" stop-color="#b44c46"/>
+      <stop offset=".13" stop-color="#10100f"/>
+      <stop offset=".72" stop-color="#171615"/>
+      <stop offset="1" stop-color="#050505"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#paper)"/>
+  <path d="M110 165h980v870H110z" fill="#090807" opacity=".88"/>
+  <circle cx="600" cy="600" r="410" fill="url(#disc)"/>
+  <circle cx="600" cy="600" r="78" fill="#d5b37a"/>
+  <path d="M215 928c190-96 384-132 582-108 70 8 133 24 188 47" fill="none" stroke="#f1dfba" stroke-width="8" opacity=".7"/>
+  <text x="135" y="258" fill="#f3e8d1" font-family="Georgia, serif" font-size="58">Eulogio Albalat</text>
+  <text x="135" y="330" fill="#c88d45" font-family="Arial, sans-serif" font-size="34" letter-spacing="4">TORROBA / GUITAR MUSIC</text>
+  <text x="135" y="1030" fill="#f3e8d1" font-family="Arial, sans-serif" font-size="30">TODO-ASSET temporary sleeve</text>
+</svg>

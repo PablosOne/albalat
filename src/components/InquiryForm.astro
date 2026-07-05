@@ -1,0 +1,174 @@
+---
+import type { Locale } from '@/i18n';
+
+interface Props {
+  locale: Locale;
+  intent: 'class' | 'concert' | 'contact';
+}
+
+const { locale, intent } = Astro.props;
+const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY;
+const email = 'contacto@example.com';
+const copy = {
+  es: {
+    name: 'Nombre',
+    email: 'Email',
+    message: 'Mensaje',
+    inquiryType: 'Tipo de consulta',
+    classOption: 'Clase privada',
+    concertOption: 'Concierto',
+    contactOption: 'Consulta general',
+    submit: 'Enviar consulta',
+    sending: 'Enviando...',
+    success: 'Gracias. La consulta se ha enviado correctamente.',
+    error: 'No se ha podido enviar el formulario. Puedes escribir directamente por email.',
+    unavailable: 'El formulario se activara al configurar Web3Forms. Mientras tanto, puedes escribir directamente por email.',
+    required: 'Completa los campos obligatorios antes de enviar.',
+    class: 'Consulta sobre clases y conciertos',
+    concert: 'Consulta sobre conciertos',
+    contact: 'Consulta general',
+  },
+  en: {
+    name: 'Name',
+    email: 'Email',
+    message: 'Message',
+    inquiryType: 'Inquiry type',
+    classOption: 'Private class',
+    concertOption: 'Concert',
+    contactOption: 'General inquiry',
+    submit: 'Send inquiry',
+    sending: 'Sending...',
+    success: 'Thank you. Your inquiry has been sent.',
+    error: 'The form could not be sent. You can write directly by email.',
+    unavailable: 'The form will be active once Web3Forms is configured. In the meantime, you can write directly by email.',
+    required: 'Please complete the required fields before sending.',
+    class: 'Classes and concerts inquiry',
+    concert: 'Concert inquiry',
+    contact: 'General inquiry',
+  },
+}[locale];
+
+const subject = copy[intent];
+const showInquiryType = intent === 'class';
+---
+<form
+  class="grid gap-5 border border-ink/10 bg-ink/[0.03] p-5 md:p-6"
+  action="https://api.web3forms.com/submit"
+  method="POST"
+  data-inquiry-form
+  data-success={copy.success}
+  data-error={copy.error}
+  data-required={copy.required}
+>
+  {accessKey && <input type="hidden" name="access_key" value={accessKey} />}
+  <input type="hidden" name="subject" value={`${subject} - Eulogio Albalat`} />
+  {!showInquiryType && <input type="hidden" name="inquiry_type" value={copy[`${intent}Option` as 'concertOption' | 'contactOption']} />}
+  <input type="checkbox" name="botcheck" class="hidden" tabindex="-1" autocomplete="off" />
+
+  <label class="grid gap-2 text-sm font-medium text-ink-muted">
+    {copy.name}
+    <input
+      required
+      name="name"
+      autocomplete="name"
+      class="min-h-12 border border-ink/15 bg-stage px-4 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
+    />
+  </label>
+
+  {showInquiryType && (
+    <label class="grid gap-2 text-sm font-medium text-ink-muted">
+      {copy.inquiryType}
+      <select
+        required
+        name="inquiry_type"
+        class="min-h-12 border border-ink/15 bg-stage px-4 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
+      >
+        <option value={copy.classOption}>{copy.classOption}</option>
+        <option value={copy.concertOption}>{copy.concertOption}</option>
+      </select>
+    </label>
+  )}
+
+  <label class="grid gap-2 text-sm font-medium text-ink-muted">
+    {copy.email}
+    <input
+      required
+      type="email"
+      name="email"
+      autocomplete="email"
+      class="min-h-12 border border-ink/15 bg-stage px-4 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
+    />
+  </label>
+
+  <label class="grid gap-2 text-sm font-medium text-ink-muted">
+    {copy.message}
+    <textarea
+      required
+      name="message"
+      rows="6"
+      class="min-h-36 resize-y border border-ink/15 bg-stage px-4 py-3 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
+    ></textarea>
+  </label>
+
+  <div class="flex flex-wrap items-center gap-4">
+    <button
+      type="submit"
+      class="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-stage transition-colors duration-200 hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+      disabled={!accessKey}
+      data-submit-label={copy.submit}
+      data-sending-label={copy.sending}
+    >
+      {copy.submit}
+    </button>
+    <a class="text-sm font-medium text-ink-muted underline-offset-4 hover:text-accent hover:underline" href={`mailto:${email}`}>
+      {email}
+    </a>
+  </div>
+
+  <p class="min-h-6 text-sm text-ink-muted" data-form-status aria-live="polite">
+    {!accessKey ? copy.unavailable : ''}
+  </p>
+</form>
+
+<script is:inline>
+  document.querySelectorAll('[data-inquiry-form]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const formEl = event.currentTarget;
+      if (!(formEl instanceof HTMLFormElement)) return;
+
+      const status = formEl.querySelector('[data-form-status]');
+      const button = formEl.querySelector('button[type="submit"]');
+      if (!(button instanceof HTMLButtonElement)) return;
+
+      if (!formEl.checkValidity()) {
+        formEl.reportValidity();
+        if (status) status.textContent = formEl.dataset.required || '';
+        return;
+      }
+
+      const submitLabel = button.dataset.submitLabel || button.textContent || '';
+      button.disabled = true;
+      button.textContent = button.dataset.sendingLabel || submitLabel;
+
+      try {
+        const response = await fetch(formEl.action, {
+          method: 'POST',
+          body: new FormData(formEl),
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) throw new Error('Form submission failed');
+
+        formEl.reset();
+        if (status) status.textContent = formEl.dataset.success || '';
+      } catch {
+        if (status) status.textContent = formEl.dataset.error || '';
+      } finally {
+        button.disabled = false;
+        button.textContent = submitLabel;
+      }
+    });
+  });
+</script>

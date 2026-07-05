@@ -4,11 +4,39 @@ import Nav from '@/components/Nav.astro';
 import Stage from '@/components/Stage.astro';
 import { site } from '@/data/site';
 import { laneSwitch } from '@/lib/transitions';
+
+const pageURL = new URL('/', Astro.site);
+const imageURL = new URL(site.about.portrait.src, Astro.site);
+const sameAs = site.socials.map((social) => social.href).filter((href) => href.startsWith('http'));
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': `${pageURL}#person`,
+      name: site.fullName,
+      jobTitle: site.role.es,
+      url: pageURL.toString(),
+      image: imageURL.toString(),
+      sameAs,
+    },
+    {
+      '@type': 'MusicGroup',
+      '@id': `${pageURL}#artist`,
+      name: site.fullName,
+      url: pageURL.toString(),
+      image: imageURL.toString(),
+      member: { '@id': `${pageURL}#person` },
+      sameAs,
+    },
+  ],
+};
 ---
 <Base
   locale="es"
   title={`${site.fullName} - ${site.role.es}`}
   description="El escenario digital de Eulogio Albalat: guitarra clasica, grabaciones, videos, clases y conciertos."
+  jsonLd={jsonLd}
 >
   <Nav locale="es" />
   <main id="main-content" transition:name="page-lane" transition:animate={laneSwitch}>

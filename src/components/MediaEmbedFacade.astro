@@ -1,0 +1,158 @@
+---
+interface Props {
+  provider?: 'spotify' | 'youtube';
+  title: string;
+  src?: string;
+  locale?: 'es' | 'en';
+  youtubeId?: string;
+  label?: string;
+  class?: string;
+}
+
+const {
+  provider,
+  title,
+  src,
+  locale = 'en',
+  youtubeId,
+  label,
+  class: className = '',
+} = Astro.props;
+
+const isYouTubeFacade = Boolean(youtubeId);
+const thumbnail = youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg` : '';
+const fallbackThumbnail = youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : '';
+const copy = {
+  es: {
+    load: provider === 'spotify' ? 'Cargar reproductor de Spotify' : 'Cargar video de YouTube',
+    privacy: 'El reproductor externo se carga solo despues de pulsar.',
+    play: 'Reproducir video',
+  },
+  en: {
+    load: provider === 'spotify' ? 'Load Spotify player' : 'Load YouTube video',
+    privacy: 'The external player loads only after you press.',
+    play: 'Play video',
+  },
+}[locale];
+---
+{isYouTubeFacade ? (
+  <div
+    class:list={[
+      'media-facade group relative aspect-video overflow-hidden bg-black shadow-[0_30px_90px_rgba(0,0,0,0.45)]',
+      className,
+    ]}
+    data-media-facade
+    data-youtube-id={youtubeId}
+    data-title={title}
+  >
+    <img
+      src={thumbnail}
+      alt=""
+      class="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-[1.025] group-hover:opacity-95"
+      loading="lazy"
+      decoding="async"
+      referrerpolicy="no-referrer"
+      onerror={`this.onerror=null;this.src='${fallbackThumbnail}'`}
+    />
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(198,146,62,0.18),transparent_34%),linear-gradient(180deg,rgba(11,10,9,0.08),rgba(11,10,9,0.78))]"></div>
+    <button
+      type="button"
+      class="absolute inset-0 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+      aria-label={`${label ?? copy.play}: ${title}`}
+      data-media-play
+    >
+      <span class="grid size-20 place-items-center rounded-full border border-ink/25 bg-stage/70 text-ink shadow-[0_0_55px_rgba(198,146,62,0.35)] backdrop-blur-sm transition duration-300 group-hover:border-accent group-hover:text-accent md:size-24">
+        <span class="ml-1 block h-0 w-0 border-y-[13px] border-l-[21px] border-y-transparent border-l-current md:border-y-[15px] md:border-l-[25px]"></span>
+      </span>
+    </button>
+  </div>
+) : (
+  <div
+    class:list={[
+      'media-facade relative min-h-[196px] overflow-hidden border border-ink/15 bg-[#11100e]',
+      className,
+    ]}
+  data-embed-facade
+  data-media-facade
+    data-src={src}
+    data-title={title}
+    data-provider={provider}
+  >
+    <div class="absolute inset-0 opacity-80" aria-hidden="true">
+      <div class="h-full w-full bg-[radial-gradient(circle_at_18%_22%,rgba(198,146,62,.32),transparent_28%),radial-gradient(circle_at_82%_70%,rgba(30,104,96,.28),transparent_30%),linear-gradient(135deg,rgba(244,239,231,.08),rgba(11,10,9,.96))]"></div>
+    </div>
+    <div class="relative flex min-h-[196px] flex-col justify-between p-5">
+      <div>
+        <p class="font-mono text-[0.68rem] font-medium uppercase tracking-wide text-accent">
+          {provider}
+        </p>
+        <h3 class="mt-3 text-xl font-medium leading-tight text-ink">
+          {title}
+        </h3>
+        <p class="mt-3 max-w-sm text-sm leading-6 text-ink-muted">
+          {copy.privacy}
+        </p>
+      </div>
+      <button
+        type="button"
+        class="mt-6 inline-flex w-fit items-center gap-3 border border-ink/20 bg-ink px-4 py-3 text-sm font-semibold text-stage transition-colors duration-200 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        data-embed-load
+        aria-label={`${copy.load}: ${title}`}
+      >
+        <span class="grid size-7 place-items-center rounded-full bg-stage text-ink" aria-hidden="true">
+          <span class="ml-0.5 block h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-current"></span>
+        </span>
+        <span>{copy.load}</span>
+      </button>
+    </div>
+  </div>
+)}
+
+<script>
+  const initMediaFacades = () => {
+    document.querySelectorAll<HTMLElement>('[data-embed-facade], [data-media-facade]').forEach((facade) => {
+      const button = facade.querySelector<HTMLButtonElement>('[data-embed-load]');
+      if (!button || facade.dataset.ready === 'true') return;
+      facade.dataset.ready = 'true';
+      button.addEventListener('click', () => {
+        const src = facade.dataset.src;
+        if (!src) return;
+
+        const iframe = document.createElement('iframe');
+        iframe.src = src;
+        iframe.title = facade.dataset.title ?? 'External media player';
+        iframe.loading = 'lazy';
+        iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.className = 'absolute inset-0 h-full w-full border-0';
+
+        facade.textContent = '';
+        facade.append(iframe);
+      }, { once: true });
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-media-facade]:not([data-media-ready])').forEach((facade) => {
+      facade.dataset.mediaReady = 'true';
+      const button = facade.querySelector<HTMLButtonElement>('[data-media-play]');
+      button?.addEventListener('click', () => {
+        const id = facade.dataset.youtubeId;
+        const title = facade.dataset.title ?? 'YouTube video';
+        if (!id) return;
+
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+        iframe.title = title;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.allowFullscreen = true;
+        iframe.loading = 'lazy';
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        iframe.className = 'absolute inset-0 h-full w-full border-0';
+
+        facade.replaceChildren(iframe);
+      }, { once: true });
+    });
+  };
+
+  initMediaFacades();
+  document.addEventListener('astro:page-load', initMediaFacades);
+</script>

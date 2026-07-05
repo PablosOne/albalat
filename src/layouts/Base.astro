@@ -9,7 +9,7 @@ interface Props {
   title: string;
   description: string;
   ogImage?: string;
-  jsonLd?: object;
+  jsonLd?: object | object[];
 }
 const { locale } = Astro.props;
 ---
@@ -19,6 +19,9 @@ const { locale } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0B0A09" />
+    <meta name="application-name" content="Eulogio Albalat" />
+    <meta name="apple-mobile-web-app-title" content="Eulogio Albalat" />
+    <meta name="format-detection" content="telephone=no" />
 
     <Seo {...Astro.props} />
     <ClientRouter />
@@ -35,7 +38,7 @@ const { locale } = Astro.props;
 
     <!-- Cloudflare Web Analytics (loads only when a beacon token is set) -->
     {import.meta.env.PUBLIC_CF_BEACON && (
-      <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={`{"token": "${import.meta.env.PUBLIC_CF_BEACON}"}`}></script>
+      <script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={`{"token": "${import.meta.env.PUBLIC_CF_BEACON}"}`}></script>
     )}
   </head>
   <body>

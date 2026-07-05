@@ -2,16 +2,64 @@ import { expect, test } from '@playwright/test';
 
 test('home renders hero and nav', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('navigation')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Inicio' })).toBeVisible();
   await expect(page.locator('[data-showcase]')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Eulogio Albalat' })).toBeVisible();
 });
 
 test('lane switch navigates to About', async ({ page }) => {
   await page.goto('/');
-  await page.locator('nav a[href="/about"]').click();
+  await page.locator('[data-showcase-panel-id="about"] a[href="/about"]').click();
   await expect(page).toHaveURL(/\/about\/?$/);
   await expect(page.getByRole('heading', { name: 'Eulogio Albalat' })).toBeVisible();
+});
+
+test('home nav jumps between horizontal stage stations', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#about"]').click();
+  await expect(page).toHaveURL(/\/#about$/);
+  await expect(page.locator('[data-showcase-panel-id="about"]')).toBeInViewport();
+});
+
+test('desktop vertical scroll scrubs the stage horizontally and updates HUD station', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForFunction(() => document.documentElement.scrollHeight > window.innerHeight * 2);
+  const about = page.locator('[data-showcase-panel-id="about"]');
+  const before = await about.evaluate((panel) => panel.getBoundingClientRect().left);
+
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight));
+  await expect.poll(() => about.evaluate((panel) => panel.getBoundingClientRect().left)).toBeLessThan(before - 20);
+
+  await expect(page.locator('[data-hud-station]')).not.toHaveText('');
+});
+
+test('HUD station links jump to stage panels', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-hud-station-link="music"]').click();
+  await expect(page).toHaveURL(/\/#music$/);
+  await expect(page.locator('[data-showcase-panel-id="music"]')).toBeInViewport();
+  await expect(page.locator('[data-hud-station-link="music"]')).toHaveAttribute('aria-current', 'true');
+});
+
+test('mobile home uses a swipeable horizontal carousel', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+
+  await page.goto('/');
+  const section = page.locator('[data-showcase]');
+  await expect(section).toBeVisible();
+
+  await expect.poll(() => section.evaluate((el) => getComputedStyle(el).overflowX)).toBe('auto');
+  await expect.poll(() => page.locator('[data-showcase-track]').evaluate((el) => getComputedStyle(el).flexDirection)).toBe('row');
+
+  await section.evaluate((el) => el.scrollTo({ left: window.innerWidth, behavior: 'instant' }));
+  await expect.poll(() => section.evaluate((el) => el.scrollLeft)).toBeGreaterThan(40);
+
+  await context.close();
 });
 
 test('reduced motion renders a vertical stack', async ({ browser }) => {

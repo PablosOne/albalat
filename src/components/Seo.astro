@@ -3,7 +3,7 @@ interface Props {
   title: string;
   description: string;
   ogImage?: string;
-  jsonLd?: object;
+  jsonLd?: object | object[];
 }
 const { title, description, ogImage = '/images/og.webp', jsonLd } = Astro.props;
 
@@ -23,10 +23,10 @@ if (isEnglish) {
   enPath = pathname === '/' ? '/en/' : '/en' + pathname;
 }
 
-const esURL = new URL(esPath, Astro.site);
-const enURL = new URL(enPath, Astro.site);
-const canonicalURL = new URL(pathname, Astro.site);
-const ogImageURL = new URL(ogImage, Astro.site);
+const esURL = new URL(esPath, Astro.site).toString();
+const enURL = new URL(enPath, Astro.site).toString();
+const canonicalURL = new URL(pathname, Astro.site).toString();
+const ogImageURL = new URL(ogImage, Astro.site).toString();
 
 const ogLocale = isEnglish ? 'en_US' : 'es_ES';
 ---
@@ -59,4 +59,4 @@ const ogLocale = isEnglish ? 'en_US' : 'es_ES';
 <meta name="twitter:image:alt" content={title} />
 
 <!-- Structured data -->
-{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+{jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}

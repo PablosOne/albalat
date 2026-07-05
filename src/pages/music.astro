@@ -1,0 +1,74 @@
+---
+import AlbumStoryPlayer from '@/components/AlbumStoryPlayer.astro';
+import { discography } from '@/data/discography';
+import { site } from '@/data/site';
+import Detail from '@/layouts/Detail.astro';
+
+const locale = 'es';
+const title = `${site.fullName} - Musica`;
+const description = 'Discografia, CDs y enlaces de escucha de Eulogio Albalat.';
+const pageURL = new URL('/music/', Astro.site);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${pageURL}#webpage`,
+      url: pageURL.toString(),
+      name: title,
+      description,
+      inLanguage: 'es',
+      about: { '@id': `${pageURL}#artist` },
+      breadcrumb: { '@id': `${pageURL}#breadcrumb` },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${pageURL}#breadcrumb`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Inicio',
+          item: new URL('/', Astro.site).toString(),
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Musica',
+          item: pageURL.toString(),
+        },
+      ],
+    },
+    {
+      '@type': 'MusicGroup',
+      '@id': `${pageURL}#artist`,
+      name: site.fullName,
+      url: pageURL.toString(),
+      sameAs: site.socials.map((social) => social.href).filter((href) => href.startsWith('http')),
+      album: discography.map((album) => ({ '@id': `${pageURL}#album-${album.id}` })),
+    },
+    ...discography.map((album) => ({
+      '@type': 'MusicAlbum',
+      '@id': `${pageURL}#album-${album.id}`,
+      name: album.title,
+      byArtist: { '@id': `${pageURL}#artist` },
+      datePublished: String(album.year),
+      image: new URL(album.cover, Astro.site).toString(),
+      recordLabel: album.label,
+      url: album.links.spotify ?? album.links.appleMusic ?? album.links.youtube ?? pageURL.toString(),
+      track: album.tracklist.map((track) => ({
+        '@type': 'MusicRecording',
+        position: track.no,
+        name: track.title,
+        duration: track.duration,
+        byArtist: { '@id': `${pageURL}#artist` },
+        inAlbum: { '@id': `${pageURL}#album-${album.id}` },
+      })),
+    })),
+  ],
+};
+---
+<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <AlbumStoryPlayer albums={discography} locale={locale} />
+</Detail>

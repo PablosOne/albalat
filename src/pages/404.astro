@@ -1,0 +1,36 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import { site } from '@/data/site';
+
+const title = `${site.fullName} - Pagina no encontrada`;
+const description = 'La pagina solicitada no existe. Vuelve al escenario principal de Eulogio Albalat.';
+---
+<Base locale="es" title={title} description={description}>
+  <Nav locale="es" />
+  <main id="main-content" class="min-h-dvh bg-stage px-6 py-28 text-ink md:px-10 md:py-36">
+    <section class="mx-auto flex min-h-[62dvh] max-w-5xl flex-col justify-center">
+      <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">404</p>
+      <h1 class="mt-6 max-w-3xl font-display text-5xl font-light leading-tight md:text-7xl">
+        Esta pagina ha quedado fuera de programa.
+      </h1>
+      <p class="mt-8 max-w-2xl text-lg leading-8 text-ink-muted md:text-xl">
+        La direccion no corresponde a una seccion publicada. Puedes regresar al inicio o continuar en la version inglesa.
+      </p>
+      <div class="mt-12 flex flex-wrap gap-3">
+        <a
+          href="/"
+          class="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-stage transition-colors duration-200 hover:bg-ink hover:text-stage focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          Volver al inicio
+        </a>
+        <a
+          href="/en/"
+          class="rounded-full border border-ink/15 px-5 py-3 text-sm font-semibold text-ink-muted transition-colors duration-200 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          English
+        </a>
+      </div>
+    </section>
+  </main>
+</Base>

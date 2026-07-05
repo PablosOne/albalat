@@ -15,29 +15,53 @@ const { station, locale } = Astro.props;
 const href = locale === 'en' && station.href
   ? (station.href === '/' ? '/en/' : `/en${station.href}`)
   : station.href;
+const stationNumber = ['about', 'music', 'videos', 'guitar', 'classes', 'contact'].indexOf(station.id) + 1;
+const artifactLabel = {
+  about: 'score',
+  music: 'wave',
+  videos: 'frame',
+  guitar: 'rosette',
+  classes: 'fretboard',
+  contact: 'signal',
+}[station.id] ?? 'score';
+const cta = locale === 'en' ? 'Explore' : 'Explorar';
 ---
 <a
   href={href}
-  class="group relative flex w-full flex-col justify-center gap-5 text-ink no-underline"
+  class="station-teaser group relative flex w-full flex-col justify-center gap-6 text-ink no-underline"
+  data-station-title={station.heading[locale]}
+  data-station-kind={station.id}
 >
-  <h2 data-reveal="heading" class="font-display text-4xl md:text-6xl font-light tracking-tight">
-    {station.heading[locale]}
-  </h2>
-  {station.tagline && (
-    <p data-reveal="body" class="font-sans text-lg md:text-xl text-ink-muted max-w-prose">
-      {station.tagline[locale]}
-    </p>
-  )}
-  <span
-    data-reveal="cta"
-    class="font-mono text-sm text-accent inline-flex items-center gap-2 transition-transform duration-300 group-hover:translate-x-1"
-    aria-hidden="true"
-  >
-    &rarr;
-  </span>
+  <div class="station-teaser__wash" data-parallax-x="-0.10" aria-hidden="true"></div>
+  <div class:list={['station-teaser__artifact', `station-teaser__artifact--${artifactLabel}`]} data-parallax-x="0.18" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="station-teaser__copy" data-parallax-x="-0.04">
+    <span data-reveal="label" class="station-teaser__number">
+      {String(Math.max(stationNumber, 1)).padStart(2, '0')}
+    </span>
+    <h2 data-reveal="heading" class="font-display text-4xl md:text-6xl font-light tracking-tight">
+      {station.heading[locale]}
+    </h2>
+    {station.tagline && (
+      <p data-reveal="body" class="font-sans text-lg md:text-xl text-ink-muted max-w-prose">
+        {station.tagline[locale]}
+      </p>
+    )}
+    <span
+      data-reveal="cta"
+      class="station-teaser__cta font-mono text-sm text-accent inline-flex items-center gap-2 transition-transform duration-300 group-hover:translate-x-1"
+      aria-hidden="true"
+    >
+      {cta}
+    </span>
+  </div>
   <svg
     data-string
-    class="absolute -bottom-20 left-0 h-16 w-full text-accent/50 transition-colors duration-300 group-hover:text-accent/80"
+    class="station-teaser__string absolute -bottom-20 left-0 h-16 w-full text-accent/50 transition-colors duration-300 group-hover:text-accent/80"
     aria-hidden="true"
   ></svg>
 </a>

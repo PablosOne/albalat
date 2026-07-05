@@ -6,7 +6,7 @@ const locale = 'en';
 const aboutStation = site.stations.find((station) => station.id === 'about');
 const title = `${site.fullName} - ${aboutStation?.heading.en ?? 'About'}`;
 const description = aboutStation?.tagline?.en ?? 'About Eulogio Albalat, classical guitarist.';
-const pageURL = new URL('/en/about', Astro.site);
+const pageURL = new URL('/en/about/', Astro.site);
 const imageURL = new URL(site.about.portrait.src, Astro.site);
 const email = site.socials.find((social) => social.href.startsWith('mailto:'))?.href.replace('mailto:', '');
 const sameAs = site.socials
@@ -34,6 +34,24 @@ const jsonLd = {
       image: imageURL.toString(),
       member: { '@id': `${pageURL}#person` },
       sameAs,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${pageURL}#breadcrumb`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: new URL('/en/', Astro.site).toString(),
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: aboutStation?.heading.en ?? 'About',
+          item: pageURL.toString(),
+        },
+      ],
     },
   ],
 };

@@ -9,7 +9,7 @@ interface Props {
   title: string;
   description: string;
   ogImage?: string;
-  jsonLd?: object;
+  jsonLd?: object | object[];
 }
 
 const { locale, title, description, ogImage, jsonLd } = Astro.props;

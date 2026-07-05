@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-labelledby="title desc">
+  <title id="title">TODO-ASSET placeholder album cover for Guitarra</title>
+  <desc id="desc">Temporary record sleeve artwork for Eulogio Albalat until the official cover is provided.</desc>
+  <defs>
+    <linearGradient id="sleeve" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#1f4f50"/>
+      <stop offset=".52" stop-color="#e2cfaa"/>
+      <stop offset="1" stop-color="#6c1f2c"/>
+    </linearGradient>
+    <pattern id="strings" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M0 80 80 0" stroke="#fff4dc" stroke-width="3" opacity=".2"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#sleeve)"/>
+  <rect width="1200" height="1200" fill="url(#strings)"/>
+  <path d="M294 190h612v820H294z" fill="#120f0d" opacity=".86"/>
+  <path d="M414 832c54-184 118-333 189-447 40 105 101 254 183 447" fill="none" stroke="#e2cfaa" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="600" cy="615" r="94" fill="none" stroke="#e2cfaa" stroke-width="18"/>
+  <path d="M378 384h444" stroke="#e2cfaa" stroke-width="10" stroke-linecap="round"/>
+  <text x="350" y="300" fill="#fff4dc" font-family="Georgia, serif" font-size="74">Guitarra</text>
+  <text x="350" y="930" fill="#fff4dc" font-family="Arial, sans-serif" font-size="36">Eulogio Albalat</text>
+  <text x="350" y="980" fill="#e2cfaa" font-family="Arial, sans-serif" font-size="28">TODO-ASSET temporary sleeve</text>
+</svg>

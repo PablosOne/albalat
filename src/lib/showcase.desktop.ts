@@ -64,9 +64,23 @@ export function initShowcaseDesktop(
   const transitionMultipliers = initialGeometry.transitionMultipliers;
 
   const pinDistance = () => window.innerHeight * buildGeometry(window.innerWidth).totalMultiplier;
+  const revealedPanels = new WeakSet<HTMLElement>();
+  const revealVisiblePanels = () => {
+    panelArr.forEach((panel) => {
+      if (panel.dataset.showcasePanelId === 'hero' || revealedPanels.has(panel)) return;
+      const rect = panel.getBoundingClientRect();
+      const visibleWidth = Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
+      if (visibleWidth < Math.min(rect.width, window.innerWidth) * 0.18) return;
+
+      revealedPanels.add(panel);
+      revealPanel(panel);
+      revealProblemCard(panel);
+    });
+  };
 
   const tween = gsap.timeline({
     defaults: { ease: 'none' },
+    onUpdate: revealVisiblePanels,
     scrollTrigger: {
       trigger: section,
       start: 'top top',
@@ -75,6 +89,8 @@ export function initShowcaseDesktop(
       scrub: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
+      onUpdate: revealVisiblePanels,
+      onRefresh: revealVisiblePanels,
     },
   });
 
@@ -107,6 +123,13 @@ export function initShowcaseDesktop(
     });
     panelTriggers.push(trigger);
   });
+
+  const revealSoon = () => requestAnimationFrame(revealVisiblePanels);
+  window.addEventListener('hashchange', revealSoon);
+  window.addEventListener('scroll', revealSoon, { passive: true });
+  window.addEventListener('resize', revealSoon);
+  document.addEventListener('click', revealSoon);
+  requestAnimationFrame(revealVisiblePanels);
 
   const aboutHeadline = document.querySelector<HTMLElement>('[data-about-headline]');
   const aboutIndex = Array.from(panels).findIndex(panel => panel.dataset.showcasePanelId === 'about');
@@ -193,5 +216,9 @@ export function initShowcaseDesktop(
     aboutHeadlineTween?.kill();
     parallaxTweens.forEach(t => { t.scrollTrigger?.kill(); t.kill(); });
     hudTrigger.kill();
+    window.removeEventListener('hashchange', revealSoon);
+    window.removeEventListener('scroll', revealSoon);
+    window.removeEventListener('resize', revealSoon);
+    document.removeEventListener('click', revealSoon);
   };
 }
