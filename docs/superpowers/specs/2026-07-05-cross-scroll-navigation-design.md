@@ -131,6 +131,58 @@ Add a short permanent note to `CLAUDE.md`:
 > the down-arrows or nav/HUD, exited via up-arrow / scroll-to-top / Esc. Never
 > let wheel-down scroll the main lane vertically.
 
+## Signature motion layer (creative)
+
+Three linked motion ideas give the navigation a guitar-forward, "very visual and
+smooth" feel (gfdu-inspired), reusing machinery already in the repo.
+
+### 1. The vibrating string threshold (the divider that plucks)
+
+`src/lib/string.ts` already renders a guitar-string SVG that vibrates from
+scroll velocity + hover. Promote it from a teaser decoration into a
+**navigation affordance**: `LaneArrow` (down variant) sits on a horizontal
+guitar-string line spanning the bottom of each station that has a detail — the
+threshold you cross to descend.
+
+Behaviors:
+- **Pluck on interaction:** hovering/touching the arrow or the string plucks it
+  (a damped `twang`).
+- **Pluck on lane enter/exit:** crossing the threshold triggers a stronger
+  pluck — a tactile "you crossed a string" cue tied to the slide transition.
+- **Idle liveliness:** amplitude tracks main-lane scroll velocity (already in
+  `string.ts`), so faster horizontal panning = livelier strings.
+- A subtler string variant may also underline the `Nav`/`HUD`, plucking when a
+  nav entry is activated.
+
+Single-sourced: generalize `string.ts` into a small API
+(`attachString(svg, opts)` / `pluck(strength)`), used by `LaneArrow`, `Station`,
+`Nav`/`HUD`. Progressive enhancement; static line if JS/reduced-motion.
+
+### 2. Direction- & velocity-aware parallax (dialed up)
+
+Extend the existing `data-parallax-x` scrub system rather than replace it:
+- **Bolder layer separation:** station eyebrows/numbers, headings, and the
+  station "artifact" visuals get larger, intentional multipliers so foreground
+  and background clearly separate as you pan. Reversing scroll direction
+  reverses drift (inherent to scrub — this is the "based on direction" feel).
+- **Velocity lead/lag:** elements lean slightly in the direction of travel
+  (translate/skew proportional to `lenis.velocity` sign) and settle when scroll
+  stops — the smooth gfdu momentum feel. Capped, `prefers-reduced-motion` off.
+- **Vertical parallax in detail lanes:** the same idea on the Y axis via a
+  `data-parallax-y` scrub inside `DetailLane`, so descending into a detail has
+  the same layered motion as panning the main lane.
+
+### 3. Expressive, panel-relative type
+
+Adopt gfdu's container-query display type: station headings and detail-lane
+titles use `clamp(min, N cqw, max)` inside a `container-type: inline-size`
+wrapper, so type is large and scales with the panel/lane width rather than the
+raw viewport. Hero and detail titles take the biggest sizes; font size becomes
+part of the spatial hierarchy and rhythm, not a fixed value. Pairs with the
+`data-reveal` fade-up already wired in `showcase.desktop.ts`.
+
+All three respect `prefers-reduced-motion` and degrade to static.
+
 ## Accessibility
 
 - `LaneArrow` is a real `<button>`/`<a>` with an accessible label
@@ -168,6 +220,12 @@ Add a short permanent note to `CLAUDE.md`:
   `<Stage initialDetail=...>` + their JSON-LD, instead of `<Detail>` + content.
 - `Stage.astro`, `Nav.astro`, `HUD.astro` updated for the lane model.
 - `anchorScroll.ts` extended/superseded by `lanes.ts`.
+- `string.ts` generalized to a reusable `attachString`/`pluck` API and wired
+  into `LaneArrow` (threshold) + `Nav`/`HUD`.
+- `showcase.desktop.ts` parallax extended: bolder multipliers, velocity lead/lag,
+  and a `data-parallax-y` variant for `DetailLane`.
+- Display type migrated to container-query `clamp(min, N cqw, max)` on station
+  headings and detail titles.
 - `CLAUDE.md` gains the documented rule.
 
 ## Risks
