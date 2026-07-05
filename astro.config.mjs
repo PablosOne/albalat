@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://albalat.pages.dev', // TODO: swap to final domain
+  site: 'https://eulogioalbalat.com',
   output: 'static',
   build: { inlineStylesheets: 'always' },
   i18n: {

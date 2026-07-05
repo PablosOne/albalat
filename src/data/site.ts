@@ -1,6 +1,6 @@
 /**
  * Core content model for the site: the guitarist's identity, socials, and
- * the seven "stations" that populate the horizontal stage on Home.
+ * the stations that populate the horizontal stage on Home.
  *
  * Pure data - no components, no styling. See docs/superpowers/plans/
  * 2026-07-04-albalat-website.md (Task 1.1) for the originating spec.
@@ -50,8 +50,7 @@ export const site = {
   } satisfies Bilingual,
 
   socials: [
-    // TODO-CONTENT: replace with Eulogio's real contact email/socials once provided.
-    { label: 'Email', href: 'mailto:contacto@example.com' },
+    { label: 'Email', href: 'mailto:hello@eulogioalbalat.com' },
     { label: 'YouTube', href: 'https://www.youtube.com/c/EulogioAlbalat' },
     { label: 'Spotify', href: 'https://open.spotify.com/artist/2WrurcoEYPTTdAqWX2ulpe' },
   ],
@@ -164,27 +163,14 @@ export const site = {
       id: 'classes',
       kind: 'teaser',
       heading: {
-        es: 'Clases',
-        en: 'Classes',
+        es: 'Clases y conciertos',
+        en: 'Classes & Concerts',
       },
       tagline: {
-        es: 'Clases privadas para todos los niveles, a medida de cada alumno.',
-        en: 'Private classes for every level, tailored to each student.',
+        es: 'Clases privadas, conciertos y contacto directo en una sola consulta.',
+        en: 'Private classes, concert bookings, and direct contact in one place.',
       },
       href: '/classes',
-    },
-    {
-      id: 'contact',
-      kind: 'teaser',
-      heading: {
-        es: 'Contacto',
-        en: 'Contact',
-      },
-      tagline: {
-        es: 'Para conciertos, clases o cualquier consulta, será un placer atenderle.',
-        en: 'For concerts, classes, or any inquiry, it would be a pleasure to hear from you.',
-      },
-      href: '/contact',
     },
   ] satisfies Station[],
 };

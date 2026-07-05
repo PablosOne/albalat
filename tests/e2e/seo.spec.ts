@@ -15,8 +15,6 @@ const routes = [
   { path: '/en/guitar', canonical: '/en/guitar/', es: '/guitar/', en: '/en/guitar/' },
   { path: '/classes', canonical: '/classes/', es: '/classes/', en: '/en/classes/' },
   { path: '/en/classes', canonical: '/en/classes/', es: '/classes/', en: '/en/classes/' },
-  { path: '/contact', canonical: '/contact/', es: '/contact/', en: '/en/contact/' },
-  { path: '/en/contact', canonical: '/en/contact/', es: '/contact/', en: '/en/contact/' },
 ];
 
 for (const route of routes) {

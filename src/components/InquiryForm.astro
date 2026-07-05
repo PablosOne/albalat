@@ -8,7 +8,7 @@ interface Props {
 
 const { locale, intent } = Astro.props;
 const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY;
-const email = 'contacto@example.com';
+const email = 'hello@eulogioalbalat.com';
 const copy = {
   es: {
     name: 'Nombre',
@@ -52,36 +52,36 @@ const subject = copy[intent];
 const showInquiryType = intent === 'class';
 ---
 <form
-  class="grid gap-5 border border-ink/10 bg-ink/[0.03] p-5 md:p-6"
+  class="inquiry-form flex flex-col gap-5"
   action="https://api.web3forms.com/submit"
   method="POST"
+  novalidate
   data-inquiry-form
   data-success={copy.success}
   data-error={copy.error}
   data-required={copy.required}
 >
-  {accessKey && <input type="hidden" name="access_key" value={accessKey} />}
+  <input type="hidden" name="access_key" value={accessKey ?? ''} />
   <input type="hidden" name="subject" value={`${subject} - Eulogio Albalat`} />
   {!showInquiryType && <input type="hidden" name="inquiry_type" value={copy[`${intent}Option` as 'concertOption' | 'contactOption']} />}
-  <input type="checkbox" name="botcheck" class="hidden" tabindex="-1" autocomplete="off" />
+  <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off" />
 
-  <label class="grid gap-2 text-sm font-medium text-ink-muted">
-    {copy.name}
+  <label class="inquiry-field">
+    <span>{copy.name}</span>
     <input
       required
       name="name"
       autocomplete="name"
-      class="min-h-12 border border-ink/15 bg-stage px-4 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
+      placeholder={locale === 'es' ? 'Tu nombre' : 'Your name'}
     />
   </label>
 
   {showInquiryType && (
-    <label class="grid gap-2 text-sm font-medium text-ink-muted">
-      {copy.inquiryType}
+    <label class="inquiry-field">
+      <span>{copy.inquiryType}</span>
       <select
         required
         name="inquiry_type"
-        class="min-h-12 border border-ink/15 bg-stage px-4 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
       >
         <option value={copy.classOption}>{copy.classOption}</option>
         <option value={copy.concertOption}>{copy.concertOption}</option>
@@ -89,46 +89,50 @@ const showInquiryType = intent === 'class';
     </label>
   )}
 
-  <label class="grid gap-2 text-sm font-medium text-ink-muted">
-    {copy.email}
+  <label class="inquiry-field">
+    <span>{copy.email}</span>
     <input
       required
       type="email"
       name="email"
       autocomplete="email"
-      class="min-h-12 border border-ink/15 bg-stage px-4 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
+      placeholder="you@example.com"
     />
   </label>
 
-  <label class="grid gap-2 text-sm font-medium text-ink-muted">
-    {copy.message}
+  <label class="inquiry-field">
+    <span>{copy.message}</span>
     <textarea
       required
       name="message"
-      rows="6"
-      class="min-h-36 resize-y border border-ink/15 bg-stage px-4 py-3 text-base text-ink outline-none transition-colors duration-200 focus:border-accent"
+      rows="4"
+      placeholder={locale === 'es' ? 'Cuéntame brevemente el contexto.' : 'Briefly describe the context.'}
     ></textarea>
   </label>
 
-  <div class="flex flex-wrap items-center gap-4">
+  <div class="flex flex-wrap items-center gap-6 pt-2">
     <button
       type="submit"
-      class="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-stage transition-colors duration-200 hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+      class="border border-ink px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink transition-colors duration-200 hover:bg-ink hover:text-stage focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40"
       disabled={!accessKey}
       data-submit-label={copy.submit}
       data-sending-label={copy.sending}
     >
-      {copy.submit}
+      {copy.submit} ->
     </button>
     <a class="text-sm font-medium text-ink-muted underline-offset-4 hover:text-accent hover:underline" href={`mailto:${email}`}>
       {email}
     </a>
+    <p class="min-h-6 text-sm text-ink-muted" data-form-status role="alert">
+      {!accessKey ? copy.unavailable : ''}
+    </p>
   </div>
-
-  <p class="min-h-6 text-sm text-ink-muted" data-form-status aria-live="polite">
-    {!accessKey ? copy.unavailable : ''}
-  </p>
 </form>
+
+<div class="inquiry-success hidden" data-form-success role="status">
+  <p>{locale === 'es' ? 'Mensaje enviado.' : 'Message sent.'}</p>
+  <span>{copy.success}</span>
+</div>
 
 <script is:inline>
   document.querySelectorAll('[data-inquiry-form]').forEach((form) => {
@@ -140,6 +144,7 @@ const showInquiryType = intent === 'class';
 
       const status = formEl.querySelector('[data-form-status]');
       const button = formEl.querySelector('button[type="submit"]');
+      const success = formEl.nextElementSibling;
       if (!(button instanceof HTMLButtonElement)) return;
 
       if (!formEl.checkValidity()) {
@@ -161,8 +166,13 @@ const showInquiryType = intent === 'class';
 
         if (!response.ok) throw new Error('Form submission failed');
 
-        formEl.reset();
-        if (status) status.textContent = formEl.dataset.success || '';
+        const json = await response.json().catch(() => ({ success: true }));
+        if (json && json.success === false) throw new Error('Form submission failed');
+
+        formEl.classList.add('hidden');
+        if (success instanceof HTMLElement && success.matches('[data-form-success]')) {
+          success.classList.remove('hidden');
+        }
       } catch {
         if (status) status.textContent = formEl.dataset.error || '';
       } finally {
@@ -172,3 +182,67 @@ const showInquiryType = intent === 'class';
     });
   });
 </script>
+
+<style>
+  .inquiry-field {
+    display: grid;
+    gap: 0.45rem;
+    color: var(--ink-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .inquiry-field input,
+  .inquiry-field select,
+  .inquiry-field textarea {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.08rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.5;
+    outline: none;
+    padding: 0.45rem 0 0.7rem;
+    text-transform: none;
+    transition: border-color 180ms ease;
+  }
+
+  .inquiry-field textarea {
+    resize: vertical;
+  }
+
+  .inquiry-field input::placeholder,
+  .inquiry-field textarea::placeholder {
+    color: color-mix(in srgb, var(--ink-muted) 42%, transparent);
+  }
+
+  .inquiry-field input:focus,
+  .inquiry-field select:focus,
+  .inquiry-field textarea:focus {
+    border-color: var(--ink);
+  }
+
+  .inquiry-success p {
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: clamp(3.2rem, 8vw, 6.8rem);
+    font-weight: 300;
+    letter-spacing: 0;
+    line-height: 0.95;
+  }
+
+  .inquiry-success span {
+    display: block;
+    margin-top: 1.4rem;
+    max-width: 26rem;
+    color: var(--ink-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+</style>

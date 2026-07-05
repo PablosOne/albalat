@@ -15,14 +15,13 @@ const { station, locale } = Astro.props;
 const href = locale === 'en' && station.href
   ? (station.href === '/' ? '/en/' : `/en${station.href}`)
   : station.href;
-const stationNumber = ['about', 'music', 'videos', 'guitar', 'classes', 'contact'].indexOf(station.id) + 1;
+const stationNumber = ['about', 'music', 'videos', 'guitar', 'classes'].indexOf(station.id) + 1;
 const artifactLabel = {
   about: 'score',
   music: 'wave',
   videos: 'frame',
   guitar: 'rosette',
-  classes: 'fretboard',
-  contact: 'signal',
+  classes: 'signal',
 }[station.id] ?? 'score';
 const cta = locale === 'en' ? 'Explore' : 'Explorar';
 ---

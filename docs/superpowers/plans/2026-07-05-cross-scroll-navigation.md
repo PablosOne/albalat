@@ -28,14 +28,13 @@
 - `src/components/Station.astro` — unified main-lane panel (hero + standard), emits down-`LaneArrow` when the station has a detail.
 - `src/components/DetailLane.astro` — detail chrome: vertical scroll container, up-`LaneArrow` return header, title, content `<slot />`.
 - `src/components/content/GuitarNotes.astro` — guitar-notes grid (extracted from `guitar.astro`).
-- `src/components/content/ClassesContent.astro` — classes copy + `InquiryForm intent="class"` (extracted from `classes.astro`).
-- `src/components/content/ContactContent.astro` — contact socials + `InquiryForm intent="contact"` (extracted from `contact.astro`).
+- `src/components/content/ClassesContent.astro` — classes + concerts + contact copy, socials, and `InquiryForm intent="class"` (extracted from the current `classes.astro`, which already merges classes/concerts/contact — a separate "contact" station no longer exists in `site.ts`; see the AMENDMENT note below).
 - `tests/unit/lanes.test.ts` — unit tests for lane helpers.
 - `tests/e2e/lanes.spec.ts` — e2e for cross-scroll navigation.
 - `CLAUDE.md` — project instructions incl. the navigation invariant.
 
 **Modified files**
-- `src/data/site.ts` — add `detail?: boolean` to `Station`; set it on music/videos/guitar/classes/contact.
+- `src/data/site.ts` — add `detail?: boolean` to `Station`; set it on music/videos/guitar/classes.
 - `src/components/Stage.astro` — render `Station` + optional `DetailLane`; accept `initialDetail`.
 - `src/components/Nav.astro`, `src/components/HUD.astro` — link to `#id` on home for all stations (lanes open via engine).
 - `src/lib/config.ts` — parallax-y scale, lane transition tokens.
@@ -43,11 +42,13 @@
 - `src/lib/showcase.desktop.ts` — bolder parallax multipliers + velocity lead/lag + `data-parallax-y`.
 - `src/styles/global.css` — container-query display type, lane styles, string threshold, `data-parallax-y` pre-hide.
 - `src/layouts/Base.astro` — swap `initAnchorScroll` → `initLanes`.
-- `src/pages/{about,music,videos,guitar,classes,contact}.astro` and `src/pages/en/*` — thin `<Stage initialDetail>` wrappers.
+- `src/pages/{about,music,videos,guitar,classes}.astro` and `src/pages/en/*` — thin `<Stage initialDetail>` wrappers.
 - `tests/e2e/{stage,music,videos}.spec.ts` — update to the lane model.
 
 **Removed files (after migration)**
 - `src/components/StationHero.astro`, `src/components/StationTeaser.astro` (merged into `Station.astro`).
+
+**AMENDMENT (post-Task-2.1):** while this plan was being executed, a separate concurrent session merged the standalone "Contact" station into "Classes" — `src/data/site.ts` no longer has a `contact` station (heading now "Clases y conciertos" / "Classes & Concerts"), `src/pages/contact.astro` and `src/pages/en/contact.astro` were deleted, and `src/pages/classes.astro` was redesigned to embed the contact form, email, and socials directly. The user confirmed (2026-07-05) this merge is intentional and final. Every task below referencing a separate `contact` station, `ContactContent.astro`, or `/contact` route has been updated in place to reflect **five stations total post-hero** (about, music, videos, guitar, classes) and **four detail lanes** (music, videos, guitar, classes — `classes`'s lane now includes what would have been the contact content). Do not recreate a `contact` station, route, or component.
 
 ---
 
@@ -501,31 +502,32 @@ git commit -m "feat: reusable clickable LaneArrow triple-chevron"
 
 Move the inline detail bodies out of the route pages so they can be rendered inside both a `DetailLane` and (later) a thin route. Music and Videos already have `AlbumStoryPlayer` / `VideoGallery` — no extraction needed for those.
 
+**AMENDMENT:** `src/pages/contact.astro` / `en/contact.astro` no longer exist and `site.ts` no longer has a `contact` station (merged into `classes` by a concurrent session, confirmed intentional by the user). Do NOT create `ContactContent.astro`. `ClassesContent.astro` extracts from the CURRENT `src/pages/classes.astro`, which already contains the merged classes+concerts+contact copy, email, socials, and `InquiryForm`.
+
 **Files:**
 - Create: `src/components/content/GuitarNotes.astro` (move the `<section>…guitarNotes.map…` body from `src/pages/guitar.astro`, both locales' copy handled via `locale` prop and the bilingual `guitar-notes` data)
-- Create: `src/components/content/ClassesContent.astro` (move the classes copy + `<InquiryForm locale={locale} intent="class" />` body from `src/pages/classes.astro`)
-- Create: `src/components/content/ContactContent.astro` (move the socials list + `<InquiryForm locale={locale} intent="contact" />` body from `src/pages/contact.astro`)
+- Create: `src/components/content/ClassesContent.astro` (move the full body — heading, email link, class/concert cards, socials list, and `<InquiryForm locale={locale} intent="class" />` — from the CURRENT `src/pages/classes.astro`)
 
 **Interfaces:**
-- Produces: `GuitarNotes({ locale })`, `ClassesContent({ locale })`, `ContactContent({ locale })` — each takes only `locale: Locale`, reads its data from `src/data/*` / `site`.
+- Produces: `GuitarNotes({ locale })`, `ClassesContent({ locale })` — each takes only `locale: Locale`, reads its data from `src/data/*` / `site`.
 
 - [ ] **Step 1: Create `GuitarNotes.astro`**
 
 Frontmatter: `import { guitarNotes } from '@/data/guitar-notes'; import type { Locale } from '@/i18n'; interface Props { locale: Locale } const { locale } = Astro.props;`. Body: the exact grid currently in `guitar.astro`, but replace every `.es` access with `[locale]` and pull `kindLabels` from a bilingual literal keyed by locale. Wrap headings/eyebrows with `data-reveal` so lane reveal choreography applies.
 
-- [ ] **Step 2: Create `ClassesContent.astro` and `ContactContent.astro`**
+- [ ] **Step 2: Create `ClassesContent.astro`**
 
-Same pattern: copy the current body markup from `classes.astro` / `contact.astro`, parameterize hard-coded Spanish strings by `locale` (add an `en` counterpart to each — the English pages `src/pages/en/classes.astro` / `en/contact.astro` already contain the English copy; use those strings). Keep `<InquiryForm locale={locale} intent="class"|"contact" />` intact.
+Read the CURRENT `src/pages/classes.astro` and `src/pages/en/classes.astro` first (both have been redesigned by a concurrent session to merge in contact content — read them fresh, don't rely on any earlier description). Copy the current body markup, parameterize hard-coded strings by `locale` (use `src/pages/en/classes.astro`'s copy for the `en` branch). Keep `<InquiryForm locale={locale} intent="class" />` intact, and keep the email/socials rendering that reads from `site.socials`. Preserve the component's own `<style>` block (the `.contact-email`/`.contact-heading` clamp rules) if present.
 
-- [ ] **Step 3: Verify each renders standalone**
+- [ ] **Step 3: Verify it renders standalone**
 
-Temporarily import each into its existing route page in place of the inline body, `pnpm dev`, confirm `/guitar`, `/classes`, `/contact` (and `/en/…`) look identical to before.
+Temporarily import it into `src/pages/guitar.astro`... no — into `src/pages/classes.astro` in place of the inline body (and `GuitarNotes` into `guitar.astro`), `pnpm dev`, confirm `/guitar` and `/classes` (and `/en/…`) look identical to before. Then revert those two route files back to their current (pre-your-edit) state — this task only creates the two new content components, it does not modify the route pages (that happens in Task 7.1).
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add src/components/content/
-git commit -m "refactor: extract guitar/classes/contact bodies into content components"
+git commit -m "refactor: extract guitar/classes content into components"
 ```
 
 ### Task 3.2: `DetailLane.astro`
@@ -609,8 +611,10 @@ git commit -m "feat: DetailLane chrome + vertical scroll container"
 **Files:**
 - Modify: `src/data/site.ts:26-34` (interface), `src/data/site.ts:124-188` (stations)
 
+**AMENDMENT:** `site.ts` no longer has a `contact` station (merged into `classes` by a concurrent session, confirmed final). Read the CURRENT `src/data/site.ts` first — the exact station id list may differ from the description below; go by what's actually in the file.
+
 **Interfaces:**
-- Produces: `Station.detail?: boolean`; `true` on `music`, `videos`, `guitar`, `classes`, `contact`; absent on `hero`, `about`.
+- Produces: `Station.detail?: boolean`; `true` on `music`, `videos`, `guitar`, `classes`; absent on `hero`, `about`.
 
 - [ ] **Step 1: Extend the interface**
 
@@ -618,7 +622,7 @@ In the `Station` interface add: `detail?: boolean; // true → this station open
 
 - [ ] **Step 2: Set the flag**
 
-Add `detail: true,` to the `music`, `videos`, `guitar`, `classes`, and `contact` station literals. Leave `hero` and `about` without it.
+Add `detail: true,` to the `music`, `videos`, `guitar`, and `classes` station literals. Leave `hero` and `about` without it.
 
 - [ ] **Step 3: Verify types**
 
@@ -635,6 +639,8 @@ git commit -m "feat: mark stations that have a detail lane"
 ### Task 4.2: `Station.astro` (merge hero + teaser)
 
 One main-lane panel. `station.kind === 'hero'` renders the hero display; otherwise a richer standard panel (number, heading, tagline, artifact, string) that — when `station.detail` — shows a down-`LaneArrow` threshold instead of the old "Explore" link-out.
+
+**AMENDMENT:** `contact` is no longer a station id (merged into `classes`). The code below already reflects this (`order` array and `artifact` map have 5 entries, not 6) — read the CURRENT `src/data/site.ts` to confirm the exact station id list before implementing, in case it has changed further.
 
 **Files:**
 - Create: `src/components/Station.astro`
@@ -656,9 +662,9 @@ import LaneArrow from '@/components/LaneArrow.astro';
 interface Props { station: Station; locale: Locale; }
 const { station, locale } = Astro.props;
 const isHero = station.kind === 'hero';
-const order = ['about', 'music', 'videos', 'guitar', 'classes', 'contact'];
+const order = ['about', 'music', 'videos', 'guitar', 'classes'];
 const num = order.indexOf(station.id) + 1;
-const artifact = { about:'score', music:'wave', videos:'frame', guitar:'rosette', classes:'fretboard', contact:'signal' }[station.id] ?? 'score';
+const artifact = { about:'score', music:'wave', videos:'frame', guitar:'rosette', classes:'fretboard' }[station.id] ?? 'score';
 const openLabel = locale === 'en' ? `Open ${station.heading.en} details` : `Abrir ${station.heading.es}`;
 ---
 {isHero ? (
@@ -977,6 +983,8 @@ git commit -m "feat: lane engine (open/close, keyboard, deep-link) replacing anc
 
 ### Task 6.1: Render Station + optional DetailLane; accept `initialDetail`
 
+**AMENDMENT:** no `contact` station/lane exists (merged into `classes`). The code below already reflects this.
+
 **Files:**
 - Modify: `src/components/Stage.astro`
 - Reference: content components (Task 3.1), `AlbumStoryPlayer`, `VideoGallery`, `DetailLane`, `Station`.
@@ -996,7 +1004,6 @@ import AlbumStoryPlayer from './AlbumStoryPlayer.astro';
 import VideoGallery from './VideoGallery.astro';
 import GuitarNotes from './content/GuitarNotes.astro';
 import ClassesContent from './content/ClassesContent.astro';
-import ContactContent from './content/ContactContent.astro';
 import { discography } from '@/data/discography';
 import { videos } from '@/data/videos';
 
@@ -1015,7 +1022,6 @@ Inside the `stations.map(...)` return, replace the `{isHero ? <StationHero…/> 
       {s.id === 'videos'  && <VideoGallery videos={videos} locale={locale} />}
       {s.id === 'guitar'  && <GuitarNotes locale={locale} />}
       {s.id === 'classes' && <ClassesContent locale={locale} />}
-      {s.id === 'contact' && <ContactContent locale={locale} />}
     </DetailLane>
   ))}
 ```
@@ -1031,7 +1037,7 @@ At the top of the `Stage.astro` template (before `<section>`), add:
 - [ ] **Step 4: Verify home + a deep link**
 
 Run `pnpm dev`.
-- `/` — stations pan horizontally on wheel (both directions); About shows no down-arrow; Music/Videos/Guitar/Classes/Contact each show a down-arrow with a string; clicking one slides its lane up; the up-arrow / `Esc` / scroll-to-top returns to the same horizontal position.
+- `/` — stations pan horizontally on wheel (both directions); About shows no down-arrow; Music/Videos/Guitar/Classes each show a down-arrow with a string; clicking one slides its lane up; the up-arrow / `Esc` / scroll-to-top returns to the same horizontal position.
 - `/#music` — loads home with the Music lane already open.
 
 - [ ] **Step 5: Commit**
@@ -1074,9 +1080,11 @@ git commit -m "refactor: remove StationHero/StationTeaser (merged into Station)"
 
 Each route renders the full home stage with its lane pre-opened, keeping its existing SEO/JSON-LD. `about` (no lane) simply scrolls to the About station.
 
+**AMENDMENT:** `src/pages/contact.astro` and `src/pages/en/contact.astro` no longer exist (deleted by a concurrent session; contact is merged into `classes`) — do NOT recreate them. There are five routes to rewrite per locale, not six.
+
 **Files:**
-- Modify: `src/pages/{about,music,videos,guitar,classes,contact}.astro`
-- Modify: `src/pages/en/{about,music,videos,guitar,classes,contact}.astro`
+- Modify: `src/pages/{about,music,videos,guitar,classes}.astro`
+- Modify: `src/pages/en/{about,music,videos,guitar,classes}.astro`
 
 **Interfaces:**
 - Consumes: `Stage({ locale, initialDetail })`, `Nav`, `Base`.
@@ -1102,17 +1110,17 @@ import { laneSwitch } from '@/lib/transitions';
 </Base>
 ```
 
-- [ ] **Step 2: Apply the same shape to the other five es routes**
+- [ ] **Step 2: Apply the same shape to the other four es routes**
 
-For each, keep its existing `title`/`description`/`jsonLd`, render `<Stage locale="es" initialDetail="<id>" />`. For `about.astro` use `initialDetail={null}` (or omit) — About has no lane; it just deep-links to the station. Ids: `videos`, `guitar`, `classes`, `contact`.
+For each, keep its existing `title`/`description`/`jsonLd`, render `<Stage locale="es" initialDetail="<id>" />`. For `about.astro` use `initialDetail={null}` (or omit) — About has no lane; it just deep-links to the station. Ids: `videos`, `guitar`, `classes`.
 
-- [ ] **Step 3: Apply to all six `en` routes**
+- [ ] **Step 3: Apply to all five `en` routes**
 
 Same, with `locale="en"` and `<Nav locale="en" />`. Keep each `en` page's existing English `title`/`description`/`jsonLd`.
 
 - [ ] **Step 4: Verify routes**
 
-Run `pnpm dev`. Visit `/music`, `/videos`, `/guitar`, `/classes`, `/contact` and `/en/music` … — each loads the stage with the right lane open; `/about`, `/en/about` scroll to the About station with no lane. View source: per-route JSON-LD present.
+Run `pnpm dev`. Visit `/music`, `/videos`, `/guitar`, `/classes` and `/en/music` … — each loads the stage with the right lane open; `/about`, `/en/about` scroll to the About station with no lane. View source: per-route JSON-LD present.
 
 - [ ] **Step 5: Commit**
 
@@ -1356,7 +1364,7 @@ test('About station has no detail lane and stays on home', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#about"]').click();
   await expect(page.locator('[data-showcase-panel-id="about"]')).toBeInViewport();
-  await expect(page.locator('[data-detail-lane]')).toHaveCount(5); // music,videos,guitar,classes,contact
+  await expect(page.locator('[data-detail-lane]')).toHaveCount(4); // music,videos,guitar,classes
 });
 ```
 
@@ -1373,6 +1381,8 @@ git commit -m "test: e2e cross-scroll lane navigation"
 ```
 
 ### Task 10.2: Reconcile `music.spec.ts` / `videos.spec.ts` / `seo.spec.ts`
+
+**AMENDMENT:** `seo.spec.ts` may already have been updated by a concurrent session for the classes/contact merge (contact route removed from data model). Read the CURRENT `seo.spec.ts` before editing — if it's already been updated/committed for the merge, only adapt its assertions to the lane model (Step 2 below) without reintroducing any `/contact` route expectations.
 
 **Files:**
 - Modify: `tests/e2e/music.spec.ts`, `tests/e2e/videos.spec.ts`, `tests/e2e/seo.spec.ts`
@@ -1428,7 +1438,7 @@ git commit -m "polish: cross-scroll navigation tuning from verification sweep"
 
 - Spec §"Interaction model" → Tasks 2.1, 5.1, 5.2, 6.1 (arrows/nav enter, wheel horizontal, Esc/ArrowUp/scroll-top exit).
 - Spec §"Component architecture" → Station 4.2, DetailLane 3.2, LaneArrow 2.1, lanes.ts 5.x; old components removed 6.2.
-- Spec §"Data model" (`detail?`) → 4.1; about has no lane → 4.1, verified 10.1.
+- Spec §"Data model" (`detail?`) → 4.1; about has no lane → 4.1, verified 10.1. AMENDMENT: contact merged into classes by a concurrent session (user-confirmed final) — 4 detail lanes (music/videos/guitar/classes), not 5; no standalone contact station/route/component anywhere in this plan as of Task 3.1 onward.
 - Spec §"Routes / SEO" (deep-links + JSON-LD) → 7.1, 7.2, 10.2.
 - Spec §"Mobile" (single vertical stack) → CSS in 3.2 + engine `isDesktopMotion` guards in 5.2; verified 10.3.
 - Spec §"Signature motion" — string threshold 1.1/1.2/2.1; direction/velocity parallax 9.1; parallax-y 9.2; cqw type 9.3.
