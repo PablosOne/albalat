@@ -1,0 +1,65 @@
+---
+interface Props {
+  direction: 'down' | 'up';
+  targetId?: string;   // required for direction="down"
+  label: string;       // accessible label, already localized
+  withString?: boolean; // render the vibrating threshold line (down only)
+}
+const { direction, targetId, label, withString = false } = Astro.props;
+const isDown = direction === 'down';
+const chevron = `M8,20 L28,20 M28,20 L20,12 M28,20 L20,28`; // right-pointing base; rotated via CSS
+---
+{isDown ? (
+  <a
+    class="lane-arrow lane-arrow--down group"
+    href={`#${targetId}`}
+    data-lane-open={targetId}
+    aria-label={label}
+  >
+    {withString && (
+      <svg class="lane-arrow__string text-accent/60" data-string aria-hidden="true"></svg>
+    )}
+    <span class="lane-arrow__chevrons" aria-hidden="true">
+      {[1, 2, 3].map((n) => (
+        <svg class={`arrow arrow--${n}`} viewBox="0 0 36 40" preserveAspectRatio="xMidYMid meet">
+          <path d={chevron} fill="none" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      ))}
+    </span>
+  </a>
+) : (
+  <button type="button" class="lane-arrow lane-arrow--up group" data-lane-close aria-label={label}>
+    <span class="lane-arrow__chevrons" aria-hidden="true">
+      {[1, 2, 3].map((n) => (
+        <svg class={`arrow arrow--${n}`} viewBox="0 0 36 40" preserveAspectRatio="xMidYMid meet">
+          <path d={chevron} fill="none" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+        </svg>
+      ))}
+    </span>
+  </button>
+)}
+
+<style>
+  .lane-arrow {
+    display: inline-flex; flex-direction: column; align-items: center;
+    gap: 0.5rem; color: var(--color-accent); background: none; border: none;
+    cursor: pointer; padding: 0.5rem; text-decoration: none;
+  }
+  .lane-arrow:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: 8px; }
+  .lane-arrow__string { width: clamp(120px, 22vw, 320px); height: 1.5rem; }
+  .lane-arrow__chevrons { position: relative; display: inline-flex; flex-direction: column; }
+  /* Base SVG chevron points right; rotate to point down / up. */
+  .lane-arrow--down .arrow { transform: rotate(90deg); }
+  .lane-arrow--up .arrow { transform: rotate(-90deg); }
+  .lane-arrow .arrow { width: 2rem; height: 2rem; margin-block: -0.55rem; opacity: 0.35; }
+  .lane-arrow .arrow--1 { animation: laneArrowPulse 1.8s ease-in-out infinite; }
+  .lane-arrow .arrow--2 { animation: laneArrowPulse 1.8s ease-in-out 0.18s infinite; }
+  .lane-arrow .arrow--3 { animation: laneArrowPulse 1.8s ease-in-out 0.36s infinite; }
+  .lane-arrow:hover .arrow { opacity: 0.9; }
+  @keyframes laneArrowPulse { 0%,100% { opacity: 0.25; } 50% { opacity: 0.9; } }
+  @media (prefers-reduced-motion: reduce) {
+    .lane-arrow .arrow { animation: none; opacity: 0.7; }
+  }
+</style>
