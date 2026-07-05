@@ -180,6 +180,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
     if (isDesktopMotion()) {
       const { gsap } = await import('gsap');
+      gsap.killTweensOf(lane);
       gsap.fromTo(lane, { yPercent: 100, autoAlpha: 1 },
         { yPercent: 0, duration: LANE_TRANSITION_S, ease: 'power3.out' });
     }
@@ -202,6 +203,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     };
     if (lane && isDesktopMotion()) {
       const { gsap } = await import('gsap');
+      gsap.killTweensOf(lane);
       // Await the tween's own completion (not just its kickoff) so callers that
       // `await closeLane()` before opening a different lane (see openLane above)
       // see state.openId cleared before they proceed — otherwise finish() would
