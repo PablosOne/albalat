@@ -36,7 +36,19 @@
   --accent: #C6923E;
   --font-display: "Display", Georgia, serif;
   --font-sans: "Sans", system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
 }
+
+/* Display type scale — container-query relative sizing for responsive headings
+   that scale with their container's inline width, not the raw viewport. Each rule
+   lives inside a `container-type: inline-size` wrapper to isolate scaling per panel.
+
+   station-hero__title:  clamp(3.5rem, 12vw, 9rem)       — home hero title
+   station__heading:     clamp(2.5rem, 9vw, 6.5rem)      — station headings (in .station__copy)
+   detail-lane__title:   clamp(2.5rem, 8cqw, 6rem)       — detail lane titles (in .detail-lane__title)
+
+   Use container-query widths (cqw) for true isolation; vw units are viewport-based
+   and work in single-column layouts. Both are responsive without overflow. */
 
 @theme {
   --color-stage: var(--stage);
