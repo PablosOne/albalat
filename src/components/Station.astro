@@ -9,7 +9,7 @@ const { station, locale } = Astro.props;
 const isHero = station.kind === 'hero';
 const order = ['about', 'music', 'videos', 'guitar', 'classes'];
 const num = order.indexOf(station.id) + 1;
-const artifact = { about:'score', music:'wave', videos:'frame', guitar:'rosette', classes:'fretboard' }[station.id] ?? 'score';
+const artifact = { about:'score', music:'wave', videos:'frame', guitar:'rosette', classes:'signal' }[station.id] ?? 'score';
 const openLabel = locale === 'en' ? `Open ${station.heading.en} details` : `Abrir ${station.heading.es}`;
 ---
 {isHero ? (
@@ -46,7 +46,7 @@ const openLabel = locale === 'en' ? `Open ${station.heading.en} details` : `Abri
 <style>
   .station-hero__title { font-size: clamp(3.5rem, 12vw, 9rem); }
   .station__heading { font-size: clamp(2.5rem, 9vw, 6.5rem); }
-  .station__copy { container-type: inline-size; display: flex; flex-direction: column; gap: 1.25rem; }
+  .station__copy { position: relative; z-index: 2; max-width: 48rem; container-type: inline-size; display: flex; flex-direction: column; gap: 1.25rem; }
   .station__number { font-family: var(--font-mono, monospace); font-size: 0.8rem; letter-spacing: 0.2em; color: var(--color-accent); }
   .station__enter { margin-top: 1.5rem; }
 
