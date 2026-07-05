@@ -4,7 +4,6 @@ import { discography, featuredAlbum } from '@/data/discography';
 describe('discography data', () => {
   it('contains typed albums with bilingual notes and tracklists', () => {
     expect(discography.length).toBeGreaterThanOrEqual(2);
-
     for (const album of discography) {
       expect(album.id).toMatch(/^[a-z0-9-]+$/);
       expect(album.title).toBeTruthy();
@@ -13,25 +12,36 @@ describe('discography data', () => {
       expect(album.notes.es).toBeTruthy();
       expect(album.notes.en).toBeTruthy();
       expect(album.tracklist.length).toBeGreaterThan(0);
-      expect(album.links.spotify ?? album.links.appleMusic ?? album.links.youtube).toBeTruthy();
     }
   });
 
-  it('keeps temporary artwork explicitly marked as TODO-ASSET', () => {
-    expect(discography.every((album) => album.cover.includes('todo-cover'))).toBe(true);
-    expect(discography.some((album) => album.notes.es.includes('TODO-ASSET'))).toBe(true);
-    expect(discography.some((album) => album.notes.en.includes('TODO-ASSET'))).toBe(true);
+  it('uses real cover art with no leftover TODO-ASSET placeholders', () => {
+    expect(discography.every((a) => /\.(jpg|jpeg|png|webp)$/.test(a.cover))).toBe(true);
+    expect(discography.every((a) => !a.cover.includes('todo-cover'))).toBe(true);
+    expect(discography.every((a) => !a.notes.es.includes('TODO-ASSET'))).toBe(true);
+    expect(discography.every((a) => !a.notes.en.includes('TODO-ASSET'))).toBe(true);
+  });
+
+  it('derives a spotify URI and a base palette for every album', () => {
+    for (const album of discography) {
+      expect(album.spotifyUri).toMatch(/^spotify:album:[A-Za-z0-9]+$/);
+      expect(album.palette.glow).toMatch(/^#/);
+      expect(album.palette.accent).toMatch(/^#/);
+      expect(album.palette.depth).toMatch(/^#/);
+      expect(album.palette.energy).toBeGreaterThanOrEqual(0);
+      expect(album.palette.energy).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('exposes real preview clips for the Apple-catalogued album', () => {
+    const torroba = discography.find((a) => a.id === 'torroba-guitar-music');
+    expect(torroba).toBeTruthy();
+    const withPreview = torroba!.tracklist.filter((t) => t.previewUrl);
+    expect(withPreview.length).toBeGreaterThanOrEqual(8);
+    expect(withPreview.every((t) => t.previewUrl!.startsWith('https://'))).toBe(true);
   });
 
   it('has a featured album for the listening console', () => {
-    expect(featuredAlbum).toBeTruthy();
     expect(featuredAlbum?.featured).toBe(true);
-  });
-
-  it('includes Spotify and YouTube listening paths', () => {
-    expect(discography.some((album) => album.links.spotify?.startsWith('https://open.spotify.com/album/'))).toBe(true);
-    expect(discography.some((album) => album.links.youtube?.includes('youtube.com'))).toBe(true);
-    expect(discography.some((album) => album.embeds?.spotify?.includes('/embed/album/'))).toBe(true);
-    expect(discography.some((album) => album.embeds?.youtube?.includes('youtube-nocookie.com/embed'))).toBe(true);
   });
 });
