@@ -25,8 +25,12 @@ test('the bar and its audio persist across client-side navigation', async ({ pag
   await expect(page.locator('#now-playing-bar')).toBeVisible();
   // tag the node to prove identity survives the swap
   await page.evaluate(() => document.getElementById('now-playing-bar')!.setAttribute('data-probe', 'kept'));
-  await page.getByRole('link', { name: 'Vídeos' }).first().click();
-  await expect(page).toHaveURL(/\/videos/);
+  // The "Vídeos"/etc nav links are same-page #hash lane triggers intercepted by
+  // lanes.ts (no ClientRouter swap) — only the Home link is a genuine
+  // cross-document route change from /music, so it's the one that actually
+  // exercises transition:persist.
+  await page.getByRole('link', { name: 'Inicio' }).click();
+  await expect(page).toHaveURL(/\/$/);
   const bar = page.locator('#now-playing-bar');
   await expect(bar).toBeVisible();
   await expect(bar).toHaveAttribute('data-probe', 'kept'); // same DOM node

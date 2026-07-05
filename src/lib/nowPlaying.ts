@@ -101,7 +101,7 @@ export function createEngine(opts: { audio?: AudioLike } = {}): NowPlayingEngine
     if (track.previewUrl) {
       audio.src = track.previewUrl;
       audio.currentTime = 0;
-      void audio.play();
+      void audio.play().catch(() => {});
     } else {
       // No preview for this track: hold on the bar; the user can expand to full.
       audio.pause();
@@ -123,7 +123,7 @@ export function createEngine(opts: { audio?: AudioLike } = {}): NowPlayingEngine
     load(q, index) { queue = q; state.queueLength = q.length; playIndex(index); },
     toggle() {
       if (state.mode === 'full') return;
-      if (audio.paused) void audio.play();
+      if (audio.paused) void audio.play().catch(() => {});
       else audio.pause();
     },
     seek(seconds) { audio.currentTime = seconds; state.position = seconds; emit(); },
