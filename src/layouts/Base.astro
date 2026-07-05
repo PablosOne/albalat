@@ -51,11 +51,38 @@ const { locale } = Astro.props;
       import { initShowcase } from '@/lib/showcase';
       import { initLanes } from '@/lib/lanes';
       import { initSignature } from '@/lib/string';
-      const initialDetail = document.documentElement.dataset.initialDetail || null;
-      initScroll();
-      const run = () => { heroEntrance(); initShowcase(); initSignature(); initLanes({ initialDetail }); };
+
+      // This script's text is identical on every route, so Astro's ClientRouter
+      // treats it as "already ran" after the first load and will not re-execute
+      // it on later swaps (see astro's transitions/swap-functions.js
+      // detectScriptExecuted, keyed by exact script text). initScroll/initShowcase/
+      // initLanes/initSignature all bind to the (fresh, swapped-in) DOM though, so
+      // they must be torn down and re-run on every astro:page-load, the same way
+      // AlbumStoryPlayer.astro and NowPlayingBar.astro already do for their own init.
+      let teardown: Array<() => void> = [];
+
+      const run = async () => {
+        teardown.forEach((fn) => fn());
+        teardown = [];
+
+        const initialDetail = document.documentElement.dataset.initialDetail || null;
+        teardown.push(await initScroll());
+        teardown.push(await initShowcase());
+        teardown.push(initSignature());
+        teardown.push(initLanes({ initialDetail }));
+      };
+
+      // The cinematic hero intro is a one-time-per-session flourish, not part of
+      // the page's required interactivity — play it once (documentElement survives
+      // every swap) rather than replaying it on every soft nav back to Home.
+      if (!document.documentElement.dataset.heroPlayed) {
+        document.documentElement.dataset.heroPlayed = 'true';
+        heroEntrance();
+      }
+
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
       else run();
+      document.addEventListener('astro:page-load', run);
     </script>
   </body>
 </html>

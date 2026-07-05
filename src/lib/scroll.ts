@@ -2,7 +2,11 @@ import type Lenis from 'lenis';
 import { MOBILE_BREAKPOINT_PX } from '@/lib/config';
 
 /** Initialise smooth scroll + ScrollTrigger synchronisation.
- *  Call once from a client-side script in the base layout.
+ *  Called from the base layout on every `astro:page-load` (including the
+ *  first). Returns a teardown function the caller must run before
+ *  re-initialising, since ClientRouter swaps re-run this without a full
+ *  page reload — leaving the old Lenis instance and gsap ticker callback
+ *  running would double-drive scroll.
  *
  *  BUNDLE NOTE
  *  ───────────
@@ -11,8 +15,8 @@ import { MOBILE_BREAKPOINT_PX } from '@/lib/config';
  *  and reduced-motion users never pay for these — Lighthouse "unused JS"
  *  warning was largely from these two libs sitting in the main chunk.
  */
-export async function initScroll(): Promise<Lenis | null> {
-  if (typeof window === 'undefined') return null;
+export async function initScroll(): Promise<() => void> {
+  if (typeof window === 'undefined') return () => {};
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Lenis on touch devices fights the browser's native momentum scroll and
@@ -22,7 +26,7 @@ export async function initScroll(): Promise<Lenis | null> {
   const isMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`).matches;
   const isCoarse = window.matchMedia('(pointer: coarse)').matches;
   if (prefersReduced || isMobile || isCoarse) {
-    return null;
+    return () => {};
   }
 
   // Dynamic import keeps Lenis + ScrollTrigger out of the mobile bundle.
@@ -41,9 +45,10 @@ export async function initScroll(): Promise<Lenis | null> {
     smoothWheel: true,
   });
 
-  lenis.on('scroll', ScrollTrigger.update);
+  const unsubscribeScroll = lenis.on('scroll', ScrollTrigger.update);
 
-  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  const tick = (time: number) => lenis.raf(time * 1000);
+  gsap.ticker.add(tick);
   gsap.ticker.lagSmoothing(0);
 
   ScrollTrigger.refresh();
@@ -51,5 +56,12 @@ export async function initScroll(): Promise<Lenis | null> {
   // Expose for anchorScroll.ts and other modules that need to trigger smooth scrolls.
   (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
 
-  return lenis;
+  return () => {
+    gsap.ticker.remove(tick);
+    unsubscribeScroll();
+    lenis.destroy();
+    if ((window as unknown as { __lenis?: Lenis }).__lenis === lenis) {
+      delete (window as unknown as { __lenis?: Lenis }).__lenis;
+    }
+  };
 }
