@@ -7,9 +7,15 @@ import {
   getPanelPadding,
   SHOWCASE_PANEL_MAX_WIDTH_PX,
 } from '@/lib/config';
-import StationHero from './StationHero.astro';
-import StationTeaser from './StationTeaser.astro';
 import HUD from './HUD.astro';
+import DetailLane from './DetailLane.astro';
+import Station from './Station.astro';
+import AlbumStoryPlayer from './AlbumStoryPlayer.astro';
+import VideoGallery from './VideoGallery.astro';
+import GuitarNotes from './content/GuitarNotes.astro';
+import ClassesContent from './content/ClassesContent.astro';
+import { discography } from '@/data/discography';
+import { videos } from '@/data/videos';
 
 // The track sizes itself to its children: each station emits an explicit
 // width (capped on ultrawide via SHOWCASE_PANEL_MAX_WIDTH_PX, except hero)
@@ -19,8 +25,9 @@ import HUD from './HUD.astro';
 // with the per-panel cap without duplicating the formula.
 interface Props {
   locale: Locale;
+  initialDetail?: string | null;
 }
-const { locale } = Astro.props;
+const { locale, initialDetail = null } = Astro.props;
 // `site.stations` is declared with `satisfies Station[]`, which validates
 // the literal against `Station[]` without widening it — so each element's
 // inferred type only carries the properties present in its own literal
@@ -28,6 +35,7 @@ const { locale } = Astro.props;
 // station is treated uniformly as `Station` for the optional fields below.
 const stations: Station[] = site.stations;
 ---
+{initialDetail && <script is:inline set:html={`document.documentElement.dataset.initialDetail=${JSON.stringify(initialDetail)}`}></script>}
 <section
   class="relative w-full overflow-hidden"
   aria-label={site.fullName}
@@ -79,12 +87,18 @@ const stations: Station[] = site.stations;
           data-showcase-panel-gap-after-px={gapPx}
           style={styleAttr}
         >
-          {isHero
-            ? <StationHero station={station} locale={locale} />
-            : <StationTeaser station={station} locale={locale} />}
+          <Station station={station} locale={locale} />
         </article>
       );
     })}
   </div>
+  {stations.filter((s) => s.detail).map((s) => (
+    <DetailLane id={s.id} title={s.heading[locale]} locale={locale}>
+      {s.id === 'music'   && <AlbumStoryPlayer albums={discography} locale={locale} />}
+      {s.id === 'videos'  && <VideoGallery videos={videos} locale={locale} />}
+      {s.id === 'guitar'  && <GuitarNotes locale={locale} />}
+      {s.id === 'classes' && <ClassesContent locale={locale} />}
+    </DetailLane>
+  ))}
   <HUD locale={locale} />
 </section>
