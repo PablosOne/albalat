@@ -50,6 +50,8 @@
 
 **AMENDMENT (post-Task-2.1):** while this plan was being executed, a separate concurrent session merged the standalone "Contact" station into "Classes" — `src/data/site.ts` no longer has a `contact` station (heading now "Clases y conciertos" / "Classes & Concerts"), `src/pages/contact.astro` and `src/pages/en/contact.astro` were deleted, and `src/pages/classes.astro` was redesigned to embed the contact form, email, and socials directly. The user confirmed (2026-07-05) this merge is intentional and final. Every task below referencing a separate `contact` station, `ContactContent.astro`, or `/contact` route has been updated in place to reflect **five stations total post-hero** (about, music, videos, guitar, classes) and **four detail lanes** (music, videos, guitar, classes — `classes`'s lane now includes what would have been the contact content). Do not recreate a `contact` station, route, or component.
 
+**AMENDMENT 2 (post-Task-9.1, 2026-07-05):** a separate concurrent session removed the "Guitar" station from the site ENTIRELY — deleted `src/components/content/GuitarNotes.astro`, `src/data/guitar-notes.ts`, `src/pages/guitar.astro`, `src/pages/en/guitar.astro`, and the `guitar` station literal from `site.ts`; updated `Station.astro`'s `order`/`artifact` maps accordingly. The user confirmed (2026-07-05) this removal is intentional and final. **From this point forward, every remaining task in this plan (9.2, 9.3, 10.1, 10.2, 10.3, and the coverage map) treats the site as having FOUR stations post-hero (about, music, videos, classes) and THREE detail lanes (music, videos, classes) — no guitar station, route, content component, or lane anywhere.** Any task text below still mentioning `guitar`/`GuitarNotes`/`/guitar` reflects the plan's state BEFORE this amendment (already-completed tasks 3.1/4.1/4.2/6.1/7.1, whose commits legitimately included guitar at the time) — do not use those sections as a template for remaining work; read the current repo state instead, which no longer has guitar. Do not recreate the guitar station, route, or component. This removal is being finished by another session directly (uncommitted at time of writing) — do not touch `src/data/site.ts`, `src/components/Stage.astro`, `src/components/Station.astro`'s order/artifact maps, or the i18n files yourself; treat their current/eventual guitar-free state as ground truth for any task you implement from here on.
+
 ---
 
 ## Phase 0 — Foundation
@@ -1304,6 +1306,8 @@ git commit -m "style: panel-relative container-query display type"
 
 ### Task 10.1: E2E — cross-scroll navigation
 
+**AMENDMENT:** the `guitar` station/route/lane no longer exists (removed by a concurrent session, user-confirmed final — see AMENDMENT 2 near the top of this document). Replace every `guitar`-referencing test below with an equivalent using `videos` or `classes` instead, and change the About-station lane-count assertion from 4 to 3 (music, videos, classes).
+
 **Files:**
 - Create: `tests/e2e/lanes.spec.ts`
 - Modify: `tests/e2e/stage.spec.ts` (the "lane switch navigates to About" test now stays on home)
@@ -1352,8 +1356,8 @@ test('nav entry opens the matching lane', async ({ page }) => {
 });
 
 test('deep-link route opens the lane on load', async ({ page }) => {
-  await page.goto('/guitar');
-  await expect(page.locator('[data-detail-lane="guitar"]')).toBeVisible();
+  await page.goto('/classes');
+  await expect(page.locator('[data-detail-lane="classes"]')).toBeVisible();
 });
 ```
 
@@ -1366,7 +1370,7 @@ test('About station has no detail lane and stays on home', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#about"]').click();
   await expect(page.locator('[data-showcase-panel-id="about"]')).toBeInViewport();
-  await expect(page.locator('[data-detail-lane]')).toHaveCount(4); // music,videos,guitar,classes
+  await expect(page.locator('[data-detail-lane]')).toHaveCount(3); // music,videos,classes
 });
 ```
 
@@ -1423,7 +1427,7 @@ Verify, and note results:
 - Each detail station: down-arrow + string; open slides up; string plucks on enter; vertical scroll works; up-arrow / `Esc` / scroll-to-top returns to the same x; focus restored.
 - `about`: no arrow, no lane.
 - Nav + HUD entries open lanes / scroll correctly, `es` and `en`.
-- Deep links `/music`, `/en/guitar` open the right lane.
+- Deep links `/music`, `/en/classes` open the right lane.
 - Mobile (`<768px` devtools): everything is one vertical stack; lanes inline; arrows scroll between station and detail.
 - `prefers-reduced-motion`: no slides, no lean, no string vibration; all reachable.
 
@@ -1440,7 +1444,7 @@ git commit -m "polish: cross-scroll navigation tuning from verification sweep"
 
 - Spec §"Interaction model" → Tasks 2.1, 5.1, 5.2, 6.1 (arrows/nav enter, wheel horizontal, Esc/ArrowUp/scroll-top exit).
 - Spec §"Component architecture" → Station 4.2, DetailLane 3.2, LaneArrow 2.1, lanes.ts 5.x; old components removed 6.2.
-- Spec §"Data model" (`detail?`) → 4.1; about has no lane → 4.1, verified 10.1. AMENDMENT: contact merged into classes by a concurrent session (user-confirmed final) — 4 detail lanes (music/videos/guitar/classes), not 5; no standalone contact station/route/component anywhere in this plan as of Task 3.1 onward.
+- Spec §"Data model" (`detail?`) → 4.1; about has no lane → 4.1, verified 10.1. AMENDMENT: contact merged into classes (user-confirmed final); guitar station removed entirely (user-confirmed final, see AMENDMENT 2) — 3 detail lanes (music/videos/classes) as of Task 9.1 onward; no standalone contact or guitar station/route/component anywhere in this plan from that point forward.
 - Spec §"Routes / SEO" (deep-links + JSON-LD) → 7.1, 7.2, 10.2.
 - Spec §"Mobile" (single vertical stack) → CSS in 3.2 + engine `isDesktopMotion` guards in 5.2; verified 10.3.
 - Spec §"Signature motion" — string threshold 1.1/1.2/2.1; direction/velocity parallax 9.1; parallax-y 9.2; cqw type 9.3.
