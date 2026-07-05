@@ -1451,3 +1451,77 @@ git commit -m "polish: cross-scroll navigation tuning from verification sweep"
 - Spec §"Documented rule" → 0.1 (CLAUDE.md).
 - Spec §"Accessibility" → LaneArrow labels/focus 2.1, focus move/restore + Esc 5.2, reduced-motion throughout.
 - Spec §"Testing" → 5.1 (unit), 10.1–10.2 (e2e), 10.3 (manual matrix).
+
+---
+
+## Phase 11 — Showcase integration (post-Task-9.3 pivot, 2026-07-05)
+
+**AMENDMENT 3:** while this plan was being executed, a separate concurrent session replaced the HOME page's rendering entirely: `src/pages/index.astro`/`en/index.astro` now render a NEW `Showcase.astro` + `Panel.astro` component set (gfdu-styled), driven by a NEW `getHomePanels(locale)` function and `Panel`/`PanelLink` types in `site.ts` — completely separate from the `Station`/`site.stations` model the rest of this plan uses. The user confirmed (2026-07-05): keep this new design/visual system as-is on `/`, but integrate the lane-navigation system into it so opening music/videos/classes content works in-place, since Home currently has ZERO `[data-detail-lane]` markup — clicking anything on Home either pans the horizontal stage or fully navigates away to `/music`/`/videos`/`/classes`, never opens an in-page lane.
+
+**Diagnosis (verified empirically, not just read):** `lanes.ts`/`showcase.ts` require ZERO changes — both already operate generically on `[data-showcase-panel]`/`[data-showcase-panel-id]`, and `Panel.astro` already emits that exact attribute contract. `lanes.ts`'s `onClick` already treats any `a[href^="#"]` pointing to a panel with `hasDetailLane(id) === true` as a lane-opener automatically (no `data-lane-open` attribute required — that's only needed for `LaneArrow`'s own down-arrow, not a general requirement). The ONLY gap is: (1) no `<DetailLane>` elements exist in `Showcase.astro`'s output, so `hasDetailLane()` is always false on Home; (2) `getHomePanels()`'s music/videos/classes panels link via `href: `${prefix}/music`` etc. — a full-page link, not a hash.
+
+### Task 11.1: Render DetailLanes in Showcase.astro
+
+**Files:**
+- Modify: `src/components/Showcase.astro`
+
+**Interfaces:**
+- Consumes: `DetailLane` (Task 3.2), `AlbumStoryPlayer`, `VideoGallery`, `content/ClassesContent.astro` — the SAME components `Stage.astro` already uses for its lanes (Task 6.1). Reads `discography`/`videos` data the same way `Stage.astro` does.
+
+- [ ] **Step 1: Mirror Stage.astro's lane-rendering block**
+
+In `Showcase.astro`, after the closing `</div>` of `[data-showcase-track]` (and before `<ShowcaseHUD />`), add:
+
+```astro
+{['music', 'videos', 'classes'].map((id) => (
+  <DetailLane id={id} title={panels.find((p) => p.id === id)?.heading ?? id} locale={locale}>
+    {id === 'music'   && <AlbumStoryPlayer albums={discography} locale={locale} />}
+    {id === 'videos'  && <VideoGallery videos={videos} locale={locale} />}
+    {id === 'classes' && <ClassesContent locale={locale} />}
+  </DetailLane>
+))}
+```
+
+Adjust `DetailLane`'s `title` prop source to whatever `Showcase.astro`/`getHomePanels()` actually expose (read the current file — panels have a `.heading` string, not a `Bilingual` object, since this is the NEW Panel type, not `Station`). Import `DetailLane`, `AlbumStoryPlayer`, `VideoGallery`, `ClassesContent`, `discography`, `videos` at the top of `Showcase.astro`.
+
+- [ ] **Step 2: Verify**
+
+`pnpm build`, then `pnpm dev`: navigate to `/#music` (hash on load) — confirm `initLanes`'s existing `initialDetail`-from-hash resolution opens the Music lane on Home (it already reads `resolveInitialDetail` from the URL hash, no Stage-specific dependency). Confirm the lane's content (album player) renders correctly and the up-arrow/Esc returns to the Home showcase at the Music panel's horizontal position.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git commit -m "feat: render detail lanes in Showcase for in-place music/videos/classes content" -- src/components/Showcase.astro
+```
+
+### Task 11.2: Repoint panel links to hash-driven lane-open
+
+**Files:**
+- Modify: `src/data/site.ts` (`getHomePanels()`)
+
+**Interfaces:**
+- No signature change — only literal `href` values change.
+
+- [ ] **Step 1: Change the three "Open X" links from full-page to hash**
+
+In `getHomePanels()`, change:
+```ts
+{ label: isEn ? 'Open music' : 'Ver musica', href: `${prefix}/music` },
+```
+to:
+```ts
+{ label: isEn ? 'Open music' : 'Ver musica', href: '#music' },
+```
+Same for the videos (`#videos`) and classes (`#classes`) "Open X"/"Make an enquiry" links. Do NOT change the `Spotify`/`YouTube`/`Email` links (external, correctly stay as full URLs) — only the same-site "Open X" entries whose target is the corresponding lane.
+
+**Do this AFTER Task 11.1 lands** — repointing the hrefs before the `DetailLane`s exist would make `hasDetailLane()` false, so `lanes.ts` would fall through to the "scroll to panel" branch instead of opening a lane, losing BOTH the old full-page navigation AND the new in-place open.
+
+- [ ] **Step 2: Verify**
+
+`pnpm dev`: on `/`, scroll/pan to the Music panel, click "Ver musica" — confirm the Music lane opens in place (no page navigation, `#music` in the URL, `AlbumStoryPlayer` visible). Same for Videos/Classes. Confirm the standalone `/music`, `/videos`, `/classes` routes (Task 7.1) still work unchanged for anyone who deep-links or shares those URLs directly.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git commit -m "feat: panel links open in-place lanes instead of navigating away" -- src/data/site.ts
+```
