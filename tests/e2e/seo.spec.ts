@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const site = 'https://albalat.pages.dev';
+const site = 'https://eulogioalbalat.com';
 
 const routes = [
   { path: '/', canonical: '/', es: '/', en: '/en/' },
@@ -11,8 +11,6 @@ const routes = [
   { path: '/en/music', canonical: '/en/music/', es: '/music/', en: '/en/music/' },
   { path: '/videos', canonical: '/videos/', es: '/videos/', en: '/en/videos/' },
   { path: '/en/videos', canonical: '/en/videos/', es: '/videos/', en: '/en/videos/' },
-  { path: '/guitar', canonical: '/guitar/', es: '/guitar/', en: '/en/guitar/' },
-  { path: '/en/guitar', canonical: '/en/guitar/', es: '/guitar/', en: '/en/guitar/' },
   { path: '/classes', canonical: '/classes/', es: '/classes/', en: '/en/classes/' },
   { path: '/en/classes', canonical: '/en/classes/', es: '/classes/', en: '/en/classes/' },
 ];
@@ -33,7 +31,7 @@ for (const route of routes) {
 
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Eulogio Albalat/);
     await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /.+/);
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /^https:\/\/albalat\.pages\.dev\//);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /^https:\/\/eulogioalbalat\.com\//);
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
   });
 }
