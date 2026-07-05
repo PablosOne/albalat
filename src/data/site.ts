@@ -31,6 +31,7 @@ export interface Station {
   body?: BilingualParagraphs;
   href?: string;
   accent?: string;
+  detail?: boolean; // true → this station opens a vertical detail lane
 }
 
 export interface AboutContent {
@@ -132,6 +133,7 @@ export const site = {
         en: 'Recordings gathered by album, ready to listen.',
       },
       href: '/music',
+      detail: true,
     },
     {
       id: 'videos',
@@ -145,6 +147,7 @@ export const site = {
         en: 'Performances and concert moments on film.',
       },
       href: '/videos',
+      detail: true,
     },
     {
       id: 'guitar',
@@ -158,6 +161,7 @@ export const site = {
         en: 'Notes on technique, sound, and instruments.',
       },
       href: '/guitar',
+      detail: true,
     },
     {
       id: 'classes',
@@ -171,6 +175,7 @@ export const site = {
         en: 'Private classes, concert bookings, and direct contact in one place.',
       },
       href: '/classes',
+      detail: true,
     },
   ] satisfies Station[],
 };
