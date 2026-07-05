@@ -60,25 +60,35 @@ const { locale } = Astro.props;
       // they must be torn down and re-run on every astro:page-load, the same way
       // AlbumStoryPlayer.astro and NowPlayingBar.astro already do for their own init.
       let teardown: Array<() => void> = [];
+      // On first load, run() fires twice (see below) — once immediately/on
+      // DOMContentLoaded, once more from astro:page-load (which the router also
+      // dispatches off the native `load` event). If the second fire lands while
+      // the first is still suspended on initScroll/initShowcase's dynamic
+      // import(), both would otherwise finish and double-init. Only the call that
+      // is still current when its awaits resolve gets to register its teardown;
+      // a superseded call tears itself down immediately instead.
+      let runGen = 0;
 
       const run = async () => {
+        const gen = ++runGen;
         teardown.forEach((fn) => fn());
         teardown = [];
 
         const initialDetail = document.documentElement.dataset.initialDetail || null;
-        teardown.push(await initScroll());
-        teardown.push(await initShowcase());
-        teardown.push(initSignature());
-        teardown.push(initLanes({ initialDetail }));
+        const cleanups = [await initScroll(), await initShowcase(), initSignature(), initLanes({ initialDetail })];
+
+        if (gen !== runGen) {
+          cleanups.forEach((fn) => fn());
+          return;
+        }
+        teardown = cleanups;
       };
 
       // The cinematic hero intro is a one-time-per-session flourish, not part of
-      // the page's required interactivity — play it once (documentElement survives
-      // every swap) rather than replaying it on every soft nav back to Home.
-      if (!document.documentElement.dataset.heroPlayed) {
-        document.documentElement.dataset.heroPlayed = 'true';
-        heroEntrance();
-      }
+      // the page's required interactivity. This block runs exactly once — the
+      // enclosing script is deduped by ClientRouter (see above) and never
+      // re-executes on later swaps, so no extra guard is needed here.
+      heroEntrance();
 
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
       else run();

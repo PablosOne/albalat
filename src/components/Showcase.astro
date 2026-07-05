@@ -17,7 +17,13 @@ interface Props {
 const { locale, initialDetail = null } = Astro.props;
 const panels = getHomePanels(locale);
 ---
-{initialDetail && <script is:inline set:html={`document.documentElement.dataset.initialDetail=${JSON.stringify(initialDetail)}`}></script>}
+{initialDetail && (
+  // data-astro-rerun: without it, Astro's ClientRouter dedupes this script by its
+  // exact text (see src/layouts/Base.astro's own astro:page-load fix for the same
+  // mechanism) and skips re-running it on a repeat SPA visit to this route within
+  // the same session, silently breaking auto-open of the detail lane.
+  <script is:inline data-astro-rerun set:html={`document.documentElement.dataset.initialDetail=${JSON.stringify(initialDetail)}`}></script>
+)}
 <section class="relative w-full overflow-hidden" aria-label={locale === 'en' ? 'Home' : 'Inicio'} data-showcase>
   <div class="relative z-10 flex" data-showcase-track style="width: max-content;">
     {panels.map((panel, i) => <Panel panel={panel} isLast={i === panels.length - 1} />)}
