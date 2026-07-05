@@ -642,6 +642,8 @@ One main-lane panel. `station.kind === 'hero'` renders the hero display; otherwi
 
 **AMENDMENT:** `contact` is no longer a station id (merged into `classes`). The code below already reflects this (`order` array and `artifact` map have 5 entries, not 6) — read the CURRENT `src/data/site.ts` to confirm the exact station id list before implementing, in case it has changed further.
 
+**AMENDMENT 2 (post-Task-4.2-review):** two corrections folded into the code below: (1) `classes`'s artifact is `signal`, not `fretboard` — the concurrent session that merged Contact into Classes also repointed `StationTeaser.astro`'s artifact map for `classes` to `signal` (previously `contact`'s visual), and this component must match; (2) `.station__copy` needs `position: relative; z-index: 2; max-width: 48rem;` (ported from `.station-teaser__copy` in `global.css`) — without `position`, the artifact decoration can paint over the heading/tagline text, and without `max-width` the copy column is unconstrained on desktop.
+
 **Files:**
 - Create: `src/components/Station.astro`
 - Reference (do not modify yet): `src/components/StationHero.astro`, `src/components/StationTeaser.astro`
@@ -664,7 +666,7 @@ const { station, locale } = Astro.props;
 const isHero = station.kind === 'hero';
 const order = ['about', 'music', 'videos', 'guitar', 'classes'];
 const num = order.indexOf(station.id) + 1;
-const artifact = { about:'score', music:'wave', videos:'frame', guitar:'rosette', classes:'fretboard' }[station.id] ?? 'score';
+const artifact = { about:'score', music:'wave', videos:'frame', guitar:'rosette', classes:'signal' }[station.id] ?? 'score';
 const openLabel = locale === 'en' ? `Open ${station.heading.en} details` : `Abrir ${station.heading.es}`;
 ---
 {isHero ? (
@@ -701,7 +703,7 @@ const openLabel = locale === 'en' ? `Open ${station.heading.en} details` : `Abri
 <style>
   .station-hero__title { font-size: clamp(3.5rem, 12vw, 9rem); }
   .station__heading { font-size: clamp(2.5rem, 9vw, 6.5rem); }
-  .station__copy { container-type: inline-size; display: flex; flex-direction: column; gap: 1.25rem; }
+  .station__copy { position: relative; z-index: 2; max-width: 48rem; container-type: inline-size; display: flex; flex-direction: column; gap: 1.25rem; }
   .station__number { font-family: var(--font-mono, monospace); font-size: 0.8rem; letter-spacing: 0.2em; color: var(--color-accent); }
   .station__enter { margin-top: 1.5rem; }
 </style>
