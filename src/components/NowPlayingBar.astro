@@ -1,0 +1,139 @@
+---
+interface Props {
+  locale: 'es' | 'en';
+}
+const { locale } = Astro.props;
+const copy = {
+  es: { region: 'Reproductor', play: 'Reproducir', pause: 'Pausar', prev: 'Anterior', next: 'Siguiente',
+        full: 'Pista completa', spotify: 'Abrir en Spotify', apple: 'Abrir en Apple Music', close: 'Cerrar',
+        hint: 'Vista previa - pista completa en Spotify / Apple Music', seek: 'Buscar en la pista' },
+  en: { region: 'Player', play: 'Play', pause: 'Pause', prev: 'Previous', next: 'Next',
+        full: 'Full track', spotify: 'Open in Spotify', apple: 'Open in Apple Music', close: 'Close',
+        hint: 'Preview - full track on Spotify / Apple Music', seek: 'Seek within track' },
+}[locale];
+---
+<aside
+  id="now-playing-bar"
+  transition:persist="now-playing"
+  data-visible="false"
+  hidden
+  role="region"
+  aria-label={copy.region}
+  data-copy={JSON.stringify(copy)}
+  class="fixed inset-x-0 bottom-0 z-50 border-t border-ink/15 bg-[#0d0c0a]/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] transition-transform duration-300 data-[visible=false]:translate-y-full"
+>
+  <div data-np-embed hidden class="border-b border-ink/10 bg-black"></div>
+  <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 md:gap-4">
+    <img data-np-cover src="" alt="" width="48" height="48" class="size-12 shrink-0 border border-ink/10 object-cover" />
+    <div class="min-w-0 flex-1">
+      <p data-np-title class="truncate text-sm font-medium text-ink">-</p>
+      <div class="mt-1 flex items-center gap-2">
+        <span data-np-elapsed class="font-mono text-[0.65rem] text-ink-muted">0:00</span>
+        <input data-np-seek type="range" min="0" max="1000" value="0" step="1"
+          aria-label={copy.seek}
+          class="h-1 w-full flex-1 cursor-pointer appearance-none rounded bg-ink/15 accent-[var(--album-accent,theme(colors.accent))]" />
+        <span data-np-duration class="font-mono text-[0.65rem] text-ink-muted">0:30</span>
+      </div>
+      <p data-np-hint class="mt-0.5 truncate text-[0.6rem] text-ink-muted">{copy.hint}</p>
+    </div>
+    <div class="flex shrink-0 items-center gap-1">
+      <button data-np-prev type="button" aria-label={copy.prev} class="np-btn">⏮</button>
+      <button data-np-toggle type="button" aria-label={copy.play} class="np-btn np-btn--primary">▶</button>
+      <button data-np-next type="button" aria-label={copy.next} class="np-btn">⏭</button>
+      <button data-np-full type="button" class="np-chip">{copy.full}</button>
+      <a data-np-spotify href="#" target="_blank" rel="noreferrer" aria-label={copy.spotify} class="np-btn">S</a>
+      <a data-np-apple href="#" target="_blank" rel="noreferrer" aria-label={copy.apple} class="np-btn">A</a>
+      <button data-np-close type="button" aria-label={copy.close} class="np-btn">✕</button>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .np-btn { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem;
+    border: 1px solid rgba(244,239,231,0.14); color: var(--ink); font-size: 0.8rem; }
+  .np-btn:hover, .np-btn:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+  .np-btn--primary { border-color: var(--album-accent, var(--accent)); color: var(--album-accent, var(--accent)); }
+  .np-chip { padding: 0 0.6rem; height: 2rem; border: 1px solid rgba(244,239,231,0.14); font-size: 0.7rem; white-space: nowrap; }
+  .np-chip:hover, .np-chip:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+  [data-np-apple][hidden], [data-np-full][hidden] { display: none; }
+</style>
+
+<script>
+  import { getNowPlaying, type PlayerState } from '@/lib/nowPlaying';
+  import { applyTheme } from '@/lib/trackTheme';
+
+  const fmt = (s: number) => {
+    if (!Number.isFinite(s)) s = 0;
+    const m = Math.floor(s / 60); const r = Math.floor(s % 60);
+    return `${m}:${String(r).padStart(2, '0')}`;
+  };
+
+  const initNowPlayingBar = () => {
+    const bar = document.getElementById('now-playing-bar');
+    if (!bar || bar.dataset.bound === 'true') return;
+    bar.dataset.bound = 'true';
+    const engine = getNowPlaying();
+    const copy = JSON.parse(bar.dataset.copy || '{}');
+
+    const q = <T extends Element>(sel: string) => bar.querySelector<T>(sel)!;
+    const cover = q<HTMLImageElement>('[data-np-cover]');
+    const title = q<HTMLElement>('[data-np-title]');
+    const toggle = q<HTMLButtonElement>('[data-np-toggle]');
+    const seek = q<HTMLInputElement>('[data-np-seek]');
+    const elapsed = q<HTMLElement>('[data-np-elapsed]');
+    const duration = q<HTMLElement>('[data-np-duration]');
+    const embed = q<HTMLElement>('[data-np-embed]');
+    const spotify = q<HTMLAnchorElement>('[data-np-spotify]');
+    const apple = q<HTMLAnchorElement>('[data-np-apple]');
+    const full = q<HTMLButtonElement>('[data-np-full]');
+
+    toggle.addEventListener('click', () => engine.toggle());
+    q<HTMLButtonElement>('[data-np-prev]').addEventListener('click', () => engine.prev());
+    q<HTMLButtonElement>('[data-np-next]').addEventListener('click', () => engine.next());
+    q<HTMLButtonElement>('[data-np-close]').addEventListener('click', () => { engine.close(); embed.hidden = true; embed.replaceChildren(); });
+    seek.addEventListener('input', () => {
+      const s = engine.getState();
+      if (s.duration) engine.seek((Number(seek.value) / 1000) * s.duration);
+    });
+    full.addEventListener('click', () => {
+      const s = engine.getState();
+      if (!s.track) return;
+      const provider: 'spotify' | 'apple' = s.track.appleEmbed ? 'apple' : 'spotify';
+      const src = provider === 'apple' ? s.track.appleEmbed! : `https://open.spotify.com/embed/${s.track.spotifyUri.split(':').slice(1).join('/')}`;
+      const iframe = document.createElement('iframe');
+      iframe.src = src;
+      iframe.loading = 'lazy';
+      iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      iframe.className = 'h-[152px] w-full border-0 md:h-[232px]';
+      embed.replaceChildren(iframe);
+      embed.hidden = false;
+      engine.expandFull(provider);
+    });
+
+    const render = (s: PlayerState) => {
+      bar.hidden = !s.visible;
+      bar.dataset.visible = String(s.visible);
+      applyTheme('nowplaying', s.visible && s.track ? s.track.theme : null);
+      if (!s.track) return;
+      cover.src = s.track.cover;
+      cover.alt = s.track.albumTitle;
+      title.textContent = `${s.track.title} — ${s.track.albumTitle}`;
+      toggle.textContent = s.isPaused ? '▶' : '⏸';
+      toggle.setAttribute('aria-label', s.isPaused ? copy.play : copy.pause);
+      elapsed.textContent = fmt(s.position);
+      duration.textContent = fmt(s.duration || 30);
+      seek.value = String(s.duration ? Math.round((s.position / s.duration) * 1000) : 0);
+      seek.setAttribute('aria-valuenow', String(Math.round(s.position)));
+      spotify.href = s.track.spotifyUrl ?? '#';
+      apple.hidden = !s.track.appleUrl;
+      if (s.track.appleUrl) apple.href = s.track.appleUrl;
+      full.hidden = !(s.track.appleEmbed || s.track.spotifyUri);
+    };
+
+    engine.subscribe(render);
+    render(engine.getState());
+  };
+
+  initNowPlayingBar();
+  document.addEventListener('astro:page-load', initNowPlayingBar);
+</script>

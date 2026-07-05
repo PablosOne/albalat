@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css';
 import Seo from '@/components/Seo.astro';
+import NowPlayingBar from '@/components/NowPlayingBar.astro';
 import type { Locale } from '@/i18n';
 import { ClientRouter } from 'astro:transitions';
 
@@ -43,6 +44,7 @@ const { locale } = Astro.props;
   </head>
   <body>
     <slot />
+    <NowPlayingBar locale={locale} />
     <script>
       import { initScroll } from '@/lib/scroll';
       import { heroEntrance } from '@/lib/motion';
