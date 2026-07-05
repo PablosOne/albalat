@@ -205,7 +205,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
         }
       }
     }
-    document.documentElement.setAttribute('data-lane-open', id);
+    document.documentElement.setAttribute('data-open-lane', id);
     history.replaceState(null, '', `#${id}`);
     lane.querySelector<HTMLElement>('[data-detail-heading]')?.focus();
   }
@@ -218,7 +218,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       state.detachY?.();
       state.detachY = undefined;
       if (lane) lane.hidden = true;
-      document.documentElement.removeAttribute('data-lane-open');
+      document.documentElement.removeAttribute('data-open-lane');
       history.replaceState(null, '', window.location.pathname + window.location.search);
       state.openId = null;
       state.restoreFocus?.focus?.();
