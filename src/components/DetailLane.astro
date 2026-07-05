@@ -1,0 +1,49 @@
+---
+import LaneArrow from '@/components/LaneArrow.astro';
+import type { Locale } from '@/i18n';
+interface Props { id: string; title: string; locale: Locale; }
+const { id, title, locale } = Astro.props;
+const back = locale === 'en' ? 'Back to main lane' : 'Volver a la línea principal';
+---
+<section
+  class="detail-lane"
+  data-detail-lane={id}
+  aria-label={title}
+  hidden
+>
+  <div class="detail-lane__scroll" data-detail-scroll>
+    <header class="detail-lane__header">
+      <LaneArrow direction="up" label={back} />
+      <h2 class="detail-lane__title" data-detail-heading tabindex="-1">{title}</h2>
+    </header>
+    <div class="detail-lane__body">
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .detail-lane {
+    position: fixed; inset: 0; z-index: 60;
+    background: var(--color-stage); color: var(--color-ink);
+  }
+  .detail-lane[hidden] { display: none; }
+  .detail-lane__scroll {
+    height: 100dvh; overflow-y: auto; overflow-x: hidden;
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  .detail-lane__header {
+    display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    padding-top: clamp(2rem, 6vh, 5rem);
+  }
+  .detail-lane__title {
+    container-type: inline-size;
+    font-family: var(--font-display, serif);
+    font-weight: 300; letter-spacing: -0.02em; text-align: center;
+    font-size: clamp(2.5rem, 8cqw, 6rem);
+  }
+  .detail-lane__body { padding: clamp(2rem, 6vh, 6rem) clamp(1rem, 6vw, 7rem) 12vh; }
+  /* Mobile / reduced-motion: lanes are inline in the vertical stack, not fixed. */
+  @media (max-width: 767px) { .detail-lane { position: relative; inset: auto; z-index: auto; } .detail-lane__scroll { height: auto; overflow: visible; } }
+  @media (prefers-reduced-motion: reduce) { .detail-lane { position: relative; inset: auto; } .detail-lane__scroll { height: auto; overflow: visible; } }
+</style>
