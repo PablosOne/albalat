@@ -29,6 +29,18 @@ export const SHOWCASE_PANEL_MAX_WIDTH_PX = 1800;
  *  showcase. 1.0 = exactly as authored on each element. */
 export const SHOWCASE_PARALLAX_GLOBAL_SCALE = 1.5;
 
+/** Global multiplier for every `data-parallax-y` element inside a detail lane. */
+export const SHOWCASE_PARALLAX_Y_GLOBAL_SCALE = 1.0;
+
+/** Detail-lane open/close slide duration, in seconds. */
+export const LANE_TRANSITION_S = 0.7;
+
+/** Max px an element may "lean" in the scroll direction from velocity. */
+export const LANE_VELOCITY_LEAN_MAX_PX = 26;
+
+/** px of lean per unit of Lenis velocity (before the max clamp). */
+export const LANE_VELOCITY_LEAN_FACTOR = 0.012;
+
 /** Default panel weight (screen-widths). 1.0 = 100vw. Every station renders
  *  full-width by default; use SHOWCASE_PANEL_OVERRIDES for one-off tuning. */
 export const SHOWCASE_DEFAULT_WEIGHT = 1.0;
