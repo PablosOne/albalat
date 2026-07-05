@@ -222,7 +222,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
   const onClick = (e: MouseEvent) => {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
     const closer = (e.target as Element | null)?.closest('[data-lane-close]');
-    if (closer) { e.preventDefault(); void closeLane(); return; }
+    if (closer) { e.preventDefault(); e.stopPropagation(); void closeLane(); return; }
     const opener = (e.target as Element | null)?.closest<HTMLElement>('[data-lane-open], a[href^="#"]');
     if (!opener) return;
     const id = opener.getAttribute('data-lane-open')
@@ -231,6 +231,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     const panel = document.querySelector(`[data-showcase-panel-id="${CSS.escape(id)}"]`);
     if (!panel) return;
     e.preventDefault();
+    e.stopPropagation();
     if (hasDetailLane(id)) void openLane(id);
     else { history.pushState(null, '', `#${id}`); scrollToPanel(id); } // station w/o lane
   };
@@ -262,7 +263,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     if (id && next !== current) { e.preventDefault(); scrollToPanel(id); }
   };
 
-  document.addEventListener('click', onClick);
+  document.addEventListener('click', onClick, { capture: true });
   document.addEventListener('keydown', onKey);
 
   // Open initialDetail (route deep-link or hash) once the showcase has laid out.
@@ -272,7 +273,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
   }));
 
   return () => {
-    document.removeEventListener('click', onClick);
+    document.removeEventListener('click', onClick, { capture: true });
     document.removeEventListener('keydown', onKey);
   };
 }
