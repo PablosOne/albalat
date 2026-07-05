@@ -1,20 +1,7 @@
+import { attachString, type StringHandle } from '@/lib/laneString';
+
 type Gsap = typeof import('gsap').gsap;
 type Tween = ReturnType<Gsap['to']>;
-
-interface LenisLike {
-  velocity?: number;
-}
-
-interface RunningString {
-  line: SVGPolylineElement;
-  state: {
-    amplitude: number;
-    target: number;
-    phase: number;
-    hovered: boolean;
-  };
-  cleanup: () => void;
-}
 
 interface HudEls {
   station: HTMLElement;
@@ -23,79 +10,10 @@ interface HudEls {
   links: HTMLAnchorElement[];
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const POINT_COUNT = 72;
-const WIDTH = 1000;
-const MID_Y = 50;
 const MOBILE_MEDIA = '(max-width: 767px)';
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function readScrollVelocity(): number {
-  const lenis = (window as unknown as { __lenis?: LenisLike }).__lenis;
-  const v = Math.abs(lenis?.velocity ?? 0);
-  return Number.isFinite(v) ? v : 0;
-}
-
-function ensureLine(svg: SVGSVGElement): SVGPolylineElement {
-  svg.setAttribute('viewBox', `0 0 ${WIDTH} 100`);
-  svg.setAttribute('preserveAspectRatio', 'none');
-  svg.setAttribute('focusable', 'false');
-
-  const existing = svg.querySelector<SVGPolylineElement>('[data-string-line]');
-  if (existing) return existing;
-
-  const line = document.createElementNS(SVG_NS, 'polyline');
-  line.setAttribute('data-string-line', '');
-  line.setAttribute('fill', 'none');
-  line.setAttribute('stroke', 'currentColor');
-  line.setAttribute('stroke-width', '1.4');
-  line.setAttribute('stroke-linecap', 'round');
-  line.setAttribute('stroke-linejoin', 'round');
-  line.setAttribute('vector-effect', 'non-scaling-stroke');
-  svg.appendChild(line);
-  return line;
-}
-
-function writePoints(item: RunningString): void {
-  const { line, state } = item;
-  const points: string[] = [];
-
-  for (let i = 0; i < POINT_COUNT; i++) {
-    const t = i / (POINT_COUNT - 1);
-    const x = t * WIDTH;
-    const envelope = Math.pow(Math.sin(Math.PI * t), 1.35);
-    const fast = Math.sin(t * Math.PI * 8 + state.phase);
-    const slow = Math.sin(t * Math.PI * 2 - state.phase * 0.55);
-    const y = MID_Y + envelope * state.amplitude * (fast * 0.78 + slow * 0.22);
-    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
-  }
-
-  line.setAttribute('points', points.join(' '));
-}
-
-function initString(svg: SVGSVGElement): RunningString {
-  const line = ensureLine(svg);
-  const state = { amplitude: 0, target: 0, phase: 0, hovered: false };
-  const enter = () => { state.hovered = true; };
-  const leave = () => { state.hovered = false; };
-
-  svg.addEventListener('pointerenter', enter);
-  svg.addEventListener('pointerleave', leave);
-
-  const item: RunningString = {
-    line,
-    state,
-    cleanup: () => {
-      svg.removeEventListener('pointerenter', enter);
-      svg.removeEventListener('pointerleave', leave);
-    },
-  };
-
-  writePoints(item);
-  return item;
 }
 
 function mountSpotlight(root: HTMLElement, gsap: Gsap): () => void {
@@ -262,27 +180,23 @@ export function initSignature(): () => void {
   let active = true;
   let cleanupFns: Array<() => void> = [];
 
+  const readVelocity = () => {
+    const lenis = (window as unknown as { __lenis?: { velocity?: number } }).__lenis;
+    const v = Math.abs(lenis?.velocity ?? 0);
+    return Number.isFinite(v) ? v : 0;
+  };
+
+  const handles: StringHandle[] = strings.map((svg) => {
+    const h = attachString(svg);
+    h.setVelocitySource(readVelocity);
+    return h;
+  });
+  cleanupFns.push(...handles.map((h) => () => h.destroy()));
+
+  // Spotlights still need gsap; keep that dynamic import for them only.
   void import('gsap').then(({ gsap }) => {
     if (!active) return;
-
-    const running = strings.map(initString);
-    cleanupFns.push(...running.map((item) => item.cleanup));
     cleanupFns.push(...spotlights.map((root) => mountSpotlight(root, gsap)));
-
-    const tick = () => {
-      const velocity = readScrollVelocity();
-      const impulse = Math.min(18, velocity * 0.07);
-
-      running.forEach((item, i) => {
-        item.state.target = Math.max(impulse, item.state.hovered ? 14 : 0);
-        item.state.amplitude += (item.state.target - item.state.amplitude) * 0.095;
-        item.state.phase += 0.075 + i * 0.002 + Math.min(0.08, velocity * 0.00045);
-        writePoints(item);
-      });
-    };
-
-    gsap.ticker.add(tick);
-    cleanupFns.push(() => gsap.ticker.remove(tick));
   });
 
   return () => {
