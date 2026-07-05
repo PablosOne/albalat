@@ -1,0 +1,84 @@
+---
+import InquiryForm from '@/components/InquiryForm.astro';
+import { site } from '@/data/site';
+import Detail from '@/layouts/Detail.astro';
+
+const locale = 'en';
+const title = `${site.fullName} - Classes & Concerts`;
+const description = 'Private classical guitar classes and concert inquiries with Eulogio Albalat.';
+const pageURL = new URL('/en/classes/', Astro.site);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${pageURL}#webpage`,
+      url: pageURL.toString(),
+      name: title,
+      description,
+      inLanguage: 'en',
+      breadcrumb: { '@id': `${pageURL}#breadcrumb` },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${pageURL}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/en/', Astro.site).toString() },
+        { '@type': 'ListItem', position: 2, name: 'Classes & Concerts', item: pageURL.toString() },
+      ],
+    },
+    {
+      '@type': 'Course',
+      '@id': `${pageURL}#private-classes`,
+      name: 'Private classical guitar classes',
+      description: 'Private classical guitar lessons shaped around each student level, repertoire, and goals.',
+      provider: { '@type': 'Person', name: site.fullName },
+      inLanguage: 'en',
+    },
+    {
+      '@type': 'Service',
+      '@id': `${pageURL}#concert-booking`,
+      name: 'Classical guitar concerts',
+      description: 'Inquiries for recitals, private concerts, and musical proposals.',
+      provider: { '@type': 'Person', name: site.fullName },
+      serviceType: 'Classical guitar performance',
+      inLanguage: 'en',
+    },
+  ],
+};
+---
+<Detail locale={locale} title={title} description={description} jsonLd={jsonLd}>
+  <section class="px-6 pb-20 pt-32 md:px-10 md:pb-28 md:pt-40">
+    <div class="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div>
+        <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">Classes & Concerts</p>
+        <h1 class="mt-6 max-w-4xl font-display text-5xl font-light leading-tight text-ink md:text-7xl">
+          A place to study the guitar or discuss a concert.
+        </h1>
+        <p class="mt-8 max-w-3xl text-lg leading-8 text-ink-muted md:text-xl">
+          Each inquiry is handled personally, with attention to level, repertoire, calendar, and the context of the proposal.
+        </p>
+
+        <div class="mt-14 grid gap-6 md:grid-cols-2">
+          <article class="border border-ink/10 p-6">
+            <h2 class="font-display text-3xl font-light text-ink">Private classes</h2>
+            <p class="mt-4 leading-7 text-ink-muted">
+              Technical and musical work for students at different levels: sound, reading, repertoire, daily practice, and preparation of pieces.
+            </p>
+          </article>
+          <article class="border border-ink/10 p-6">
+            <h2 class="font-display text-3xl font-light text-ink">Concerts</h2>
+            <p class="mt-4 leading-7 text-ink-muted">
+              Recitals and classical guitar programs for series, cultural venues, private events, and special proposals.
+            </p>
+          </article>
+        </div>
+      </div>
+
+      <aside class="lg:pt-16">
+        <h2 class="mb-5 font-display text-3xl font-light text-ink">Send an inquiry</h2>
+        <InquiryForm locale={locale} intent="class" />
+      </aside>
+    </div>
+  </section>
+</Detail>
