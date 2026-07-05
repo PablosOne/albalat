@@ -14,7 +14,7 @@ const back = locale === 'en' ? 'Back to main lane' : 'Volver a la línea princip
   <div class="detail-lane__scroll" data-detail-scroll>
     <header class="detail-lane__header">
       <LaneArrow direction="up" label={back} />
-      <h2 class="detail-lane__title" data-detail-heading tabindex="-1">{title}</h2>
+      <h2 class="detail-lane__title" data-detail-heading data-parallax-y="-0.6" tabindex="-1">{title}</h2>
     </header>
     <div class="detail-lane__body">
       <slot />

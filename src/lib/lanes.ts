@@ -1,5 +1,5 @@
 import type Lenis from 'lenis';
-import { MOBILE_BREAKPOINT_PX, buildShowcaseGeometry, LANE_TRANSITION_S } from '@/lib/config';
+import { MOBILE_BREAKPOINT_PX, buildShowcaseGeometry, LANE_TRANSITION_S, SHOWCASE_PARALLAX_Y_GLOBAL_SCALE } from '@/lib/config';
 
 export function laneIdFromHash(hash: string): string | null {
   if (!hash) return null;
@@ -131,7 +131,7 @@ function scrollToPanel(panelId: string): void {
   }
 }
 
-interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; }
+interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; }
 
 function isDesktopMotion(): boolean {
   return !window.matchMedia('(max-width: 767px)').matches
@@ -183,6 +183,25 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       gsap.killTweensOf(lane);
       gsap.fromTo(lane, { yPercent: 100, autoAlpha: 1 },
         { yPercent: 0, duration: LANE_TRANSITION_S, ease: 'power3.out' });
+
+      // 3) vertical parallax for [data-parallax-y] descendants, scrubbed by the
+      // lane's own scroll container. Desktop/motion-enabled only; detached in
+      // closeLane so repeated open/close cycles never leave a stale listener.
+      if (scroller) {
+        const yEls = Array.from(lane.querySelectorAll<HTMLElement>('[data-parallax-y]'));
+        if (yEls.length) {
+          const onScrollY = () => {
+            const top = scroller.scrollTop;
+            yEls.forEach((el) => {
+              const m = Number(el.dataset.parallaxY) || 0;
+              el.style.transform = `translateY(${(top * m * SHOWCASE_PARALLAX_Y_GLOBAL_SCALE * 0.1).toFixed(1)}px)`;
+            });
+          };
+          onScrollY(); // sync to the reset scrollTop=0 before the listener is live
+          scroller.addEventListener('scroll', onScrollY, { passive: true });
+          state.detachY = () => scroller.removeEventListener('scroll', onScrollY);
+        }
+      }
     }
     document.documentElement.setAttribute('data-lane-open', id);
     history.replaceState(null, '', `#${id}`);
@@ -194,6 +213,8 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     if (!id) return;
     const lane = laneEl(id);
     const finish = () => {
+      state.detachY?.();
+      state.detachY = undefined;
       if (lane) lane.hidden = true;
       document.documentElement.removeAttribute('data-lane-open');
       history.replaceState(null, '', window.location.pathname + window.location.search);
