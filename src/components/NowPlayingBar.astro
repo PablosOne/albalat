@@ -56,6 +56,12 @@ const copy = {
   .np-chip { padding: 0 0.6rem; height: 2rem; border: 1px solid rgba(244,239,231,0.14); font-size: 0.7rem; white-space: nowrap; }
   .np-chip:hover, .np-chip:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
   [data-np-apple][hidden], [data-np-full][hidden] { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #now-playing-bar {
+      transition: none;
+    }
+  }
 </style>
 
 <script>
@@ -68,12 +74,39 @@ const copy = {
     return `${m}:${String(r).padStart(2, '0')}`;
   };
 
+  let copy: Record<string, string> = {};
+  let refreshDynamicCopy: (() => void) | null = null;
+
+  const applyStaticCopy = (bar: HTMLElement) => {
+    bar.setAttribute('aria-label', copy.region ?? '');
+    bar.querySelector('[data-np-seek]')?.setAttribute('aria-label', copy.seek ?? '');
+    const hint = bar.querySelector<HTMLElement>('[data-np-hint]');
+    if (hint) hint.textContent = copy.hint ?? '';
+    bar.querySelector('[data-np-prev]')?.setAttribute('aria-label', copy.prev ?? '');
+    bar.querySelector('[data-np-next]')?.setAttribute('aria-label', copy.next ?? '');
+    const full = bar.querySelector<HTMLElement>('[data-np-full]');
+    if (full) full.textContent = copy.full ?? '';
+    bar.querySelector('[data-np-spotify]')?.setAttribute('aria-label', copy.spotify ?? '');
+    bar.querySelector('[data-np-apple]')?.setAttribute('aria-label', copy.apple ?? '');
+    bar.querySelector('[data-np-close]')?.setAttribute('aria-label', copy.close ?? '');
+  };
+
   const initNowPlayingBar = () => {
     const bar = document.getElementById('now-playing-bar');
-    if (!bar || bar.dataset.bound === 'true') return;
+    if (!bar) return;
+
+    // The bar node is transition:persist'd across client-side navigations, so it is
+    // never re-created. Re-read the current page's locale copy and re-apply it to the
+    // static chrome on every astro:page-load — independent of the one-time listener
+    // binding below — so the bar's labels don't stay stuck in the locale that was
+    // active when the node was first mounted.
+    copy = JSON.parse(bar.dataset.copy || '{}');
+    applyStaticCopy(bar);
+    refreshDynamicCopy?.();
+
+    if (bar.dataset.bound === 'true') return;
     bar.dataset.bound = 'true';
     const engine = getNowPlaying();
-    const copy = JSON.parse(bar.dataset.copy || '{}');
 
     const q = <T extends Element>(sel: string) => bar.querySelector<T>(sel)!;
     const cover = q<HTMLImageElement>('[data-np-cover]');
@@ -114,12 +147,12 @@ const copy = {
       bar.hidden = !s.visible;
       bar.dataset.visible = String(s.visible);
       applyTheme('nowplaying', s.visible && s.track ? s.track.theme : null);
+      toggle.textContent = s.isPaused ? '▶' : '⏸';
+      toggle.setAttribute('aria-label', s.isPaused ? copy.play : copy.pause);
       if (!s.track) return;
       cover.src = s.track.cover;
       cover.alt = s.track.albumTitle;
       title.textContent = `${s.track.title} — ${s.track.albumTitle}`;
-      toggle.textContent = s.isPaused ? '▶' : '⏸';
-      toggle.setAttribute('aria-label', s.isPaused ? copy.play : copy.pause);
       elapsed.textContent = fmt(s.position);
       duration.textContent = fmt(s.duration || 30);
       seek.value = String(s.duration ? Math.round((s.position / s.duration) * 1000) : 0);
@@ -129,6 +162,8 @@ const copy = {
       if (s.track.appleUrl) apple.href = s.track.appleUrl;
       full.hidden = !(s.track.appleEmbed || s.track.spotifyUri);
     };
+
+    refreshDynamicCopy = () => render(engine.getState());
 
     engine.subscribe(render);
     render(engine.getState());
