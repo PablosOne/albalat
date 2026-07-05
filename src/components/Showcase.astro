@@ -1,0 +1,31 @@
+---
+import { getHomePanels, type HomeLocale } from '@/data/site';
+import Panel from './Panel.astro';
+import ShowcaseHUD from './ShowcaseHUD.astro';
+import DetailLane from './DetailLane.astro';
+import AlbumStoryPlayer from './AlbumStoryPlayer.astro';
+import VideoGallery from './VideoGallery.astro';
+import ClassesContent from './content/ClassesContent.astro';
+import { discography } from '@/data/discography';
+import { videos } from '@/data/videos';
+
+interface Props {
+  locale: HomeLocale;
+}
+
+const { locale } = Astro.props;
+const panels = getHomePanels(locale);
+---
+<section class="relative w-full overflow-hidden" aria-label={locale === 'en' ? 'Home' : 'Inicio'} data-showcase>
+  <div class="relative z-10 flex" data-showcase-track style="width: max-content;">
+    {panels.map((panel, i) => <Panel panel={panel} isLast={i === panels.length - 1} />)}
+  </div>
+  {['music', 'videos', 'classes'].map((id) => (
+    <DetailLane id={id} title={panels.find((p) => p.id === id)?.heading ?? id} locale={locale}>
+      {id === 'music'   && <AlbumStoryPlayer albums={discography} locale={locale} />}
+      {id === 'videos'  && <VideoGallery videos={videos} locale={locale} />}
+      {id === 'classes' && <ClassesContent locale={locale} />}
+    </DetailLane>
+  ))}
+  <ShowcaseHUD />
+</section>
