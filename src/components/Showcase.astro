@@ -11,11 +11,13 @@ import { videos } from '@/data/videos';
 
 interface Props {
   locale: HomeLocale;
+  initialDetail?: string | null;
 }
 
-const { locale } = Astro.props;
+const { locale, initialDetail = null } = Astro.props;
 const panels = getHomePanels(locale);
 ---
+{initialDetail && <script is:inline set:html={`document.documentElement.dataset.initialDetail=${JSON.stringify(initialDetail)}`}></script>}
 <section class="relative w-full overflow-hidden" aria-label={locale === 'en' ? 'Home' : 'Inicio'} data-showcase>
   <div class="relative z-10 flex" data-showcase-track style="width: max-content;">
     {panels.map((panel, i) => <Panel panel={panel} isLast={i === panels.length - 1} />)}
