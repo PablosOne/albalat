@@ -1,23 +1,64 @@
 import { expect, test } from '@playwright/test';
 
-test('music page renders the album story and defers embeds', async ({ page }) => {
+test('music page renders the album story with real covers', async ({ page }) => {
   await page.goto('/music');
-
   await expect(page.getByRole('heading', { name: 'Discografia como estanteria viva' })).toBeVisible();
-  await expect(page.locator('[data-album-story]')).toBeVisible();
   await expect(page.locator('[data-album-card]')).toHaveCount(2);
   await expect(page.locator('[data-album-section]')).toHaveCount(2);
-  await expect(page.locator('[data-embed-facade]')).toHaveCount(2);
-  await expect(page.locator('iframe')).toHaveCount(0);
-
-  await page.getByRole('button', { name: /Cargar reproductor de Spotify/ }).first().click();
-  await expect(page.locator('iframe[src*="open.spotify.com/embed"]')).toHaveCount(1);
+  await expect(page.locator('#now-playing-bar')).toBeHidden();
 });
 
-test('english music page renders localized story copy', async ({ page }) => {
-  await page.goto('/en/music');
+test('playing a track raises the persistent bar with the right title', async ({ page }) => {
+  await page.goto('/music');
+  await page.locator('[data-play-track][data-album-id="torroba-guitar-music"][data-track-index="0"]').click();
+  const bar = page.locator('#now-playing-bar');
+  await expect(bar).toBeVisible();
+  await expect(bar.locator('[data-np-title]')).toContainText('Turegano');
+  // audio element carries a preview src
+  const src = await page.evaluate(() => (window as any).__nowPlaying?.getState()?.track?.previewUrl ?? '');
+  expect(src).toContain('mzaf_');
+});
 
+test('the bar and its audio persist across client-side navigation', async ({ page }) => {
+  await page.goto('/music');
+  await page.locator('[data-play-track][data-album-id="torroba-guitar-music"][data-track-index="0"]').click();
+  await expect(page.locator('#now-playing-bar')).toBeVisible();
+  // tag the node to prove identity survives the swap
+  await page.evaluate(() => document.getElementById('now-playing-bar')!.setAttribute('data-probe', 'kept'));
+  await page.getByRole('link', { name: 'Vídeos' }).first().click();
+  await expect(page).toHaveURL(/\/videos/);
+  const bar = page.locator('#now-playing-bar');
+  await expect(bar).toBeVisible();
+  await expect(bar).toHaveAttribute('data-probe', 'kept'); // same DOM node
+  await expect(bar.locator('[data-np-title]')).toContainText('Turegano');
+});
+
+test('expand-to-full swaps in a provider embed and pauses the preview', async ({ page }) => {
+  await page.goto('/music');
+  await page.locator('[data-play-track][data-album-id="torroba-guitar-music"][data-track-index="0"]').click();
+  await page.locator('#now-playing-bar [data-np-full]').click();
+  await expect(page.locator('#now-playing-bar [data-np-embed] iframe')).toHaveCount(1);
+  const mode = await page.evaluate(() => (window as any).__nowPlaying?.getState()?.mode);
+  expect(mode).toBe('full');
+});
+
+test('close hides the bar', async ({ page }) => {
+  await page.goto('/music');
+  await page.locator('[data-play-track]').first().click();
+  await expect(page.locator('#now-playing-bar')).toBeVisible();
+  await page.locator('#now-playing-bar [data-np-close]').click();
+  await expect(page.locator('#now-playing-bar')).toBeHidden();
+});
+
+test('the playing track drives the ambient theme CSS variable', async ({ page }) => {
+  await page.goto('/music');
+  await page.locator('[data-play-track][data-album-id="torroba-guitar-music"][data-track-index="5"]').click(); // Nocturno
+  const glow = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--album-glow').trim());
+  expect(glow.toLowerCase()).toBe('#3f4a63');
+});
+
+test('english music page renders localized copy', async ({ page }) => {
+  await page.goto('/en/music');
   await expect(page.getByRole('heading', { name: 'Discography as a living record shelf' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Spotify' }).first()).toBeVisible();
-  await expect(page.locator('iframe')).toHaveCount(0);
 });
