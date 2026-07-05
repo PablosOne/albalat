@@ -47,10 +47,11 @@ const { locale } = Astro.props;
       import { initScroll } from '@/lib/scroll';
       import { heroEntrance } from '@/lib/motion';
       import { initShowcase } from '@/lib/showcase';
-      import { initAnchorScroll } from '@/lib/anchorScroll';
+      import { initLanes } from '@/lib/lanes';
       import { initSignature } from '@/lib/string';
-      initScroll(); initAnchorScroll();
-      const run = () => { heroEntrance(); initShowcase(); initSignature(); };
+      const initialDetail = document.documentElement.dataset.initialDetail || null;
+      initScroll();
+      const run = () => { heroEntrance(); initShowcase(); initSignature(); initLanes({ initialDetail }); };
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
       else run();
     </script>
