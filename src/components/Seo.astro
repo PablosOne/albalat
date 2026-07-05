@@ -5,7 +5,7 @@ interface Props {
   ogImage?: string;
   jsonLd?: object | object[];
 }
-const { title, description, ogImage = '/images/og.webp', jsonLd } = Astro.props;
+const { title, description, ogImage = '/images/og.jpg', jsonLd } = Astro.props;
 
 const pathname = Astro.url.pathname;
 
@@ -27,11 +27,17 @@ const esURL = new URL(esPath, Astro.site).toString();
 const enURL = new URL(enPath, Astro.site).toString();
 const canonicalURL = new URL(pathname, Astro.site).toString();
 const ogImageURL = new URL(ogImage, Astro.site).toString();
+const ogImageType = ogImage.endsWith('.png')
+  ? 'image/png'
+  : ogImage.endsWith('.webp')
+    ? 'image/webp'
+    : 'image/jpeg';
 
 const ogLocale = isEnglish ? 'en_US' : 'es_ES';
 ---
 <title>{title}</title>
 <meta name="description" content={description} />
+<meta name="author" content="Eulogio Albalat" />
 <link rel="canonical" href={canonicalURL} />
 
 <!-- hreflang alternates -->
@@ -45,6 +51,8 @@ const ogLocale = isEnglish ? 'en_US' : 'es_ES';
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={ogImageURL} />
+<meta property="og:image:secure_url" content={ogImageURL} />
+<meta property="og:image:type" content={ogImageType} />
 <meta property="og:image:alt" content={title} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
