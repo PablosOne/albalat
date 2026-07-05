@@ -7,11 +7,11 @@ test('home renders hero and nav', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Eulogio Albalat' })).toBeVisible();
 });
 
-test('lane switch navigates to About', async ({ page }) => {
+test('About station has no detail lane and stays on home', async ({ page }) => {
   await page.goto('/');
-  await page.locator('[data-showcase-panel-id="about"] a[href="/about"]').click();
-  await expect(page).toHaveURL(/\/about\/?$/);
-  await expect(page.getByRole('heading', { name: 'Eulogio Albalat' })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#about"]').click();
+  await expect(page.locator('[data-showcase-panel-id="about"]')).toBeInViewport();
+  await expect(page.locator('[data-detail-lane]')).toHaveCount(3); // music,videos,classes
 });
 
 test('home nav jumps between horizontal stage stations', async ({ page }) => {
