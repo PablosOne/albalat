@@ -223,6 +223,8 @@ const copy = {
 </style>
 
 <script>
+  let unsubscribeNowPlaying: (() => void) | null = null;
+
   const initAlbumStory = () => {
     document.querySelectorAll<HTMLElement>('[data-album-story]').forEach((root) => {
       if (root.dataset.ready === 'true') return;
@@ -284,7 +286,8 @@ const copy = {
           });
 
           const trackButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-play-track]'));
-          engine.subscribe((s) => {
+          unsubscribeNowPlaying?.();
+          unsubscribeNowPlaying = engine.subscribe((s) => {
             trackButtons.forEach((btn) => {
               const active = !!s.track && btn.dataset.albumId === s.track.albumId
                 && Number(btn.dataset.trackIndex) === s.index && s.visible;
