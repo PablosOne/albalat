@@ -154,8 +154,20 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
   async function openLane(id: string) {
     const lane = laneEl(id);
+    // Same lane already open (or mid-open): no-op instead of restarting the tween.
     if (!lane || state.openId === id) return;
-    state.restoreFocus = document.activeElement as HTMLElement | null;
+    // Capture the trigger before any await touches focus (e.g. via closeLane's
+    // restore-focus step below), so the *new* lane restores focus to the element
+    // that actually opened it, not to whatever closeLane() restored focus to.
+    const trigger = document.activeElement as HTMLElement | null;
+    // A different lane is already open: close it fully before opening this one,
+    // so we never end up with two lanes visible (hidden = false) at once.
+    if (state.openId) await closeLane();
+    // Set synchronously (before the open-tween's `await import('gsap')`) so
+    // closeLane()/onKey's Escape guard and the re-entry guard above see the
+    // correct id immediately, not only after the ~0.7s slide-in finishes.
+    state.openId = id;
+    state.restoreFocus = trigger;
 
     // 1) align the main lane to the station first (so exit restores exactly here)
     scrollToPanel(id);
@@ -171,7 +183,6 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       gsap.fromTo(lane, { yPercent: 100, autoAlpha: 1 },
         { yPercent: 0, duration: LANE_TRANSITION_S, ease: 'power3.out' });
     }
-    state.openId = id;
     document.documentElement.setAttribute('data-lane-open', id);
     history.replaceState(null, '', `#${id}`);
     lane.querySelector<HTMLElement>('[data-detail-heading]')?.focus();
@@ -191,7 +202,16 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     };
     if (lane && isDesktopMotion()) {
       const { gsap } = await import('gsap');
-      gsap.to(lane, { yPercent: 100, duration: LANE_TRANSITION_S, ease: 'power3.in', onComplete: finish });
+      // Await the tween's own completion (not just its kickoff) so callers that
+      // `await closeLane()` before opening a different lane (see openLane above)
+      // see state.openId cleared before they proceed — otherwise finish() would
+      // fire later and clobber the newly-set state.openId back to null.
+      await new Promise<void>((resolve) => {
+        gsap.to(lane, {
+          yPercent: 100, duration: LANE_TRANSITION_S, ease: 'power3.in',
+          onComplete: () => { finish(); resolve(); },
+        });
+      });
     } else {
       finish();
     }
