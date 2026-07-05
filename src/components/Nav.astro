@@ -12,7 +12,6 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const pathname = Astro.url.pathname;
-const isHome = pathname === '/' || pathname === '/en/';
 
 function localizePath(path: string): string {
   if (locale === 'es') return path;
@@ -20,11 +19,11 @@ function localizePath(path: string): string {
 }
 
 const navItems = site.stations
-  .filter((station) => station.kind !== 'hero' && station.href)
+  .filter((station) => station.kind !== 'hero')
   .map((station) => ({
     id: station.id,
     label: t(`nav.${station.id}`),
-    href: isHome ? `#${station.id}` : localizePath(station.href!),
+    href: `#${station.id}`,
   }));
 
 const homeHref = localizePath('/');
@@ -54,21 +53,14 @@ const homeHref = localizePath('/');
   </a>
 
   <div class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-none">
-    {navItems.map((item) => {
-      const isCurrent = pathname === item.href || (item.href !== '/' && pathname.startsWith(`${item.href}/`));
-      return (
-        <a
-          href={item.href}
-          class:list={[
-            'whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-            isCurrent ? 'text-accent' : 'text-ink-muted',
-          ]}
-          aria-current={isCurrent ? 'page' : undefined}
-        >
-          {item.label}
-        </a>
-      );
-    })}
+    {navItems.map((item) => (
+      <a
+        href={item.href}
+        class="whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent text-ink-muted"
+      >
+        {item.label}
+      </a>
+    ))}
   </div>
 
   <LangToggle locale={locale} />

@@ -43,7 +43,7 @@ Baseline commit: 1793a27 (WIP checkpoint of unrelated pre-existing work)
 - Task 1: complete
 - Task 2: complete
 - Task 3: complete
-- Task 4: pending
+- Task 4: complete
 - Task 5: pending
 - Task 6: pending
 - Task 7: pending
@@ -52,6 +52,7 @@ Baseline commit: 1793a27 (WIP checkpoint of unrelated pre-existing work)
 - Task 1: complete (commits ae27196..2b6d609, review clean; minor cosmetic finding: Muneira/Muñeira accent typo, plan-mandated, no fix needed)
 - Task 2: complete (commits 2b6d609..14980c9, review clean; original implementer hit API rate limit mid-task, controller verified+committed its correct fix; minor: unused-ish type alias name, redundant regex branch, both noted not fixed)
 - Task 3: complete (commit 98bcbe4; landed directly by a concurrent session without going through this review process — reviewed retroactively by the cross-scroll controller on 2026-07-05, review clean, minor notes: audio.play() lacks .catch(), a couple of edge cases untested per the brief's own spec)
+- Task 4: complete (commits 1caf123, 981ed0d, 1a754ad; review round 1 found 2 Important issues — no prefers-reduced-motion gating (fixed correctly first try), and stale locale copy after a client-side ClientRouter navigation. The first locale fix (981ed0d) looked plausible but was proven wrong by round-2 review actually reading Astro's swap-functions.js source: transition:persist means the persisted DOM node's own data-copy attribute is never refreshed by Astro's swap, so re-running the refresh function on every page-load just reapplied the same stale value. Round-3 fix (1a754ad) correctly sources locale from document.documentElement.lang (which Astro's swapRootAttributes DOES keep fresh) and embeds the full bilingual dict as a script-scope constant instead of a persisted-node attribute; independently verified against Astro's source and built HTML output, re-reviewed clean. Minor noted: bilingual copy dict now duplicated between Astro frontmatter and client script — not blocking.)
 
 # Cross-Scroll Navigation Progress Ledger
 
@@ -75,11 +76,11 @@ any new overlap with the user before proceeding.
 - Task 4.1: complete
 - Task 4.2: complete
 - Task 5.1: complete
-- Task 5.2: pending
-- Task 6.1: pending
-- Task 6.2: pending
-- Task 7.1: pending
-- Task 7.2: pending
+- Task 5.2: complete
+- Task 6.1: complete
+- Task 6.2: complete
+- Task 7.1: complete
+- Task 7.2: complete
 - Task 8.1: pending
 - Task 9.1: pending
 - Task 9.2: pending
@@ -101,5 +102,11 @@ any new overlap with the user before proceeding.
 - Task 4.1: complete (commit 946288f, review clean)
 - Task 4.2: complete (commits b489d79, 054c9fe; review round 1 found 2 Important issues — classes artifact should be 'signal' not 'fretboard' (another session repointed StationTeaser.astro's map when merging contact into classes), and .station__copy was missing position/z-index/max-width vs the original .station-teaser__copy, risking the artifact painting over text. Both independently verified by controller, fixed, re-reviewed clean. Plan doc also corrected (commit 06d2534) to prevent the same drift in future briefs.)
 - Task 5.1: complete (commit 384c845, review clean; first attempt hit an API rate limit mid-task after correctly writing the RED test, resumed cleanly by a second implementer instance)
+- Task 5.2: complete (commits d759bab, 195989a, 171d0ee; review round 1 found 2 Important race conditions in openLane/closeLane (state.openId set too late; no guard against opening a second lane) — fixed, but the fix itself exposed a new Important issue (no gsap.killTweensOf before tweens, causing visible animation jank on rapid open/close/switch) — fixed in a third commit, re-reviewed clean. One edge case (double-Escape during in-flight close can corrupt a subsequently-opened lane's state) explicitly deferred as a known, tracked, low-likelihood follow-up — NOT fixed, revisit before final ship if e2e testing surfaces it.)
+- CRITICAL FIX (commit d83db99): discovered during Task 6.1's verification — no lane could be opened by ANY click (down-arrow, Nav, HUD) because Astro's <ClientRouter/> (Base.astro <head>) registers its own bubble-phase click listener that runs before lanes.ts's, calls preventDefault() on every same-origin anchor click, and lanes.ts's onClick bailed on e.defaultPrevented before ever checking [data-lane-open]. Fixed by registering lanes.ts's click listener in the capture phase ({capture:true}, matching flag on removeEventListener) + stopPropagation() on the two fully-handled branches. Reviewed clean; reviewer independently read ClientRouter.astro's source to confirm the mechanism and confirmed no regression to modifier-clicks, unrelated anchors, or genuine cross-page navigation. One benign side-note: showcase.desktop.ts's separate revealSoon click listener no longer fires synchronously for lane clicks (still fires via its own scroll-event subscription, since openLane/closeLane call scrollToPanel) — not a defect.
+- Task 6.1: complete (commit 5377217, review clean; existing e2e test "lane switch navigates to About" now fails as an expected side effect of About having no detail lane per the plan — will be rewritten in Task 10.1, not a Stage.astro regression, independently confirmed by reviewer)
+- Task 6.2: complete (commit fd3587e, review clean)
+- Task 7.1: complete (commit 73fedb4, review clean; all 10 routes (5 stations x 2 locales) rewritten to thin <Stage initialDetail> wrappers, SEO frontmatter preserved byte-for-byte, dead code from deleted inline bodies correctly removed, independently verified)
+- Task 7.2: complete (commit 30b8e49, review clean)
 - USER REQUEST 2026-07-05: user asked to also continue the Persistent Music Player plan (docs/superpowers/plans/2026-07-05-persistent-music-player.md) in this same session, interleaved with cross-scroll. Discovered its Task 3 (nowPlaying.ts engine, commit 98bcbe4) was already committed by the other concurrent session but never reviewed under this process — dispatched a review for it retroactively before proceeding to its Task 4.
 - NOTE: shared .superpowers/sdd/task-N-*.md filenames collided with a third concurrent session's own decimal task numbering (its "Task 1.2" report was overwritten by mine). From this point forward, this plan's scratch files use the `xscroll-` prefix (e.g. xscroll-review-*.diff) to avoid further collisions; task-brief/report files for 0.1/0.2/1.1/1.2 remain under the original unprefixed names (already consumed, no longer at risk).
