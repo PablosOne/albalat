@@ -65,6 +65,21 @@ html {
   scrollbar-width: none;
 }
 
+/* Velocity lead/lag lean — additive to the data-parallax-x GSAP tweens.
+   showcase.desktop.ts writes `--lean` (a px value) once per frame from
+   Lenis's reported velocity; this rule turns it into a translateX and lets
+   it ease back to 0 when scrolling stops. GSAP's parallax-x tweens write a
+   full inline `transform` on their own target elements every tick, which
+   would silently clobber this stylesheet rule on the same element — so
+   `data-parallax-lean` is only ever placed on elements that do NOT also
+   carry `data-parallax-x` (see Station.astro's `.station__artifact-lean`
+   inner-wrapper pattern for the case where both effects are wanted on the
+   same visual element). */
+[data-parallax-lean] {
+  transform: translateX(var(--lean, 0));
+  transition: transform 0.35s ease-out;
+}
+
 [data-showcase]::-webkit-scrollbar {
   display: none;
 }
@@ -312,8 +327,13 @@ html {
   }
 
   .hud-nav__link,
-  .station-teaser__cta::after {
+  .station-teaser__cta::after,
+  [data-parallax-lean] {
     transition: none;
+  }
+
+  [data-parallax-lean] {
+    transform: none;
   }
 }
 

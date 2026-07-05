@@ -1,6 +1,11 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { buildShowcaseGeometry, SHOWCASE_PARALLAX_GLOBAL_SCALE } from '@/lib/config';
+import {
+  buildShowcaseGeometry,
+  SHOWCASE_PARALLAX_GLOBAL_SCALE,
+  LANE_VELOCITY_LEAN_MAX_PX,
+  LANE_VELOCITY_LEAN_FACTOR,
+} from '@/lib/config';
 import { revealPanel, revealProblemCard } from '@/lib/motion';
 
 /**
@@ -197,6 +202,26 @@ export function initShowcaseDesktop(
     });
   });
 
+  // ─── Velocity lead/lag lean ─────────────────────────────────────────────
+  // Additive to the parallax-x tweens above: elements marked
+  // `data-parallax-lean` get a subtle `--lean` CSS custom property driven by
+  // Lenis's *reported velocity* (not scroll position), so they lean toward
+  // the travel direction while panning fast and settle back to 0 (via the
+  // CSS transition in global.css) once scrolling stops. Deliberately reads
+  // `window.__lenis` once per frame and writes only a custom property —
+  // no layout reads, so this can't introduce forced-reflow jank.
+  const leanEls = Array.from(document.querySelectorAll<HTMLElement>('[data-parallax-lean]'));
+  let leanRaf = 0;
+  const leanTick = () => {
+    const lenis = (window as unknown as { __lenis?: { velocity?: number } }).__lenis;
+    const v = lenis?.velocity ?? 0;
+    const lean = Math.max(-LANE_VELOCITY_LEAN_MAX_PX,
+      Math.min(LANE_VELOCITY_LEAN_MAX_PX, v * LANE_VELOCITY_LEAN_FACTOR));
+    leanEls.forEach((el, i) => { el.style.setProperty('--lean', `${lean * (1 + i % 3 * 0.15)}px`); });
+    leanRaf = requestAnimationFrame(leanTick);
+  };
+  if (leanEls.length) leanRaf = requestAnimationFrame(leanTick);
+
   const progressEl = document.querySelector<HTMLElement>('[data-hud-progress]');
   const hudTrigger = ScrollTrigger.create({
     trigger: section,
@@ -215,6 +240,7 @@ export function initShowcaseDesktop(
     aboutHeadlineTween?.scrollTrigger?.kill();
     aboutHeadlineTween?.kill();
     parallaxTweens.forEach(t => { t.scrollTrigger?.kill(); t.kill(); });
+    if (leanRaf) cancelAnimationFrame(leanRaf);
     hudTrigger.kill();
     window.removeEventListener('hashchange', revealSoon);
     window.removeEventListener('scroll', revealSoon);

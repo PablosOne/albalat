@@ -28,11 +28,13 @@ const openLabel = locale === 'en' ? `Open ${station.heading.en} details` : `Abri
   <div class="station group relative flex w-full flex-col justify-center gap-6 text-ink" data-station-title={station.heading[locale]} data-station-kind={station.id}>
     <div class="station__wash" data-parallax-x="-0.16" aria-hidden="true"></div>
     <div class:list={['station__artifact', `station__artifact--${artifact}`]} data-parallax-x="0.28" aria-hidden="true">
-      {Array.from({ length: 4 }).map(() => <span></span>)}
+      <div class="station__artifact-lean" data-parallax-lean>
+        {Array.from({ length: 4 }).map(() => <span></span>)}
+      </div>
     </div>
     <div class="station__copy" data-parallax-x="-0.06">
       <span data-reveal="heading" data-text-reveal-preset="label" class="station__number">{String(Math.max(num,1)).padStart(2,'0')}</span>
-      <h2 data-reveal="heading" data-text-reveal-preset="headline" class="station__heading font-display font-light tracking-tight">{station.heading[locale]}</h2>
+      <h2 data-reveal="heading" data-text-reveal-preset="headline" data-parallax-lean class="station__heading font-display font-light tracking-tight">{station.heading[locale]}</h2>
       {station.tagline && <p data-reveal="body" class="font-sans text-lg md:text-xl text-ink-muted max-w-prose">{station.tagline[locale]}</p>}
     </div>
     {station.detail && (
@@ -76,6 +78,18 @@ const openLabel = locale === 'en' ? `Open ${station.heading.en} details` : `Abri
     aspect-ratio: 1;
     opacity: 0.56;
     transform: translateY(-50%);
+  }
+
+  /* `.station__artifact` already carries the GSAP `data-parallax-x` scrub,
+     which writes its own inline `transform` every tick — an inline style
+     would silently clobber the `[data-parallax-lean]` CSS-var-based
+     translateX rule if applied to the same element. So the velocity lean
+     lives on this inner wrapper instead: `inset: 0` inside the (already
+     positioned) `.station__artifact` reproduces the exact same box, so the
+     artifact's absolutely-positioned spans are unaffected. */
+  .station__artifact-lean {
+    position: absolute;
+    inset: 0;
   }
 
   .station__artifact span {
