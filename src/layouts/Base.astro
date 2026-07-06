@@ -13,6 +13,7 @@ interface Props {
   jsonLd?: object | object[];
 }
 const { locale } = Astro.props;
+const gaId = import.meta.env.PUBLIC_GA_ID ?? '';
 ---
 <!doctype html>
 <html lang={locale}>
@@ -36,6 +37,34 @@ const { locale } = Astro.props;
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geist-Regular.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geist-Medium.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Geist-SemiBold.woff2" />
+
+    <!-- Google Analytics (loads only when GA ID is set) -->
+    {gaId && (
+      <>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+        <script is:inline define:vars={{ gaId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag() { dataLayer.push(arguments); }
+          gtag('js', new Date());
+
+          let lastPagePath = '';
+          const sendPageView = () => {
+            const pagePath = window.location.pathname + window.location.search;
+            if (pagePath === lastPagePath) return;
+            lastPagePath = pagePath;
+            gtag('config', gaId, {
+              page_path: pagePath,
+              page_location: window.location.href,
+              page_title: document.title,
+            });
+          };
+
+          sendPageView();
+          document.addEventListener('astro:page-load', sendPageView);
+        </script>
+      </>
+    )}
 
     <!-- Cloudflare Web Analytics (loads only when a beacon token is set) -->
     {import.meta.env.PUBLIC_CF_BEACON && (

@@ -91,6 +91,7 @@ export const site = {
     { label: 'Email', href: 'mailto:hello@eulogioalbalat.com' },
     { label: 'YouTube', href: 'https://www.youtube.com/c/EulogioAlbalat' },
     { label: 'Spotify', href: 'https://open.spotify.com/artist/2WrurcoEYPTTdAqWX2ulpe' },
+    { label: 'Apple Music', href: 'https://music.apple.com/us/artist/eulogio-albalat/1849308945' },
   ],
 
   about: {
@@ -211,6 +212,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
   const email = site.socials.find((social) => social.label === 'Email')?.href ?? 'mailto:hello@eulogioalbalat.com';
   const youtube = site.socials.find((social) => social.label === 'YouTube')?.href ?? '/videos';
   const spotify = site.socials.find((social) => social.label === 'Spotify')?.href ?? '/music';
+  const appleMusic = site.socials.find((social) => social.label === 'Apple Music')?.href ?? '/music';
 
   return [
     {
@@ -326,6 +328,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         { label: email.replace('mailto:', ''), href: email },
         { label: 'YouTube', href: youtube },
         { label: 'Spotify', href: spotify },
+        { label: 'Apple Music', href: appleMusic },
       ],
       visual: { kind: 'minimal' },
     },

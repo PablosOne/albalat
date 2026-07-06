@@ -10,6 +10,8 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const pathname = Astro.url.pathname;
 const isEnglishPath = pathname === '/en' || pathname.startsWith('/en/');
+const nextLocale = isEnglishPath ? 'ES' : 'EN';
+const flagLabel = isEnglishPath ? 'ES' : 'GB';
 
 let href: string;
 if (isEnglishPath) {
@@ -20,8 +22,90 @@ if (isEnglishPath) {
 ---
 <a
   href={href}
-  class="text-[var(--color-fg)] hover:underline underline-offset-4 decoration-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
+  class="lang-toggle"
   aria-label={t('a11y.toggleLang')}
 >
-  {t('a11y.toggleLang')}
+  <span class:list={['lang-toggle__flag', isEnglishPath ? 'lang-toggle__flag--es' : 'lang-toggle__flag--en']} aria-hidden="true">
+    <span>{flagLabel}</span>
+  </span>
+  <span class="lang-toggle__text">{nextLocale}</span>
 </a>
+
+<style>
+  .lang-toggle {
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--color-fg) 22%, transparent);
+    border-radius: 999px;
+    color: var(--color-fg);
+    display: inline-flex;
+    gap: 0.45rem;
+    min-height: 2rem;
+    padding: 0.2rem 0.55rem 0.2rem 0.25rem;
+    text-decoration: none;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .lang-toggle:hover,
+  .lang-toggle:focus-visible {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .lang-toggle__flag {
+    align-items: center;
+    border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+    border-radius: 999px;
+    display: inline-flex;
+    height: 1.45rem;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    width: 1.45rem;
+  }
+
+  .lang-toggle__flag::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.82;
+  }
+
+  .lang-toggle__flag--en::before {
+    background:
+      linear-gradient(90deg, transparent 42%, currentColor 42% 58%, transparent 58%),
+      linear-gradient(0deg, transparent 42%, currentColor 42% 58%, transparent 58%),
+      linear-gradient(135deg, transparent 45%, currentColor 45% 55%, transparent 55%),
+      linear-gradient(45deg, transparent 45%, currentColor 45% 55%, transparent 55%);
+  }
+
+  .lang-toggle__flag--es::before {
+    background:
+      linear-gradient(180deg, currentColor 0 27%, transparent 27% 73%, currentColor 73% 100%),
+      linear-gradient(90deg, transparent 0 38%, currentColor 38% 48%, transparent 48% 100%);
+  }
+
+  .lang-toggle__flag span {
+    font-family: var(--font-mono);
+    font-size: 0.45rem;
+    letter-spacing: 0;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .lang-toggle__text {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    line-height: 1;
+  }
+
+  @media (max-width: 767px) {
+    .lang-toggle {
+      min-height: 2.1rem;
+    }
+  }
+</style>
