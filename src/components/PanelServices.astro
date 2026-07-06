@@ -1,0 +1,104 @@
+---
+import type { Panel } from '@/data/site';
+import { HEADING_HIGHLIGHT_COLOR } from '@/lib/textHighlight';
+import TextReveal from './TextReveal.astro';
+
+interface Props {
+  panel: Panel;
+}
+
+const { panel } = Astro.props;
+---
+<div class="services-panel grid grid-cols-12 gap-8 w-full max-w-[1600px] mx-auto items-center">
+  <div class="col-span-12 lg:col-span-10 min-w-0">
+    {panel.subheading && <TextReveal as="p" text={panel.subheading} class="text-label text-[var(--color-muted)] mb-4" reveal="heading" mode="block" preset="label" />}
+    <TextReveal as="h2" text={panel.heading} highlight={panel.headingHighlight} highlightColor={HEADING_HIGHLIGHT_COLOR} class="services-heading text-display-xl font-display mb-8" reveal="heading" mode="words" preset="headline" />
+    {panel.body.length > 0 && (
+      <div class="text-body-xl max-w-[60ch] mb-12 text-[var(--color-muted)]">
+        {panel.body.map((paragraph) => <TextReveal as="p" text={paragraph} class="mb-4" reveal="body" mode="phrases" preset="body" />)}
+      </div>
+    )}
+    {panel.bullets && (
+      <ul class="services-list flex flex-col">
+        {panel.bullets.map((bullet, i) => (
+          <li
+            class={`services-item flex items-baseline gap-6 py-4 ${i > 0 ? 'border-t border-[var(--color-fg)]/15' : ''}`}
+            data-reveal="body"
+            data-text-reveal="block"
+            data-text-reveal-preset="body"
+          >
+            <span class="text-label text-[var(--color-muted)] w-12 shrink-0">/{String(i + 1).padStart(2, '0')}</span>
+            <span class="services-bullet-text text-display-l font-display">{bullet}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+    {panel.links && (
+      <div class="services-links mt-12 flex gap-6 text-label">
+        {panel.links.map((link) => (
+          <a
+            href={link.href}
+            target={link.href.startsWith('http') ? '_blank' : undefined}
+            rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+            class="underline decoration-1 underline-offset-4 hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
+            data-reveal="cta"
+            data-text-reveal="block"
+            data-text-reveal-preset="label"
+          >
+            {link.label} -&gt;
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
+<style>
+  .services-panel {
+    min-width: 0;
+  }
+
+  .services-heading,
+  .services-bullet-text {
+    letter-spacing: 0;
+  }
+
+  .services-bullet-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 767px) {
+    .services-panel {
+      max-width: 100%;
+    }
+
+    .services-heading {
+      font-size: clamp(2rem, 9.5vw, 2.6rem);
+      line-height: 0.98;
+      max-width: 100%;
+      margin-bottom: 1.5rem;
+    }
+
+    .services-list {
+      width: 100%;
+    }
+
+    .services-item {
+      align-items: flex-start;
+      gap: 1rem;
+      padding-block: 1rem;
+    }
+
+    .services-bullet-text {
+      font-size: clamp(1.65rem, 7.6vw, 2.25rem);
+      line-height: 1;
+    }
+
+    .services-links {
+      flex-wrap: wrap;
+      gap: 1rem 1.5rem;
+      margin-top: 2.25rem;
+    }
+  }
+</style>

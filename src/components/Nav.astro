@@ -12,6 +12,10 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const pathname = Astro.url.pathname;
+const isHome = pathname === '/' || pathname === '/en/';
+const toolbarAttrs = isHome
+  ? { 'data-toolbar': true, style: 'opacity: 0; clip-path: inset(0% 0% 100% 0%)' }
+  : {};
 
 function localizePath(path: string): string {
   if (locale === 'es') return path;
@@ -38,30 +42,57 @@ const homeHref = localizePath('/');
 <Wordmark />
 
 <nav
-  class="fixed left-1/2 top-4 z-50 flex w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 items-center justify-between gap-3 rounded-full border border-ink/10 bg-stage/70 px-3 py-2 shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-md md:top-5 md:w-auto md:max-w-none md:px-4"
+  {...toolbarAttrs}
+  class="nav-bar fixed top-0 inset-x-0 md:top-6 md:inset-x-auto md:right-6 md:left-auto z-50 md:mix-blend-difference"
   aria-label={t('nav.home')}
 >
-  <a
-    href={homeHref}
-    class:list={[
-      'hidden rounded-full px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:inline-flex',
-      pathname === homeHref ? 'text-accent' : 'text-ink-muted',
-    ]}
-    aria-current={pathname === homeHref ? 'page' : undefined}
-  >
-    {t('nav.home')}
-  </a>
-
-  <div class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-none">
-    {navItems.map((item) => (
+  <ul class="nav-bar__list flex items-center justify-start md:justify-end gap-6 md:gap-6 text-label py-4 md:py-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <li>
       <a
-        href={item.href}
-        class="whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium uppercase tracking-wide transition-colors duration-200 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent text-ink-muted"
+        href={homeHref}
+        class:list={[
+          'text-[var(--color-fg)] hover:underline underline-offset-4 decoration-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm',
+          pathname === homeHref ? 'text-[var(--color-accent)]' : '',
+        ]}
+        aria-current={pathname === homeHref ? 'page' : undefined}
       >
-        {item.label}
+        {t('nav.home')}
       </a>
+    </li>
+    {navItems.map((item) => (
+      <li>
+        <a
+          href={item.href}
+          class="whitespace-nowrap text-[var(--color-fg)] hover:underline underline-offset-4 decoration-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
+        >
+          {item.label}
+        </a>
+      </li>
     ))}
-  </div>
-
-  <LangToggle locale={locale} />
+    <li class="shrink-0">
+      <LangToggle locale={locale} />
+    </li>
+  </ul>
 </nav>
+
+<style>
+  @media (max-width: 767px) {
+    .nav-bar {
+      background: rgba(11, 10, 9, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      min-height: 3.5rem;
+    }
+
+    .nav-bar__list {
+      width: 100%;
+      min-height: 3.5rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .nav-bar__list li:first-child {
+      display: none;
+    }
+  }
+</style>

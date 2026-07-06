@@ -1,0 +1,99 @@
+---
+import type { Panel as PanelType } from '@/data/site';
+import {
+  getPanelGapAfter,
+  getPanelPadding,
+  getPanelScrollWeight,
+  SHOWCASE_PANEL_MAX_WIDTH_PX,
+} from '@/lib/config';
+import PanelHero from './PanelHero.astro';
+import PanelAbout from './PanelAbout.astro';
+import PanelPhoto from './PanelPhoto.astro';
+import PanelServices from './PanelServices.astro';
+import PanelMinimal from './PanelMinimal.astro';
+import PanelSeparator from './PanelSeparator.astro';
+import PanelCard from './PanelCard.astro';
+
+interface Props {
+  panel: PanelType;
+  isLast?: boolean;
+}
+
+const { panel, isLast = false } = Astro.props;
+const isHero = panel.id === 'hero';
+const layerClass = isHero
+  ? 'z-40 bg-[var(--color-bg)]'
+  : panel.id === 'about'
+    ? 'z-20 bg-[var(--color-bg)]'
+    : 'z-40 bg-[var(--color-bg)]';
+
+const scrollWeight = getPanelScrollWeight(panel.visual.kind, 'md', panel.id);
+const widthVw = scrollWeight * 100;
+const widthCss = isHero
+  ? `${widthVw}vw`
+  : `calc(${scrollWeight} * min(100vw, ${SHOWCASE_PANEL_MAX_WIDTH_PX}px))`;
+const gapPx = isLast ? 0 : getPanelGapAfter(panel.id);
+const padPx = getPanelPadding(panel.id);
+const styleAttr = [
+  `width: ${widthCss}`,
+  gapPx > 0 ? `margin-right: ${gapPx}px` : null,
+  `padding-left: ${padPx}px`,
+  `padding-right: ${padPx}px`,
+  panel.accent ? `--color-accent: ${panel.accent}` : null,
+].filter(Boolean).join('; ');
+---
+<article
+  class:list={['relative h-dvh flex-shrink-0 flex items-center', layerClass]}
+  id={panel.id}
+  data-showcase-panel
+  data-showcase-panel-id={panel.id}
+  data-showcase-panel-index={panel.index}
+  data-showcase-panel-kind={panel.visual.kind}
+  data-showcase-panel-weight={scrollWeight}
+  data-showcase-panel-gap-after-px={gapPx}
+  style={styleAttr}
+>
+  {panel.visual.kind === 'hero' && <PanelHero panel={panel} />}
+  {panel.visual.kind === 'about' && <PanelAbout panel={panel} />}
+  {panel.visual.kind === 'photo' && <PanelPhoto panel={panel} />}
+  {panel.visual.kind === 'services' && <PanelServices panel={panel} />}
+  {panel.visual.kind === 'minimal' && <PanelMinimal panel={panel} />}
+  {panel.visual.kind === 'separator' && <PanelSeparator panel={panel} />}
+  {panel.visual.kind === 'card' && <PanelCard panel={panel} />}
+  {!isLast && panel.id !== 'hero' && panel.id !== 'contact' && panel.visual.kind !== 'separator' && (
+    <button type="button" class="gfdu-mobile-next" data-mobile-next aria-label="Scroll to next section">
+      <span aria-hidden="true">↓</span>
+    </button>
+  )}
+</article>
+
+<script>
+  if (!(window as any).__gfduMobileNextBound) {
+    (window as any).__gfduMobileNextBound = true;
+
+    const flagScrolled = () => {
+      document.documentElement.setAttribute('data-user-scrolled', '');
+      window.removeEventListener('scroll', flagScrolled);
+      window.removeEventListener('touchmove', flagScrolled);
+      window.removeEventListener('wheel', flagScrolled);
+    };
+    window.addEventListener('scroll', flagScrolled, { passive: true });
+    window.addEventListener('touchmove', flagScrolled, { passive: true });
+    window.addEventListener('wheel', flagScrolled, { passive: true });
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null;
+      const btn = target?.closest('[data-mobile-next]') as HTMLElement | null;
+      if (!btn) return;
+      const panel = btn.closest('[data-showcase-panel]');
+      const next = panel?.nextElementSibling as HTMLElement | null;
+      if (!next) return;
+      e.preventDefault();
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const nav = document.querySelector('nav') as HTMLElement | null;
+      const navOffset = (nav ? nav.getBoundingClientRect().height : 56) + 8;
+      const top = next.getBoundingClientRect().top + window.scrollY - navOffset;
+      window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
+    });
+  }
+</script>

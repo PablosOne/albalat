@@ -1,0 +1,45 @@
+---
+import type { Panel } from '@/data/site';
+import TextReveal from './TextReveal.astro';
+
+interface Props {
+  panel: Panel;
+}
+
+const { panel } = Astro.props;
+---
+<div class="relative w-full h-full">
+  {panel.visual.image && (
+    <div class="absolute top-14 md:top-16 inset-x-4 md:inset-x-8 bottom-4 md:bottom-8 overflow-hidden rounded-2xl md:rounded-3xl bg-[var(--color-bg)]">
+      <img src={panel.visual.image} alt={panel.visual.imageAlt ?? ''} class="absolute inset-0 w-full h-full object-cover opacity-55" />
+      <div class="absolute inset-0 bg-gradient-to-r from-[var(--color-bg)] via-[var(--color-bg)]/72 to-transparent pointer-events-none" aria-hidden="true"></div>
+    </div>
+  )}
+  <div class="relative z-10 h-full flex flex-col justify-center max-w-[1600px] mx-auto px-6 md:px-16">
+    <TextReveal as="p" text={[panel.role, panel.dates].filter(Boolean).join(' · ')} class="text-label text-[var(--color-muted)] mb-4" reveal="heading" mode="block" preset="label" />
+    <TextReveal as="h2" text={panel.heading} class="text-display-l font-display mb-8" reveal="heading" mode="words" preset="headline" />
+    {panel.subheading && (
+      <TextReveal as="p" text={panel.subheading} class="text-body-xl max-w-[34ch] text-[var(--color-fg)] mb-6" reveal="heading" mode="phrases" preset="body" />
+    )}
+    <div class="text-body-xl max-w-[52ch] text-[var(--color-muted)]">
+      {panel.body.map((paragraph) => <TextReveal as="p" text={paragraph} class="mb-4" reveal="body" mode="phrases" preset="body" />)}
+    </div>
+    {panel.links && (
+      <div class="mt-8 flex flex-wrap gap-5 text-label">
+        {panel.links.map((link) => (
+          <a
+            href={link.href}
+            target={link.href.startsWith('http') ? '_blank' : undefined}
+            rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+            class="underline decoration-1 underline-offset-4 hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
+            data-reveal="cta"
+            data-text-reveal="block"
+            data-text-reveal-preset="label"
+          >
+            {link.label} -&gt;
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</div>

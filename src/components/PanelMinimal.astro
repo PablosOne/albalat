@@ -1,0 +1,260 @@
+---
+import type { Panel } from '@/data/site';
+import { site } from '@/data/site';
+import TextReveal from './TextReveal.astro';
+
+interface Props {
+  panel: Panel;
+}
+
+const { panel } = Astro.props;
+const mailLink = panel.links?.find((link) => link.href.startsWith('mailto:'));
+const otherLinks = panel.links?.filter((link) => !link.href.startsWith('mailto:')) ?? [];
+const web3formsKey = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
+const mailCharCount = mailLink?.label.length ?? 1;
+const normalizedHeading = panel.heading?.trim().toLowerCase();
+const isEn = normalizedHeading === 'contact' || normalizedHeading === 'contact.';
+const copy = isEn
+  ? {
+      name: 'Name',
+      namePlaceholder: 'Your name',
+      email: 'Email',
+      message: 'Message',
+      messagePlaceholder: 'Private class, concert proposal, or general inquiry.',
+      submit: 'Send ->',
+      sending: 'Sending...',
+      successTitle: 'Message sent.',
+      successText: 'Thank you. Your inquiry has been sent.',
+      error: 'Something went wrong. You can write directly by email.',
+      unavailable: 'The form will be active once Web3Forms is configured. Direct email remains available.',
+      required: 'Please complete the required fields before sending.',
+      subject: `New inquiry from ${site.fullName}`,
+    }
+  : {
+      name: 'Nombre',
+      namePlaceholder: 'Tu nombre',
+      email: 'Email',
+      message: 'Mensaje',
+      messagePlaceholder: 'Clase privada, propuesta de concierto o consulta general.',
+      submit: 'Enviar ->',
+      sending: 'Enviando...',
+      successTitle: 'Mensaje enviado.',
+      successText: 'Gracias. La consulta se ha enviado correctamente.',
+      error: 'No se ha podido enviar el formulario. Puedes escribir directamente por email.',
+      unavailable: 'El formulario se activara al configurar Web3Forms. El email directo sigue disponible.',
+      required: 'Completa los campos obligatorios antes de enviar.',
+      subject: `Nueva consulta desde ${site.fullName}`,
+    };
+---
+<div class="w-full max-w-[1600px] mx-auto grid grid-cols-12 gap-8 lg:gap-16 items-center">
+  <div class="contact-intro col-span-12 lg:col-span-6 flex flex-col justify-between gap-10">
+    <TextReveal as="h2" text={panel.heading} class="text-display-xl font-display" reveal="heading" mode="words" preset="headline" />
+    {mailLink && (
+      <a
+        href={mailLink.href}
+        class="contact-email font-display underline decoration-1 underline-offset-[0.15em] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
+        style={`--mail-chars: ${mailCharCount};`}
+        data-reveal="heading"
+      >
+        {mailLink.label}
+      </a>
+    )}
+    {otherLinks.length > 0 && (
+      <ul class="contact-external-links flex flex-col gap-3" data-reveal="heading">
+        {otherLinks.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              target={link.href.startsWith('http') ? '_blank' : undefined}
+              rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+              class="inline-flex text-label text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
+            >
+              {link.label} -&gt;
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+
+  <div class="contact-form-column col-span-12 lg:col-span-6" data-reveal="body">
+    <form
+      class="contact-form flex flex-col gap-5"
+      action="https://api.web3forms.com/submit"
+      method="POST"
+      novalidate
+      data-contact-form
+      data-success={copy.successText}
+      data-error={copy.error}
+      data-required={copy.required}
+    >
+      <input type="hidden" name="access_key" value={web3formsKey} />
+      <input type="hidden" name="subject" value={copy.subject} />
+      <input type="hidden" name="from_name" value={site.fullName} />
+      <input type="hidden" name="inquiry_type" value={isEn ? 'General inquiry' : 'Consulta general'} />
+      <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off" />
+
+      <label class="contact-field">
+        <span>{copy.name}</span>
+        <input required type="text" name="name" autocomplete="name" placeholder={copy.namePlaceholder} />
+      </label>
+
+      <label class="contact-field">
+        <span>{copy.email}</span>
+        <input required type="email" name="email" autocomplete="email" placeholder="you@example.com" />
+      </label>
+
+      <label class="contact-field">
+        <span>{copy.message}</span>
+        <textarea required name="message" rows="3" placeholder={copy.messagePlaceholder}></textarea>
+      </label>
+
+      <div class="flex flex-wrap items-center gap-6 pt-2">
+        <button
+          type="submit"
+          class="text-label border border-[var(--color-fg)] px-6 py-3 text-[var(--color-fg)] transition-colors hover:bg-[var(--color-fg)] hover:text-[var(--color-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!web3formsKey}
+          data-submit-label={copy.submit}
+          data-sending-label={copy.sending}
+        >
+          {copy.submit}
+        </button>
+        <p class="min-h-6 text-label text-[var(--color-muted)]" data-form-status role="alert">
+          {!web3formsKey ? copy.unavailable : ''}
+        </p>
+      </div>
+    </form>
+
+    <div class="contact-success hidden" data-form-success role="status">
+      <p class="text-display-l font-display leading-none">{copy.successTitle}</p>
+      <span class="mt-6 block text-label text-[var(--color-muted)]">{copy.successText}</span>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  document.querySelectorAll('[data-contact-form]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const formEl = event.currentTarget;
+      if (!(formEl instanceof HTMLFormElement)) return;
+
+      const status = formEl.querySelector('[data-form-status]');
+      const button = formEl.querySelector('button[type="submit"]');
+      const success = formEl.nextElementSibling;
+      if (!(button instanceof HTMLButtonElement)) return;
+
+      if (!formEl.checkValidity()) {
+        formEl.reportValidity();
+        if (status) status.textContent = formEl.dataset.required || '';
+        return;
+      }
+
+      const submitLabel = button.dataset.submitLabel || button.textContent || '';
+      button.disabled = true;
+      button.textContent = button.dataset.sendingLabel || submitLabel;
+      if (status) status.textContent = '';
+
+      try {
+        const response = await fetch(formEl.action, {
+          method: 'POST',
+          body: new FormData(formEl),
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) throw new Error('Form submission failed');
+
+        const json = await response.json().catch(() => ({ success: true }));
+        if (json && json.success === false) throw new Error('Form submission failed');
+
+        formEl.classList.add('hidden');
+        if (success instanceof HTMLElement && success.matches('[data-form-success]')) {
+          success.classList.remove('hidden');
+        }
+      } catch {
+        if (status) status.textContent = formEl.dataset.error || '';
+        button.disabled = false;
+        button.textContent = submitLabel;
+      }
+    });
+  });
+</script>
+
+<style>
+  .contact-email {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+    line-height: 0.95;
+    letter-spacing: 0;
+    font-size: min(var(--fs-display-l), calc(100vw / (var(--mail-chars) * 0.68)));
+  }
+
+  .contact-field {
+    display: grid;
+    gap: 0.45rem;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.04em;
+    line-height: 1.55;
+    text-transform: uppercase;
+  }
+
+  .contact-field input,
+  .contact-field textarea {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body-m);
+    letter-spacing: 0;
+    line-height: 1.5;
+    outline: none;
+    padding: 0.5rem 0 0.7rem;
+    resize: vertical;
+    text-transform: none;
+    transition: border-color 180ms ease;
+  }
+
+  .contact-field input::placeholder,
+  .contact-field textarea::placeholder {
+    color: color-mix(in srgb, var(--color-muted) 32%, transparent);
+  }
+
+  .contact-field input:focus,
+  .contact-field textarea:focus {
+    border-color: var(--color-fg);
+  }
+
+  @media (max-width: 767px) {
+    .contact-intro {
+      display: block;
+    }
+
+    .contact-email {
+      margin-top: 0.15em;
+      font-size: min(3rem, calc((100vw - 3rem) / (var(--mail-chars) * 0.62)));
+    }
+
+    .contact-external-links {
+      display: none;
+    }
+
+    .contact-form-column {
+      margin-top: 1.75rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .contact-email {
+      font-size: min(var(--fs-display-l), calc(50vw / (var(--mail-chars) * 0.72)));
+    }
+  }
+</style>

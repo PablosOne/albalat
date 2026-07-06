@@ -1,0 +1,199 @@
+---
+import type { Panel } from '@/data/site';
+import { resolveAccent } from '@/lib/panelWash';
+
+interface Props {
+  panel: Panel;
+}
+
+const { panel } = Astro.props;
+const accent = resolveAccent(panel.accent);
+const text = (panel.tagline ?? panel.heading ?? '').trim();
+const highlight = (panel.taglineHighlight ?? '').trim();
+const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+
+function splitLine(line: string) {
+  const i = highlight ? line.indexOf(highlight) : -1;
+  if (i < 0) return { prefix: line, middle: '', suffix: '' };
+  return {
+    prefix: line.slice(0, i),
+    middle: highlight,
+    suffix: line.slice(i + highlight.length),
+  };
+}
+
+const lastIdx = lines.length - 1;
+---
+<div
+  class="separator-stage w-full"
+  data-reveal="heading"
+  data-text-reveal="block"
+  data-text-reveal-preset="headline"
+  style={`--accent: ${accent};`}
+  data-separator-container
+>
+  <h2 class="separator-heading text-display-l md:text-display-xl font-display leading-[1.05]">
+    {lines.map((line, i) => {
+      const { prefix, middle, suffix } = splitLine(line);
+      const isLast = i === lastIdx;
+      return (
+        <div class:list={['separator-line', isLast && 'separator-line--last']}>
+          <span class="separator-text">
+            {middle ? <>{prefix}<span style={`color: ${accent};`}>{middle}</span>{suffix}</> : prefix}
+          </span>
+          {isLast && (
+            <span class="separator-arrows" aria-hidden="true">
+              <span class="arrow arrow--1">→</span>
+              <span class="arrow arrow--2">→</span>
+              <span class="arrow arrow--3">→</span>
+            </span>
+          )}
+        </div>
+      );
+    })}
+  </h2>
+</div>
+
+<style>
+  .separator-stage {
+    container-type: inline-size;
+  }
+
+  .separator-heading {
+    letter-spacing: 0;
+    font-size: clamp(3.5rem, 7cqw, 6.5rem);
+  }
+
+  .separator-line {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: baseline;
+    column-gap: 1.5rem;
+    width: max-content;
+    max-width: none;
+  }
+
+  .separator-text {
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .separator-arrows {
+    position: relative;
+    display: inline-flex;
+    width: 156px;
+    height: 88px;
+    flex-shrink: 0;
+    color: var(--color-fg);
+    align-self: baseline;
+    transform: translateY(34%);
+  }
+
+  .arrow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 88px;
+    height: 88px;
+    font-family: var(--font-mono);
+    font-size: 4rem;
+    line-height: 1;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  .arrow--1 { --tx: 0px; --peak: 1; }
+  .arrow--2 { --tx: 32px; --peak: 0.45; }
+  .arrow--3 { --tx: 64px; --peak: 0.22; }
+
+  @keyframes separator-arrow-lead {
+    0% { opacity: 0; transform: translateX(-16px); }
+    32% { opacity: var(--peak); transform: translateX(var(--tx)); }
+    88% { opacity: var(--peak); transform: translateX(var(--tx)); }
+    100% { opacity: 0; transform: translateX(var(--tx)); }
+  }
+
+  @keyframes separator-arrow-trail-2 {
+    0%, 12% { opacity: 0; transform: translateX(0); }
+    44% { opacity: var(--peak); transform: translateX(var(--tx)); }
+    88% { opacity: var(--peak); transform: translateX(var(--tx)); }
+    100% { opacity: 0; transform: translateX(var(--tx)); }
+  }
+
+  @keyframes separator-arrow-trail-3 {
+    0%, 24% { opacity: 0; transform: translateX(0); }
+    56% { opacity: var(--peak); transform: translateX(var(--tx)); }
+    88% { opacity: var(--peak); transform: translateX(var(--tx)); }
+    100% { opacity: 0; transform: translateX(var(--tx)); }
+  }
+
+  .arrow--1 { animation: separator-arrow-lead 2000ms cubic-bezier(.33,0,.2,1) infinite; animation-play-state: paused; }
+  .arrow--2 { animation: separator-arrow-trail-2 2000ms cubic-bezier(.33,0,.2,1) infinite; animation-play-state: paused; }
+  .arrow--3 { animation: separator-arrow-trail-3 2000ms cubic-bezier(.33,0,.2,1) infinite; animation-play-state: paused; }
+
+  [data-separator-active] .arrow,
+  [data-showcase-panel][data-active-mobile] .arrow {
+    animation-play-state: running;
+  }
+
+  @media (max-width: 767px) {
+    .separator-heading {
+      font-size: clamp(2.35rem, 10.5vw, 2.8rem);
+      line-height: 0.98;
+    }
+
+    .separator-line,
+    .separator-line--last {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .separator-text {
+      display: block;
+      white-space: normal;
+    }
+
+    .separator-arrows {
+      display: block;
+      width: 96px;
+      height: 56px;
+      margin-top: 0.55rem;
+      transform: none;
+    }
+
+    .arrow {
+      width: 56px;
+      height: 56px;
+      font-size: 2.5rem;
+    }
+
+    .arrow--2 { --tx: 20px; }
+    .arrow--3 { --tx: 40px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .arrow {
+      animation: none !important;
+      opacity: var(--peak);
+      transform: translateX(var(--tx));
+    }
+  }
+</style>
+
+<script>
+  if (!(window as any).__gfduSeparatorIoBound) {
+    (window as any).__gfduSeparatorIoBound = true;
+    document.querySelectorAll<HTMLElement>('.separator-stage').forEach((stage) => {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) stage.setAttribute('data-separator-active', '');
+          else stage.removeAttribute('data-separator-active');
+        });
+      }, { threshold: 0 });
+      io.observe(stage);
+    });
+  }
+</script>

@@ -1,5 +1,7 @@
 /** All tunables for the site live here. Edit these to change the feel. */
 
+import type { PanelVisualKind } from '@/data/site';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Showcase scroll geometry
 //
@@ -41,9 +43,15 @@ export const LANE_VELOCITY_LEAN_MAX_PX = 26;
 /** px of lean per unit of Lenis velocity (before the max clamp). */
 export const LANE_VELOCITY_LEAN_FACTOR = 0.012;
 
-/** Default panel weight (screen-widths). 1.0 = 100vw. Every station renders
- *  full-width by default; use SHOWCASE_PANEL_OVERRIDES for one-off tuning. */
-export const SHOWCASE_DEFAULT_WEIGHT = 1.0;
+export const SHOWCASE_KIND_WEIGHTS: Record<PanelVisualKind, number> = {
+  hero: 1.0,
+  about: 1.0,
+  card: 1.0,
+  photo: 1.0,
+  services: 1.0,
+  minimal: 1.0,
+  separator: 0.85,
+};
 
 /** Optional per-kind size scale used by `getPanelScrollWeight`. Multiplies
  *  the default weight. */
@@ -70,6 +78,7 @@ export const SHOWCASE_PANEL_OVERRIDES: Record<string, ShowcasePanelOverride> = {
 /** Resolve a panel's width (in screen-widths).
  *  Precedence: SHOWCASE_PANEL_OVERRIDES[id].width → default × size. */
 export function getPanelScrollWeight(
+  kind: PanelVisualKind,
   size: ShowcasePanelSize = 'md',
   panelId?: string,
 ): number {
@@ -77,7 +86,7 @@ export function getPanelScrollWeight(
   if (o && typeof o.width === 'number' && Number.isFinite(o.width) && o.width > 0) {
     return o.width;
   }
-  return SHOWCASE_DEFAULT_WEIGHT * SHOWCASE_SIZE_SCALE[size];
+  return SHOWCASE_KIND_WEIGHTS[kind] * SHOWCASE_SIZE_SCALE[size];
 }
 
 /** Resolve the gap *after* a panel (in CSS pixels).

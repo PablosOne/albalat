@@ -4,6 +4,7 @@ describe('site data', () => {
   it('has a hero station first and a combined classes/contact station', () => {
     expect(site.stations[0]?.id).toBe('hero');
     expect(site.stations.some(s => s.id === 'classes')).toBe(true);
+    expect(site.stations.some(s => s.id === 'guitar')).toBe(false);
     expect(site.stations.some(s => s.id === 'contact')).toBe(false);
   });
   it('every station heading is bilingual', () => {

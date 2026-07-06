@@ -168,7 +168,7 @@ const copy = {
       bar.dataset.visible = String(s.visible);
       applyTheme('nowplaying', s.visible && s.track ? s.track.theme : null);
       toggle.textContent = s.isPaused ? '▶' : '⏸';
-      toggle.setAttribute('aria-label', s.isPaused ? copy.play : copy.pause);
+      toggle.setAttribute('aria-label', s.isPaused ? (copy.play ?? 'Play') : (copy.pause ?? 'Pause'));
       if (!s.track) return;
       cover.src = s.track.cover;
       cover.alt = s.track.albumTitle;

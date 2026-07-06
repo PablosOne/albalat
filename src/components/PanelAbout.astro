@@ -1,0 +1,44 @@
+---
+import type { Panel } from '@/data/site';
+import TextReveal from './TextReveal.astro';
+
+interface Props {
+  panel: Panel;
+}
+
+const { panel } = Astro.props;
+---
+<div class="relative w-full h-full" data-about-content>
+  <div
+    class="absolute inset-0 pointer-events-none overflow-visible"
+    style="clip-path: inset(-100vh 0 -100vh -200vw);"
+    aria-hidden="true"
+  >
+    <h2
+      class="absolute top-[28%] left-0 w-max max-w-none font-display font-medium leading-[0.92] text-[clamp(40px,8vw,148px)] text-[var(--color-muted)] whitespace-nowrap will-change-transform"
+      data-about-headline
+    >
+      {panel.tagline}
+    </h2>
+  </div>
+
+  <div class="absolute top-[44%] left-[-3vw] max-w-[56ch]">
+    {panel.subheading && (
+      <TextReveal as="p" text={panel.subheading} class="text-label text-[var(--color-muted)] mb-5" reveal="heading" mode="block" preset="label" data-parallax-x="-0.32" />
+    )}
+    <TextReveal as="h3" text={panel.heading} class="about-title text-display-l font-display font-medium leading-[0.95] mb-6 text-[var(--color-fg)]" reveal="heading" mode="words" preset="headline" data-parallax-x="-0.20" />
+    <div class="text-body-xl leading-[1.35] max-w-[48ch]" data-parallax-x="-0.10">
+      {panel.body.map((paragraph) => (
+        <TextReveal as="p" text={paragraph} class="mb-4 text-[var(--color-muted)]" reveal="body" mode="phrases" preset="body" />
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  @media (min-width: 768px) {
+    :global(.about-title) {
+      font-size: clamp(2.75rem, 4vw + 0.5rem, 4.5rem) !important;
+    }
+  }
+</style>

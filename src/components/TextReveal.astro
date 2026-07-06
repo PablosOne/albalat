@@ -1,0 +1,75 @@
+---
+import type { TextRevealPreset } from '@/lib/config';
+import type { HTMLAttributes } from 'astro/types';
+import { wordsWithHighlight } from '@/lib/textHighlight';
+
+type RevealTag = 'p' | 'h1' | 'h2' | 'h3' | 'span' | 'div' | 'li';
+type RevealMode = 'block' | 'words' | 'phrases';
+type RevealGroup = 'heading' | 'body' | 'cta' | 'visual';
+
+type Props = HTMLAttributes<'div'> & {
+  as?: RevealTag;
+  text?: string;
+  class?: string;
+  reveal?: RevealGroup;
+  mode?: RevealMode;
+  preset?: TextRevealPreset;
+  highlight?: string;
+  highlightColor?: string;
+};
+
+const {
+  as: Tag = 'p',
+  text = '',
+  class: className = '',
+  reveal = 'body',
+  mode = 'block',
+  preset = reveal === 'heading' ? 'headline' : reveal === 'cta' ? 'label' : 'body',
+  highlight,
+  highlightColor,
+  ...attrs
+} = Astro.props as Props;
+
+const flaggedWords = mode === 'words' ? wordsWithHighlight(text, highlight) : [];
+const words = mode === 'words'
+  ? flaggedWords.map((w) => w.word)
+  : text.trim().split(/\s+/).filter(Boolean);
+const phraseSize = preset === 'headline' ? 2 : 4;
+const phrases: string[] = [];
+for (let i = 0; i < words.length; i += phraseSize) {
+  phrases.push(words.slice(i, i + phraseSize).join(' '));
+}
+---
+<Tag
+  {...attrs}
+  class={className}
+  data-reveal={reveal}
+  data-text-reveal={mode}
+  data-text-reveal-preset={preset}
+>
+  {mode === 'words' ? (
+    flaggedWords.map(({ word, isHighlight }, i: number) => (
+      <>
+        <span class="inline-block overflow-hidden align-top pb-[0.12em]" data-text-reveal-mask>
+          <span
+            class="inline-block"
+            data-text-reveal-unit
+            style={isHighlight && highlightColor ? `color: ${highlightColor};` : undefined}
+          >{word}</span>
+        </span>
+        {i < flaggedWords.length - 1 && ' '}
+      </>
+    ))
+  ) : mode === 'phrases' ? (
+    phrases.map((phrase: string, i: number) => (
+      <>
+        <span class="inline-block overflow-hidden align-top pb-[0.08em]" data-text-reveal-mask>
+          <span class="inline-block" data-text-reveal-unit>{phrase}</span>
+        </span>
+        {i < phrases.length - 1 && ' '}
+      </>
+    ))
+  ) : (
+    <slot>{text}</slot>
+  )}
+</Tag>

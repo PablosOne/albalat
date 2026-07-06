@@ -265,7 +265,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
       ],
       visual: {
         kind: 'photo',
-        image: '/images/albums/torroba-cover.jpg',
+        image: '/images/portrait_cover.webp',
         imageAlt: isEn ? 'Album cover placeholder' : 'Portada provisional de album',
       },
     },
