@@ -15,6 +15,7 @@ const web3formsKey = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
 const mailCharCount = mailLink?.label.length ?? 1;
 const normalizedHeading = panel.heading?.trim().toLowerCase();
 const isEn = normalizedHeading === 'contact' || normalizedHeading === 'contact.';
+const currentYear = new Date().getFullYear();
 const copy = isEn
   ? {
       name: 'Name',
@@ -30,6 +31,7 @@ const copy = isEn
       unavailable: 'The form will be active once Web3Forms is configured. Direct email remains available.',
       required: 'Please complete the required fields before sending.',
       subject: `New inquiry from ${site.fullName}`,
+      credit: 'Website by',
     }
   : {
       name: 'Nombre',
@@ -45,6 +47,7 @@ const copy = isEn
       unavailable: 'El formulario se activara al configurar Web3Forms. El email directo sigue disponible.',
       required: 'Completa los campos obligatorios antes de enviar.',
       subject: `Nueva consulta desde ${site.fullName}`,
+      credit: 'Web por',
     };
 ---
 <div class="contact-panel-shell relative w-full max-w-[1600px] mx-auto">
@@ -132,6 +135,18 @@ const copy = isEn
       </div>
     </div>
   </div>
+
+  <footer class="site-credit relative z-[2] text-label text-[var(--color-muted)]" data-reveal="body">
+    <span>&copy; {currentYear} {site.fullName}</span>
+    <a
+      href="https://gfdu.me"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="site-credit-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+    >
+      {copy.credit} gfdu.me
+    </a>
+  </footer>
 </div>
 
 <script is:inline>
@@ -261,6 +276,31 @@ const copy = isEn
     border-color: var(--color-fg);
   }
 
+  .site-credit {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: clamp(2rem, 4vw, 3.75rem);
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+
+  .site-credit-link {
+    color: var(--color-muted);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--color-muted) 38%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+    transition: color 180ms ease, text-decoration-color 180ms ease;
+  }
+
+  .site-credit-link:hover {
+    color: var(--color-accent);
+    text-decoration-color: var(--color-accent);
+  }
+
   @media (max-width: 767px) {
     .contact-panel-shell {
       min-height: 0;
@@ -287,6 +327,12 @@ const copy = isEn
 
     .contact-form-column {
       margin-top: 1.75rem;
+    }
+
+    .site-credit {
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-top: 2.5rem;
     }
 
   }
