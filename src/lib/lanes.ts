@@ -1,5 +1,5 @@
 import type Lenis from 'lenis';
-import { MOBILE_BREAKPOINT_PX, buildShowcaseGeometry, LANE_TRANSITION_S, SHOWCASE_PARALLAX_Y_GLOBAL_SCALE } from '@/lib/config';
+import { MOBILE_BREAKPOINT_PX, buildShowcaseGeometry, SHOWCASE_PARALLAX_Y_GLOBAL_SCALE } from '@/lib/config';
 
 export function laneIdFromHash(hash: string): string | null {
   if (!hash) return null;
@@ -131,7 +131,7 @@ function scrollToPanel(panelId: string): void {
   }
 }
 
-interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; }
+interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; }
 
 function isDesktopMotion(): boolean {
   return !window.matchMedia('(max-width: 767px)').matches
@@ -181,8 +181,11 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     if (isDesktopMotion()) {
       const { gsap } = await import('gsap');
       gsap.killTweensOf(lane);
+      // Soft "settle" rather than a hard slam: fast start, long gentle glide to
+      // a stop, so the descent reads as scroll momentum easing out — less like a
+      // panel dropped on top, more like arriving into the content below.
       gsap.fromTo(lane, { yPercent: 100, autoAlpha: 1 },
-        { yPercent: 0, duration: LANE_TRANSITION_S, ease: 'power3.out' });
+        { yPercent: 0, duration: 0.85, ease: 'expo.out' });
 
       // 3) vertical parallax for [data-parallax-y] descendants, scrubbed by the
       // lane's own scroll container. Desktop/motion-enabled only; detached in
@@ -205,6 +208,47 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
         }
       }
     }
+    // Overscroll-up-to-exit: once the detail is scrolled to its very top,
+    // continuing to pull up rubber-bands the content with progressive resistance;
+    // past a short threshold it releases back to the main lane (which re-aligns
+    // via its usual smooth scroll). Desktop/motion only — mobile/reduced-motion
+    // lanes are inline in the native vertical stack, so scrolling up already
+    // returns to the content above with no gesture needed.
+    if (isDesktopMotion() && scroller) {
+      const pullScroller = scroller;
+      let pull = 0;
+      let springTimer = 0;
+      const MAX_PULL = 150;
+      const CLOSE_AT = 96;
+      const setPull = (v: number, animate: boolean) => {
+        pull = v;
+        pullScroller.style.transition = animate ? 'transform 0.4s cubic-bezier(0.23,1,0.32,1)' : 'none';
+        pullScroller.style.transform = v > 0 ? `translateY(${v.toFixed(1)}px)` : '';
+      };
+      const springBack = () => setPull(0, true);
+      const onWheelPull = (e: WheelEvent) => {
+        if (pullScroller.scrollTop > 0 || e.deltaY >= 0) {
+          if (pull > 0) { window.clearTimeout(springTimer); springBack(); }
+          return;
+        }
+        e.preventDefault();
+        window.clearTimeout(springTimer);
+        // Progressive resistance: the further it is already pulled, the less each
+        // additional wheel tick moves it.
+        const next = Math.min(MAX_PULL, pull + (-e.deltaY) * (1 - pull / MAX_PULL) * 0.6);
+        setPull(next, false);
+        if (next >= CLOSE_AT) { setPull(0, false); void closeLane(); return; }
+        springTimer = window.setTimeout(springBack, 130);
+      };
+      pullScroller.addEventListener('wheel', onWheelPull, { passive: false });
+      state.detachPull?.();
+      state.detachPull = () => {
+        window.clearTimeout(springTimer);
+        pullScroller.removeEventListener('wheel', onWheelPull);
+        pullScroller.style.transition = '';
+        pullScroller.style.transform = '';
+      };
+    }
     document.documentElement.setAttribute('data-open-lane', id);
     history.replaceState(null, '', `#${id}`);
     lane.querySelector<HTMLElement>('[data-detail-heading]')?.focus();
@@ -214,6 +258,8 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     const id = state.openId;
     if (!id) return;
     const lane = laneEl(id);
+    state.detachPull?.();
+    state.detachPull = undefined;
     const finish = () => {
       state.detachY?.();
       state.detachY = undefined;
@@ -233,7 +279,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       // fire later and clobber the newly-set state.openId back to null.
       await new Promise<void>((resolve) => {
         gsap.to(lane, {
-          yPercent: 100, duration: LANE_TRANSITION_S, ease: 'power3.in',
+          yPercent: 100, duration: 0.5, ease: 'power3.in',
           onComplete: () => { finish(); resolve(); },
         });
       });
