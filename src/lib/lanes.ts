@@ -131,7 +131,7 @@ function scrollToPanel(panelId: string): void {
   }
 }
 
-interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; trackTween?: { kill: () => void }; }
+interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; trackTween?: { kill: () => void }; closing?: boolean; }
 
 function isDesktopMotion(): boolean {
   return !window.matchMedia('(max-width: 767px)').matches
@@ -288,7 +288,14 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
   async function closeLane(realignTo?: string) {
     const id = state.openId;
-    if (!id) return;
+    // Re-entry guard: a close already in flight must run to completion. Without
+    // this, a second back-click restarts closeLane, whose gsap.killTweensOf(lane)
+    // kills the in-flight close tween BEFORE its onComplete (finish) fires — so
+    // rapid repeated clicks keep restarting the slide, finish() never runs,
+    // state.openId stays set, and the lane never actually closes ("back doesn't
+    // work"). Ignore re-entrant calls; the in-flight close will finish on its own.
+    if (!id || state.closing) return;
+    state.closing = true;
     const lane = laneEl(id);
     state.detachPull?.();
     state.detachPull = undefined;
@@ -300,6 +307,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       document.documentElement.removeAttribute('data-open-lane');
       history.replaceState(null, '', window.location.pathname + window.location.search);
       state.openId = null;
+      state.closing = false;
       state.restoreFocus?.focus?.();
       scrollToPanel(target); // re-align: this station, or the next one on a forward exit
     };
