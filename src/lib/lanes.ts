@@ -119,15 +119,15 @@ function getCurrentPanelIndex(): number {
   return best;
 }
 
-function scrollToPanel(panelId: string): void {
+function scrollToPanel(panelId: string, immediate = false): void {
   const y = panelScrollY(panelId);
   if (y === null) return;
 
   const lenis = (window as unknown as { __lenis?: Lenis }).__lenis;
   if (lenis) {
-    lenis.scrollTo(y, { duration: 1.2 });
+    lenis.scrollTo(y, immediate ? { immediate: true } : { duration: 1.2 });
   } else {
-    window.scrollTo({ top: y, behavior: 'smooth' });
+    window.scrollTo({ top: y, behavior: immediate ? 'auto' : 'smooth' });
   }
 }
 
@@ -169,12 +169,14 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     state.openId = id;
     state.restoreFocus = trigger;
 
-    // 1) align the main lane to the station first (so exit restores exactly here)
-    scrollToPanel(id);
+    // 1) snap the main lane to the station instantly — it is about to be covered
+    // by the rising detail, so this alignment must NOT be a visible 1.2s scroll
+    // competing with the slide (that overlap was the open-vs-close jank; close
+    // re-aligns smoothly because it plays on the revealed side, after the slide).
+    scrollToPanel(id, true);
     pluckThreshold(id);
 
     // 2) reveal + slide
-    lane.hidden = false;
     const scroller = lane.querySelector<HTMLElement>('[data-detail-scroll]');
     if (scroller) scroller.scrollTop = 0;
 
@@ -182,6 +184,12 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       const { gsap } = await import('gsap');
       const track = document.querySelector<HTMLElement>('[data-showcase-track]');
       gsap.killTweensOf(lane);
+      // Set the start state (fully below) and reveal only AFTER gsap has loaded,
+      // so there is no one-frame flash of the lane sitting at rest during the
+      // dynamic import — the close path never flashes (its lane is already
+      // visible when it animates), so this makes open and close match.
+      gsap.set(lane, { yPercent: 100, autoAlpha: 1 });
+      lane.hidden = false;
       // Coordinated "same level" descent: the detail rises from below while the
       // row of panels slides up and off the top at the same rate, so the two read
       // as one continuous vertical scroll rather than a panel dropped on top. We
@@ -189,8 +197,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       // are position:fixed children of the section, so a transform on the section
       // would become their containing block and drag them along; the track's own
       // (frozen, while a lane is open) x-scrub composes with this y through GSAP.
-      gsap.fromTo(lane, { yPercent: 100, autoAlpha: 1 },
-        { yPercent: 0, duration: 0.85, ease: 'expo.out' });
+      gsap.to(lane, { yPercent: 0, duration: 0.85, ease: 'expo.out' });
       if (track) {
         state.trackTween?.kill();
         state.trackTween = gsap.to(track, { yPercent: -100, duration: 0.85, ease: 'expo.out' });
@@ -216,6 +223,10 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
           state.detachY = () => scroller.removeEventListener('scroll', onScrollY);
         }
       }
+    } else {
+      // Mobile / reduced-motion: lanes are inline in the native vertical stack,
+      // no slide — just reveal.
+      lane.hidden = false;
     }
     // Overscroll-to-exit: at the very top of the detail, continuing to pull up
     // rubber-bands the content down and releases back to THIS station's main lane;
