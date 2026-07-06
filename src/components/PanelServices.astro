@@ -2,6 +2,7 @@
 import type { Panel } from '@/data/site';
 import { HEADING_HIGHLIGHT_COLOR } from '@/lib/textHighlight';
 import TextReveal from './TextReveal.astro';
+import LaneArrow from './LaneArrow.astro';
 
 interface Props {
   panel: Panel;
@@ -48,6 +49,11 @@ const { panel } = Astro.props;
             {link.label} -&gt;
           </a>
         ))}
+      </div>
+    )}
+    {panel.detail && panel.openLabel && (
+      <div data-reveal="cta" class="mt-8">
+        <LaneArrow direction="down" targetId={panel.id} label={panel.openLabel} withString />
       </div>
     )}
   </div>

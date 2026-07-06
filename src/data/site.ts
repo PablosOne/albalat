@@ -62,6 +62,9 @@ export interface Panel {
   tagline?: string;
   taglineHighlight?: string;
   accent?: string;
+  /** true -> this panel opens a vertical detail lane; openLabel is its arrow's accessible label. */
+  detail?: boolean;
+  openLabel?: string;
   visual: { kind: PanelVisualKind } & (
     | { image: string; imageAlt: string }
     | { image?: never; imageAlt?: never }
@@ -263,6 +266,8 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         { label: isEn ? 'Open music' : 'Ver musica', href: '#music' },
         { label: 'Spotify', href: spotify },
       ],
+      detail: true,
+      openLabel: isEn ? 'Open Music details' : 'Abrir Musica',
       visual: {
         kind: 'photo',
         image: '/images/portrait_cover.webp',
@@ -285,6 +290,8 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         { label: isEn ? 'Open videos' : 'Ver videos', href: '#videos' },
         { label: 'YouTube', href: youtube },
       ],
+      detail: true,
+      openLabel: isEn ? 'Open Videos details' : 'Abrir Videos',
       visual: {
         kind: 'photo',
         image: '/images/concert.webp',
@@ -309,6 +316,8 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         { label: isEn ? 'Make an enquiry' : 'Enviar consulta', href: '#classes' },
         { label: 'Email', href: email },
       ],
+      detail: true,
+      openLabel: isEn ? 'Open Classes & Concerts details' : 'Abrir Clases y conciertos',
       visual: { kind: 'services' },
     },
     {
