@@ -4,6 +4,7 @@ import type { Locale } from '@/i18n';
 interface Props { id: string; title: string; locale: Locale; }
 const { id, title, locale } = Astro.props;
 const back = locale === 'en' ? 'Back to main lane' : 'Volver a la línea principal';
+const backCta = locale === 'en' ? 'Back' : 'Volver';
 ---
 <section
   class="detail-lane"
@@ -14,7 +15,7 @@ const back = locale === 'en' ? 'Back to main lane' : 'Volver a la línea princip
 >
   <div class="detail-lane__scroll" data-detail-scroll>
     <header class="detail-lane__header">
-      <LaneArrow direction="up" label={back} />
+      <LaneArrow direction="up" label={back} cta={backCta} />
       <h2 class="detail-lane__title" data-detail-heading data-parallax-y="-0.6" tabindex="-1">{title}</h2>
     </header>
     <div class="detail-lane__body">
