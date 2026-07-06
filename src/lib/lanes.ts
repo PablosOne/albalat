@@ -119,15 +119,15 @@ function getCurrentPanelIndex(): number {
   return best;
 }
 
-function scrollToPanel(panelId: string, immediate = false): void {
+function scrollToPanel(panelId: string): void {
   const y = panelScrollY(panelId);
   if (y === null) return;
 
   const lenis = (window as unknown as { __lenis?: Lenis }).__lenis;
   if (lenis) {
-    lenis.scrollTo(y, immediate ? { immediate: true } : { duration: 1.2 });
+    lenis.scrollTo(y, { duration: 1.2 });
   } else {
-    window.scrollTo({ top: y, behavior: immediate ? 'auto' : 'smooth' });
+    window.scrollTo({ top: y, behavior: 'smooth' });
   }
 }
 
@@ -169,14 +169,14 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     state.openId = id;
     state.restoreFocus = trigger;
 
-    // 1) snap the main lane to the station instantly — it is about to be covered
-    // by the rising detail, so this alignment must NOT be a visible 1.2s scroll
-    // competing with the slide (that overlap was the open-vs-close jank; close
-    // re-aligns smoothly because it plays on the revealed side, after the slide).
-    scrollToPanel(id, true);
+    // The panels slide up and off the top during the descent, so their horizontal
+    // position is irrelevant while a lane is open (they are covered) — we do NOT
+    // re-align the main lane on open. Any open-time scroll (the old 1.2s smooth one
+    // OR an instant snap) fought the slide and read as jank/linearity. Alignment
+    // happens only on CLOSE (scrollToPanel there), on the revealed side.
     pluckThreshold(id);
 
-    // 2) reveal + slide
+    // reveal + slide
     const scroller = lane.querySelector<HTMLElement>('[data-detail-scroll]');
     if (scroller) scroller.scrollTop = 0;
 
@@ -197,10 +197,10 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       // are position:fixed children of the section, so a transform on the section
       // would become their containing block and drag them along; the track's own
       // (frozen, while a lane is open) x-scrub composes with this y through GSAP.
-      gsap.to(lane, { yPercent: 0, duration: 0.85, ease: 'expo.out' });
+      gsap.to(lane, { yPercent: 0, duration: 0.6, ease: 'power3.out' });
       if (track) {
         state.trackTween?.kill();
-        state.trackTween = gsap.to(track, { yPercent: -100, duration: 0.85, ease: 'expo.out' });
+        state.trackTween = gsap.to(track, { yPercent: -100, duration: 0.6, ease: 'power3.out' });
       }
 
       // 3) vertical parallax for [data-parallax-y] descendants, scrubbed by the
@@ -282,7 +282,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     }
     document.documentElement.setAttribute('data-open-lane', id);
     history.replaceState(null, '', `#${id}`);
-    lane.querySelector<HTMLElement>('[data-detail-heading]')?.focus();
+    lane.querySelector<HTMLElement>('[data-detail-scroll]')?.focus();
   }
 
   async function closeLane(realignTo?: string) {
@@ -308,7 +308,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       gsap.killTweensOf(lane);
       if (track) {
         state.trackTween?.kill();
-        state.trackTween = gsap.to(track, { yPercent: 0, duration: 0.5, ease: 'power3.in' });
+        state.trackTween = gsap.to(track, { yPercent: 0, duration: 0.6, ease: 'power3.in' });
       }
       // Await the tween's own completion (not just its kickoff) so callers that
       // `await closeLane()` before opening a different lane (see openLane above)
@@ -316,7 +316,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       // fire later and clobber the newly-set state.openId back to null.
       await new Promise<void>((resolve) => {
         gsap.to(lane, {
-          yPercent: 100, duration: 0.5, ease: 'power3.in',
+          yPercent: 100, duration: 0.6, ease: 'power3.in',
           onComplete: () => { finish(); resolve(); },
         });
       });
@@ -329,6 +329,17 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
     const closer = (e.target as Element | null)?.closest('[data-lane-close]');
     if (closer) { e.preventDefault(); e.stopPropagation(); void closeLane(); return; }
+    const nexter = (e.target as Element | null)?.closest('[data-lane-next]');
+    if (nexter) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (state.openId) {
+        const order = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'));
+        const here = order.findIndex((p) => p.dataset.showcasePanelId === state.openId);
+        void closeLane(order[here + 1]?.dataset.showcasePanelId); // release forward to the next station
+      }
+      return;
+    }
     const opener = (e.target as Element | null)?.closest<HTMLElement>('[data-lane-open], a[href^="#"]');
     if (!opener) return;
     const id = opener.getAttribute('data-lane-open')
