@@ -660,6 +660,15 @@ body {
   }
 }
 
+/* While a detail lane owns the screen, hide the page's own scrollbar so it does
+   not double up with the lane's [data-detail-scroll] scrollbar. The page under
+   the fixed lane is a tall pinned showcase; the lane covers it entirely and the
+   wheel is handed to the lane (data-lenis-prevent), so the page must not keep a
+   second scrollbar (or scroll) alongside the detail's own. */
+html[data-open-lane] {
+  overflow: hidden;
+}
+
 @keyframes laneStageOut {
   from {
     opacity: 1;
