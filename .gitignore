@@ -4,3 +4,4 @@ test-results/
 .astro/
 .DS_Store
 *.log
+.worktrees/
