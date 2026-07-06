@@ -1,0 +1,95 @@
+---
+import type { PanelLink } from '@/data/site';
+
+interface Props {
+  link: PanelLink;
+  class?: string;
+  reveal?: boolean;
+}
+
+const { link, class: className = '', reveal = true } = Astro.props;
+const key = link.label.toLowerCase();
+const platform = key.includes('spotify')
+  ? 'spotify'
+  : key.includes('youtube')
+    ? 'youtube'
+    : key.includes('email') || link.href.startsWith('mailto:')
+      ? 'email'
+      : 'external';
+const isExternal = link.href.startsWith('http');
+const revealAttrs = reveal
+  ? {
+      'data-reveal': 'cta',
+      'data-text-reveal': 'block',
+      'data-text-reveal-preset': 'label',
+    }
+  : {};
+---
+<a
+  href={link.href}
+  target={isExternal ? '_blank' : undefined}
+  rel={isExternal ? 'noopener noreferrer' : undefined}
+  class:list={['platform-link', className]}
+  {...revealAttrs}
+>
+  <span class="platform-link__icon" aria-hidden="true">
+    {platform === 'spotify' && (
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.95" />
+        <path d="M7.7 9.4c2.9-.8 6.3-.6 8.9.8" fill="none" stroke="var(--color-bg, #0b0a09)" stroke-width="1.4" stroke-linecap="round" />
+        <path d="M8.2 12c2.4-.6 5-.4 7.1.7" fill="none" stroke="var(--color-bg, #0b0a09)" stroke-width="1.25" stroke-linecap="round" />
+        <path d="M8.7 14.4c1.8-.4 3.8-.3 5.4.5" fill="none" stroke="var(--color-bg, #0b0a09)" stroke-width="1.1" stroke-linecap="round" />
+      </svg>
+    )}
+    {platform === 'youtube' && (
+      <svg class="platform-link__icon-svg--youtube" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M21.4 7.3a2.7 2.7 0 0 0-1.9-1.9C17.8 5 12 5 12 5s-5.8 0-7.5.4a2.7 2.7 0 0 0-1.9 1.9A28 28 0 0 0 2.2 12c0 1.6.1 3.2.4 4.7a2.7 2.7 0 0 0 1.9 1.9c1.7.4 7.5.4 7.5.4s5.8 0 7.5-.4a2.7 2.7 0 0 0 1.9-1.9c.3-1.5.4-3.1.4-4.7s-.1-3.2-.4-4.7Z" />
+        <path fill="var(--color-bg, #0b0a09)" d="m10.2 14.9 4.8-2.9-4.8-2.9v5.8Z" />
+      </svg>
+    )}
+    {platform === 'email' && <span>@</span>}
+    {platform === 'external' && <span>↗</span>}
+  </span>
+  <span>{link.label}</span>
+</a>
+
+<style>
+  .platform-link {
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--color-fg) 16%, transparent);
+    color: var(--color-fg);
+    display: inline-flex;
+    gap: 0.65rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 0.95rem;
+    text-decoration: none;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .platform-link:hover,
+  .platform-link:focus-visible {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .platform-link__icon {
+    align-items: center;
+    display: inline-flex;
+    height: 1.1rem;
+    justify-content: center;
+    width: 1.25rem;
+  }
+
+  .platform-link__icon svg {
+    display: block;
+    height: 1.15rem;
+    width: 1.15rem;
+  }
+
+  .platform-link__icon-svg--youtube {
+    width: 1.25rem;
+  }
+</style>

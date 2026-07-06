@@ -147,9 +147,35 @@ const copy = {
                   </p>
 
                   <div class="mt-7 flex flex-wrap gap-3">
-                    {album.links.spotify && <a class="music-link" href={album.links.spotify} target="_blank" rel="noreferrer">{copy.spotify}</a>}
-                    {album.links.appleMusic && <a class="music-link" href={album.links.appleMusic} target="_blank" rel="noreferrer">{copy.appleMusic}</a>}
-                    {album.links.youtube && <a class="music-link" href={album.links.youtube} target="_blank" rel="noreferrer">{copy.youtube}</a>}
+                    {album.links.spotify && (
+                      <a class="music-link" href={album.links.spotify} target="_blank" rel="noreferrer">
+                        <svg class="music-link__icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.95" />
+                          <path d="M7.7 9.4c2.9-.8 6.3-.6 8.9.8" fill="none" stroke="var(--color-bg, #0d0c0a)" stroke-width="1.4" stroke-linecap="round" />
+                          <path d="M8.2 12c2.4-.6 5-.4 7.1.7" fill="none" stroke="var(--color-bg, #0d0c0a)" stroke-width="1.25" stroke-linecap="round" />
+                          <path d="M8.7 14.4c1.8-.4 3.8-.3 5.4.5" fill="none" stroke="var(--color-bg, #0d0c0a)" stroke-width="1.1" stroke-linecap="round" />
+                        </svg>
+                        <span>{copy.spotify}</span>
+                      </a>
+                    )}
+                    {album.links.appleMusic && (
+                      <a class="music-link" href={album.links.appleMusic} target="_blank" rel="noreferrer">
+                        <svg class="music-link__icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path fill="currentColor" d="M16.3 12.3c0-1.8 1.5-2.7 1.6-2.8-.9-1.2-2.2-1.4-2.7-1.4-1.1-.1-2.1.6-2.7.6-.6 0-1.5-.6-2.5-.6-1.3 0-2.5.8-3.2 2-1.4 2.4-.4 6 1 7.9.7 1 1.5 2.1 2.5 2 .9 0 1.3-.6 2.5-.6s1.5.6 2.5.6 1.7-1 2.4-2c.8-1.1 1.1-2.2 1.1-2.3 0 0-2.4-.9-2.5-3.4Z" />
+                          <path fill="currentColor" d="M14.5 6.9c.5-.7.9-1.6.8-2.5-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.4.9.1 1.8-.4 2.3-1.1Z" />
+                        </svg>
+                        <span>{copy.appleMusic}</span>
+                      </a>
+                    )}
+                    {album.links.youtube && (
+                      <a class="music-link" href={album.links.youtube} target="_blank" rel="noreferrer">
+                        <svg class="music-link__icon music-link__icon--youtube" viewBox="0 0 24 24" aria-hidden="true">
+                          <path fill="currentColor" d="M21.4 7.3a2.7 2.7 0 0 0-1.9-1.9C17.8 5 12 5 12 5s-5.8 0-7.5.4a2.7 2.7 0 0 0-1.9 1.9A28 28 0 0 0 2.2 12c0 1.6.1 3.2.4 4.7a2.7 2.7 0 0 0 1.9 1.9c1.7.4 7.5.4 7.5.4s5.8 0 7.5-.4a2.7 2.7 0 0 0 1.9-1.9c.3-1.5.4-3.1.4-4.7s-.1-3.2-.4-4.7Z" />
+                          <path fill="var(--color-bg, #0d0c0a)" d="m10.2 14.9 4.8-2.9-4.8-2.9v5.8Z" />
+                        </svg>
+                        <span>{copy.youtube}</span>
+                      </a>
+                    )}
                   </div>
 
                   <div class="mt-8">
@@ -193,6 +219,8 @@ const copy = {
     border: 1px solid rgba(244, 239, 231, 0.16);
     color: var(--ink);
     display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.875rem;
     font-weight: 600;
     padding: 0.7rem 0.95rem;
@@ -205,6 +233,17 @@ const copy = {
     border-color: var(--accent);
     color: var(--accent);
     outline: none;
+  }
+
+  .music-link__icon {
+    display: block;
+    height: 1rem;
+    width: 1rem;
+    flex: 0 0 auto;
+  }
+
+  .music-link__icon--youtube {
+    width: 1.15rem;
   }
 
   @media (max-width: 1023px) {

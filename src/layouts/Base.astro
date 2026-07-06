@@ -68,6 +68,13 @@ const { locale } = Astro.props;
       // is still current when its awaits resolve gets to register its teardown;
       // a superseded call tears itself down immediately instead.
       let runGen = 0;
+      // The cinematic hero intro should play once per session, not once per
+      // script-execution: every route's markup ships its hero/toolbar pre-hidden,
+      // so each navigation needs *some* reveal or the new page stays permanently
+      // clipped/invisible. Only the winning run() call (see gen check below)
+      // flips this, so a superseded double-fire on first load can't burn the
+      // one real reveal on a call that immediately tears itself down.
+      let heroIntroPlayed = false;
 
       const run = async () => {
         const gen = ++runGen;
@@ -82,13 +89,9 @@ const { locale } = Astro.props;
           return;
         }
         teardown = cleanups;
+        heroEntrance(document, { instant: heroIntroPlayed });
+        heroIntroPlayed = true;
       };
-
-      // The cinematic hero intro is a one-time-per-session flourish, not part of
-      // the page's required interactivity. This block runs exactly once — the
-      // enclosing script is deduped by ClientRouter (see above) and never
-      // re-executes on later swaps, so no extra guard is needed here.
-      heroEntrance();
 
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
       else run();

@@ -131,6 +131,8 @@ function scrollToPanel(panelId: string): void {
   }
 }
 
+type GsapInstance = typeof import('gsap').gsap;
+
 interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; trackTween?: { kill: () => void }; closing?: boolean; }
 
 function isDesktopMotion(): boolean {
@@ -152,6 +154,56 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     window.setTimeout(() => svg?.dispatchEvent(new PointerEvent('pointerleave')), 260);
   };
 
+  // Coordinated "same-level" descent, shared by open and close so both directions
+  // stay in lockstep. The detail lane and the panel row (main lane) move as one:
+  // opening, the lane rises from below while the panels slide up and off the top;
+  // closing reverses it. The panels ride the [data-showcase-descent] layer, which
+  // is a DIFFERENT element from the scrubbed track — so driving its y never fights
+  // the horizontal scrub (that owns the track's x). This decoupling is what makes
+  // the descent slide on every open, not only the first. state.trackTween clears
+  // any stale y-tween so repeat cycles always start from a clean 0/-100.
+  const descend = (
+    gsap: GsapInstance,
+    lane: HTMLElement,
+    panelsLayer: HTMLElement | null,
+    dir: 'open' | 'close',
+    onComplete?: () => void,
+  ) => {
+    const ease = dir === 'open' ? 'power3.out' : 'power3.in';
+    // eslint-disable-next-line no-console
+    console.log('[descend]', dir, { panelsLayer: !!panelsLayer, lane: !!lane, laneHidden: lane.hidden, laneTransform: getComputedStyle(lane).transform });
+    if (panelsLayer) {
+      state.trackTween?.kill();
+      state.trackTween = gsap.to(panelsLayer, {
+        yPercent: dir === 'open' ? -100 : 0,
+        duration: 0.6,
+        ease,
+        onStart: () => console.log('[descend] panelsLayer onStart', getComputedStyle(panelsLayer).transform),
+        onUpdate() { if ((this as { _n?: number })._n === undefined) { (this as { _n?: number })._n = 1; console.log('[descend] panelsLayer first update', getComputedStyle(panelsLayer).transform); } },
+        onComplete: () => console.log('[descend] panelsLayer onComplete', getComputedStyle(panelsLayer).transform),
+        // Strip the inline transform once closed so the resting layer carries no
+        // lingering translate(0,0) (which would leave a stray stacking context).
+        ...(dir === 'close' ? { clearProps: 'transform' } : {}),
+      });
+    }
+    // The lane's own tween uses fromTo (not a separate gsap.set + gsap.to) so the
+    // start/end values are captured atomically in one tween — a preceding gsap.set
+    // immediately followed by gsap.to on the same target left the open direction
+    // rendering with no visible motion (close, which has no preceding set, was fine).
+    if (dir === 'open') {
+      gsap.fromTo(
+        lane,
+        { yPercent: 100, autoAlpha: 1 },
+        { yPercent: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto',
+          onStart: () => console.log('[descend] lane onStart', getComputedStyle(lane).transform),
+          onUpdate() { if ((this as { _n?: number })._n === undefined) { (this as { _n?: number })._n = 1; console.log('[descend] lane first update', getComputedStyle(lane).transform); } },
+          onComplete: () => { console.log('[descend] lane onComplete', getComputedStyle(lane).transform); onComplete?.(); } },
+      );
+    } else {
+      gsap.to(lane, { yPercent: 100, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete });
+    }
+  };
+
   async function openLane(id: string) {
     const lane = laneEl(id);
     // Same lane already open (or mid-open): no-op instead of restarting the tween.
@@ -169,11 +221,6 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     state.openId = id;
     state.restoreFocus = trigger;
 
-    // The panels slide up and off the top during the descent, so their horizontal
-    // position is irrelevant while a lane is open (they are covered) — we do NOT
-    // re-align the main lane on open. Any open-time scroll (the old 1.2s smooth one
-    // OR an instant snap) fought the slide and read as jank/linearity. Alignment
-    // happens only on CLOSE (scrollToPanel there), on the revealed side.
     pluckThreshold(id);
 
     // reveal + slide
@@ -182,27 +229,15 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
     if (isDesktopMotion()) {
       const { gsap } = await import('gsap');
+      // Drive the descent layer (panels), NOT the pinned [data-showcase] section
+      // (whose fixed-position lane children would ride a section transform) and
+      // NOT the scrubbed track (whose x the horizontal scrub owns).
+      const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
       lane.hidden = false;
       gsap.killTweensOf(lane);
-      // Coordinated "same level" descent: the detail rises from below while the
-      // panel row (main lane) slides up and off the top at the same rate, so the
-      // two read as one continuous vertical scroll — the whole content moving
-      // together — not a panel dropped on top. Reveal + off-screen start happen in
-      // the same frame (no flash); open/close share the same power3 contract.
-      gsap.fromTo(
-        lane,
-        { yPercent: 100, autoAlpha: 1 },
-        { yPercent: 0, autoAlpha: 1, duration: 0.6, ease: 'power3.out', overwrite: 'auto' },
-      );
-      // Move the TRACK (panels), NOT the pinned [data-showcase] section — its
-      // fixed-position lane children would ride along with a section transform.
-      // No `overwrite` here so it can't cancel the horizontal scrub tween that
-      // also targets the track; stale y-tweens are cleared via state.trackTween.
-      const track = document.querySelector<HTMLElement>('[data-showcase-track]');
-      if (track) {
-        state.trackTween?.kill();
-        state.trackTween = gsap.to(track, { yPercent: -100, duration: 0.6, ease: 'power3.out' });
-      }
+      // Reveal + off-screen start + descend all happen inside the fromTo below
+      // (no flash), in one atomic tween — see descend()'s comment for why.
+      descend(gsap, lane, panelsLayer, 'open');
 
       // 3) vertical parallax for [data-parallax-y] descendants, scrubbed by the
       // lane's own scroll container. Desktop/motion-enabled only; detached in
@@ -313,23 +348,14 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     };
     if (lane && isDesktopMotion()) {
       const { gsap } = await import('gsap');
+      const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
       gsap.killTweensOf(lane);
-      // Bring the panel row back down in step with the detail sliding out, so
-      // leaving looks like the same content scrolling back into place.
-      const track = document.querySelector<HTMLElement>('[data-showcase-track]');
-      if (track) {
-        state.trackTween?.kill();
-        state.trackTween = gsap.to(track, { yPercent: 0, duration: 0.6, ease: 'power3.in' });
-      }
       // Await the tween's own completion (not just its kickoff) so callers that
       // `await closeLane()` before opening a different lane (see openLane above)
       // see state.openId cleared before they proceed — otherwise finish() would
       // fire later and clobber the newly-set state.openId back to null.
       await new Promise<void>((resolve) => {
-        gsap.to(lane, {
-          yPercent: 100, duration: 0.6, ease: 'power3.in', overwrite: 'auto',
-          onComplete: () => { finish(); resolve(); },
-        });
+        descend(gsap, lane, panelsLayer, 'close', () => { finish(); resolve(); });
       });
     } else {
       finish();

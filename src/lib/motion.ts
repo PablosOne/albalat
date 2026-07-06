@@ -442,9 +442,34 @@ function animateBorderWipe(card: HTMLElement): gsap.core.Tween {
  * the bottom of the stage) until t=2.25s of the animation. On mobile we swap to an
  * opacity fade so the full stage — including the foreground — reveals at t=0, and
  * the person can start appearing at t=0.45s, cutting LCP by ~1.5-2s. */
-export function heroEntrance(root: ParentNode = document) {
+export function heroEntrance(root: ParentNode = document, opts: { instant?: boolean } = {}) {
   const bg = root.querySelector<HTMLImageElement>('[data-hero-background]');
   if (!bg) return null;
+
+  // Every route's markup ships the hero (and, on Home, the nav toolbar) pre-hidden
+  // via inline clip-path/opacity, so the session's *first* paint can play the
+  // cinematic reveal below. Client-side navigations land on a freshly-hidden copy
+  // of that same markup, but the reveal is a one-time flourish — so callers pass
+  // `instant` on every navigation after the first, snapping straight to the
+  // resting (visible) state instead of replaying the multi-second timeline.
+  if (opts.instant) {
+    const headline = root.querySelector<HTMLElement>('[data-hero-headline]');
+    const words = root.querySelectorAll<HTMLElement>('[data-hero-word-text]');
+    const foreground = root.querySelector<HTMLElement>('[data-hero-foreground]');
+    const stage = root.querySelector<HTMLElement>('[data-hero-stage]');
+    const subtitle = root.querySelector<HTMLElement>('[data-hero-subtitle]');
+    const signature = root.querySelector<HTMLElement>('[data-hero-signature]');
+    const toolbar = root.querySelectorAll<HTMLElement>('[data-toolbar]');
+    const hint = root.querySelector<HTMLElement>('[data-hero-scroll-hint]');
+    if (headline) headline.style.visibility = 'visible';
+    gsap.set(words, { clearProps: 'transform' });
+    gsap.set(foreground, { clearProps: 'transform,opacity' });
+    gsap.set(
+      [stage, ...Array.from(toolbar), subtitle, signature, hint].filter((el): el is HTMLElement => Boolean(el)),
+      { clearProps: 'clipPath,opacity,willChange' },
+    );
+    return null;
+  }
 
   // Pin initial hidden states through GSAP so its transform state stays canonical.
   // Inline % transforms collapse to a pixel matrix at computed-style time, and then

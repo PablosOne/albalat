@@ -70,6 +70,13 @@ export function initShowcaseDesktop(
 
   const pinDistance = () => window.innerHeight * buildGeometry(window.innerWidth).totalMultiplier;
   const revealedPanels = new WeakSet<HTMLElement>();
+  const revealOnce = (panel: HTMLElement) => {
+    if (revealedPanels.has(panel) || panel.dataset.showcaseRevealed === 'true') return;
+    revealedPanels.add(panel);
+    panel.dataset.showcaseRevealed = 'true';
+    revealPanel(panel);
+    revealProblemCard(panel);
+  };
   const revealVisiblePanels = () => {
     panelArr.forEach((panel) => {
       if (panel.dataset.showcasePanelId === 'hero' || revealedPanels.has(panel)) return;
@@ -77,9 +84,7 @@ export function initShowcaseDesktop(
       const visibleWidth = Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
       if (visibleWidth < Math.min(rect.width, window.innerWidth) * 0.18) return;
 
-      revealedPanels.add(panel);
-      revealPanel(panel);
-      revealProblemCard(panel);
+      revealOnce(panel);
     });
   };
 
@@ -122,8 +127,8 @@ export function initShowcaseDesktop(
       start: 'left right-=15%',
       end: 'right center',
       once: true,
-      onEnter: (self) => { revealPanel(panel); revealProblemCard(panel); self.kill(); },
-      onEnterBack: (self) => { revealPanel(panel); revealProblemCard(panel); self.kill(); },
+      onEnter: (self) => { revealOnce(panel); self.kill(); },
+      onEnterBack: (self) => { revealOnce(panel); self.kill(); },
       invalidateOnRefresh: true,
     });
     panelTriggers.push(trigger);
@@ -136,6 +141,22 @@ export function initShowcaseDesktop(
   document.addEventListener('click', revealSoon);
   requestAnimationFrame(revealVisiblePanels);
 
+  // Recenter a horizontal-parallax range so the element rests at x:0 when its
+  // panel is *aligned* (left edge at the viewport left) — the exact position a
+  // nav / keyboard jump (scrollToPanel in lanes.ts) lands on. With start
+  // 'left right' / end 'right left', that alignment happens at scrub progress
+  // p = innerWidth / (innerWidth + panelW). A total signed drift D = mult ×
+  // panelW must therefore run from `-D·p` (entering, pushed toward its lead
+  // edge) through 0 (aligned → readable) to `D·(1-p)` (exiting). Anchoring x:0
+  // to the entrance instead (the old `{x:0}` → `{x:D}`) froze nav landings
+  // mid-drift, so a jumped-to section showed its content shoved off-screen.
+  const alignedProgress = (panelW: number) =>
+    window.innerWidth / (window.innerWidth + panelW);
+  const parallaxFrom = (panelW: () => number, drift: number) =>
+    -drift * alignedProgress(panelW());
+  const parallaxTo = (panelW: () => number, drift: number) =>
+    drift * (1 - alignedProgress(panelW()));
+
   const aboutHeadline = document.querySelector<HTMLElement>('[data-about-headline]');
   const aboutIndex = Array.from(panels).findIndex(panel => panel.dataset.showcasePanelId === 'about');
   const aboutPanel = panels[aboutIndex] ?? null;
@@ -143,14 +164,13 @@ export function initShowcaseDesktop(
   const aboutHeadlineTween = aboutHeadline && aboutPanel
     ? gsap.fromTo(
         aboutHeadline,
-        { x: 0 },
+        // Drift 1.5× the about panel's rendered width (scales with the panel
+        // cap on ultrawide via SHOWCASE_PANEL_MAX_WIDTH_PX, not the raw
+        // viewport), recentered so the headline is at rest when about is the
+        // aligned/read station and sweeps symmetrically as it enters/exits.
+        { x: () => parallaxFrom(() => aboutPanel.offsetWidth, -aboutPanel.offsetWidth * 1.5) },
         {
-          // Drift left by 1.5× the about panel's rendered width so the
-          // parallax distance scales with the panel cap (capped on
-          // ultrawide via SHOWCASE_PANEL_MAX_WIDTH_PX) instead of the raw
-          // viewport. Keeps the headline reaching the same relative
-          // off-screen position regardless of monitor size.
-          x: () => -(aboutPanel.offsetWidth) * 1.5,
+          x: () => parallaxTo(() => aboutPanel.offsetWidth, -aboutPanel.offsetWidth * 1.5),
           ease: 'none',
           scrollTrigger: {
             trigger: aboutPanel,
@@ -184,9 +204,12 @@ export function initShowcaseDesktop(
       if (multiplier === 0) return;
       const tw = gsap.fromTo(
         el,
-        { x: 0 },
+        // Recentered on the aligned/read position (see alignedProgress above)
+        // so jumped-to sections frame their content instead of freezing it
+        // mid-drift; total travel is unchanged, only its zero-point moves.
+        { x: () => parallaxFrom(() => panel.offsetWidth, multiplier * panel.offsetWidth) },
         {
-          x: () => multiplier * panel.offsetWidth,
+          x: () => parallaxTo(() => panel.offsetWidth, multiplier * panel.offsetWidth),
           ease: 'none',
           scrollTrigger: {
             trigger: panel,

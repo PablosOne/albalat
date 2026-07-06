@@ -3,6 +3,7 @@ import type { Panel } from '@/data/site';
 import { HEADING_HIGHLIGHT_COLOR } from '@/lib/textHighlight';
 import TextReveal from './TextReveal.astro';
 import LaneArrow from './LaneArrow.astro';
+import PlatformLink from './PlatformLink.astro';
 
 interface Props {
   panel: Panel;
@@ -35,19 +36,9 @@ const { panel } = Astro.props;
       </ul>
     )}
     {panel.links && (
-      <div class="services-links mt-12 flex gap-6 text-label">
+      <div class="services-links panel-platform-links mt-12 flex gap-3 text-label">
         {panel.links.map((link) => (
-          <a
-            href={link.href}
-            target={link.href.startsWith('http') ? '_blank' : undefined}
-            rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-            class="underline decoration-1 underline-offset-4 hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
-            data-reveal="cta"
-            data-text-reveal="block"
-            data-text-reveal-preset="label"
-          >
-            {link.label} -&gt;
-          </a>
+          <PlatformLink link={link} />
         ))}
       </div>
     )}

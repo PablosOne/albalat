@@ -263,7 +263,6 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
           : 'Grabaciones, lanzamientos y obras seleccionadas reunidas en un espacio de escucha.',
       ],
       links: [
-        { label: isEn ? 'Open music' : 'Ver musica', href: '#music' },
         { label: 'Spotify', href: spotify },
       ],
       detail: true,
@@ -287,7 +286,6 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
           : 'Interpretaciones y momentos de concierto en imagen, con la misma atencion al detalle que el instrumento.',
       ],
       links: [
-        { label: isEn ? 'Open videos' : 'Ver videos', href: '#videos' },
         { label: 'YouTube', href: youtube },
       ],
       detail: true,
@@ -313,7 +311,6 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         ? ['Private classes', 'Concert proposals', 'Direct enquiries']
         : ['Clases privadas', 'Propuestas de concierto', 'Consultas directas'],
       links: [
-        { label: isEn ? 'Make an enquiry' : 'Enviar consulta', href: '#classes' },
         { label: 'Email', href: email },
       ],
       detail: true,

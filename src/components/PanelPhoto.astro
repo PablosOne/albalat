@@ -2,6 +2,7 @@
 import type { Panel } from '@/data/site';
 import TextReveal from './TextReveal.astro';
 import LaneArrow from './LaneArrow.astro';
+import PlatformLink from './PlatformLink.astro';
 
 interface Props {
   panel: Panel;
@@ -26,19 +27,9 @@ const { panel } = Astro.props;
       {panel.body.map((paragraph) => <TextReveal as="p" text={paragraph} class="mb-4" reveal="body" mode="phrases" preset="body" />)}
     </div>
     {panel.links && (
-      <div class="mt-8 flex flex-wrap gap-5 text-label">
+      <div class="panel-platform-links mt-8 flex flex-wrap gap-3 text-label">
         {panel.links.map((link) => (
-          <a
-            href={link.href}
-            target={link.href.startsWith('http') ? '_blank' : undefined}
-            rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-            class="underline decoration-1 underline-offset-4 hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
-            data-reveal="cta"
-            data-text-reveal="block"
-            data-text-reveal-preset="label"
-          >
-            {link.label} -&gt;
-          </a>
+          <PlatformLink link={link} />
         ))}
       </div>
     )}

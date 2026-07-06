@@ -25,8 +25,17 @@ const panels = getHomePanels(locale);
   <script is:inline data-astro-rerun set:html={`document.documentElement.dataset.initialDetail=${JSON.stringify(initialDetail)}`}></script>
 )}
 <section class="relative w-full overflow-hidden" aria-label={locale === 'en' ? 'Home' : 'Inicio'} data-showcase>
-  <div class="relative z-10 flex" data-showcase-track style="width: max-content;">
-    {panels.map((panel, i) => <Panel panel={panel} isLast={i === panels.length - 1} />)}
+  {/* Dedicated vertical-descent layer. The lane open/close (lanes.ts) drives this
+      wrapper's y so the panel row slides up with the detail, WITHOUT touching the
+      inner track's transform — which the horizontal scrub (showcase.desktop.ts)
+      owns via x. Decoupling the two onto separate elements is what stops them
+      fighting (the old cause of the descent only working the first time). Purely a
+      transform layer: the track stays `relative` so panel.offsetLeft — which the
+      scrub reads — is unchanged, and on mobile it's inert. */}
+  <div data-showcase-descent>
+    <div class="relative z-10 flex" data-showcase-track style="width: max-content;">
+      {panels.map((panel, i) => <Panel panel={panel} isLast={i === panels.length - 1} />)}
+    </div>
   </div>
   {['music', 'videos', 'classes'].map((id) => (
     <DetailLane id={id} title={panels.find((p) => p.id === id)?.heading ?? id} locale={locale}>

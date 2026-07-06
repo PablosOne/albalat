@@ -17,9 +17,9 @@ test('wheel-down pans the main lane horizontally, not vertically', async ({ page
   await expect.poll(() => about.evaluate((p) => p.getBoundingClientRect().left)).toBeLessThan(before - 10);
 });
 
-test("clicking a panel's music link opens its detail lane", async ({ page }) => {
+test("clicking a panel's music lane opener opens its detail lane", async ({ page }) => {
   await page.goto('/');
-  await page.locator('[data-showcase-panel-id="music"] a[href="#music"]').click();
+  await page.locator('[data-showcase-panel-id="music"] [data-lane-open="music"]').click();
   await expect(page.locator('[data-detail-lane="music"]')).toBeVisible();
   await expect(page).toHaveURL(/#music$/);
 });

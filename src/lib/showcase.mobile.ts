@@ -12,6 +12,12 @@ export function initShowcaseMobile(
   mode: 'carousel' | 'stack' = 'stack',
 ): () => void {
   const section = track.closest<HTMLElement>('[data-showcase]');
+  const revealOnce = (panel: HTMLElement) => {
+    if (panel.dataset.showcaseRevealed === 'true') return;
+    panel.dataset.showcaseRevealed = 'true';
+    revealPanel(panel);
+    revealProblemCard(panel);
+  };
 
   track.style.width = mode === 'carousel' ? 'max-content' : '100%';
   track.style.flexDirection = mode === 'carousel' ? 'row' : 'column';
@@ -36,8 +42,7 @@ export function initShowcaseMobile(
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const panel = entry.target as HTMLElement;
-        revealPanel(panel);
-        revealProblemCard(panel);
+        revealOnce(panel);
         revealIo.unobserve(panel);
       }
     });

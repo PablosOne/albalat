@@ -2,6 +2,7 @@
 import type { Panel } from '@/data/site';
 import { site } from '@/data/site';
 import TextReveal from './TextReveal.astro';
+import PlatformLink from './PlatformLink.astro';
 
 interface Props {
   panel: Panel;
@@ -46,88 +47,89 @@ const copy = isEn
       subject: `Nueva consulta desde ${site.fullName}`,
     };
 ---
-<div class="w-full max-w-[1600px] mx-auto grid grid-cols-12 gap-8 lg:gap-16 items-center">
-  <div class="contact-intro col-span-12 lg:col-span-6 flex flex-col justify-between gap-10">
-    <TextReveal as="h2" text={panel.heading} class="text-display-xl font-display" reveal="heading" mode="words" preset="headline" />
-    {mailLink && (
-      <a
-        href={mailLink.href}
-        class="contact-email font-display underline decoration-1 underline-offset-[0.15em] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
-        style={`--mail-chars: ${mailCharCount};`}
-        data-reveal="heading"
-      >
-        {mailLink.label}
-      </a>
-    )}
-    {otherLinks.length > 0 && (
-      <ul class="contact-external-links flex flex-col gap-3" data-reveal="heading">
-        {otherLinks.map((link) => (
-          <li>
-            <a
-              href={link.href}
-              target={link.href.startsWith('http') ? '_blank' : undefined}
-              rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-              class="inline-flex text-label text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
-            >
-              {link.label} -&gt;
-            </a>
-          </li>
-        ))}
-      </ul>
-    )}
+<div class="contact-panel-shell relative w-full max-w-[1600px] mx-auto">
+  <div class="contact-strings" aria-hidden="true">
+    {[0, 1, 2, 3, 4, 5].map((i) => (
+      <span class={`contact-string contact-string--${i + 1}`}></span>
+    ))}
   </div>
 
-  <div class="contact-form-column col-span-12 lg:col-span-6" data-reveal="body">
-    <form
-      class="contact-form flex flex-col gap-5"
-      action="https://api.web3forms.com/submit"
-      method="POST"
-      novalidate
-      data-contact-form
-      data-success={copy.successText}
-      data-error={copy.error}
-      data-required={copy.required}
-    >
-      <input type="hidden" name="access_key" value={web3formsKey} />
-      <input type="hidden" name="subject" value={copy.subject} />
-      <input type="hidden" name="from_name" value={site.fullName} />
-      <input type="hidden" name="inquiry_type" value={isEn ? 'General inquiry' : 'Consulta general'} />
-      <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off" />
-
-      <label class="contact-field">
-        <span>{copy.name}</span>
-        <input required type="text" name="name" autocomplete="name" placeholder={copy.namePlaceholder} />
-      </label>
-
-      <label class="contact-field">
-        <span>{copy.email}</span>
-        <input required type="email" name="email" autocomplete="email" placeholder="you@example.com" />
-      </label>
-
-      <label class="contact-field">
-        <span>{copy.message}</span>
-        <textarea required name="message" rows="3" placeholder={copy.messagePlaceholder}></textarea>
-      </label>
-
-      <div class="flex flex-wrap items-center gap-6 pt-2">
-        <button
-          type="submit"
-          class="text-label border border-[var(--color-fg)] px-6 py-3 text-[var(--color-fg)] transition-colors hover:bg-[var(--color-fg)] hover:text-[var(--color-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-40"
-          disabled={!web3formsKey}
-          data-submit-label={copy.submit}
-          data-sending-label={copy.sending}
+  <div class="contact-panel-content relative z-[2] grid grid-cols-12 gap-8 lg:gap-16 items-center">
+    <div class="contact-intro col-span-12 lg:col-span-6 flex flex-col justify-between gap-10">
+      <TextReveal as="h2" text={panel.heading} class="text-display-xl font-display" reveal="heading" mode="words" preset="headline" />
+      {mailLink && (
+        <a
+          href={mailLink.href}
+          class="contact-email font-display underline decoration-1 underline-offset-[0.15em] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-sm"
+          style={`--mail-chars: ${mailCharCount};`}
+          data-reveal="heading"
         >
-          {copy.submit}
-        </button>
-        <p class="min-h-6 text-label text-[var(--color-muted)]" data-form-status role="alert">
-          {!web3formsKey ? copy.unavailable : ''}
-        </p>
-      </div>
-    </form>
+          {mailLink.label}
+        </a>
+      )}
+      {otherLinks.length > 0 && (
+        <ul class="contact-external-links flex flex-wrap gap-3 text-label" data-reveal="heading">
+          {otherLinks.map((link) => (
+            <li>
+              <PlatformLink link={link} reveal={false} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
 
-    <div class="contact-success hidden" data-form-success role="status">
-      <p class="text-display-l font-display leading-none">{copy.successTitle}</p>
-      <span class="mt-6 block text-label text-[var(--color-muted)]">{copy.successText}</span>
+    <div class="contact-form-column col-span-12 lg:col-span-6" data-reveal="body">
+      <form
+        class="contact-form flex flex-col gap-5"
+        action="https://api.web3forms.com/submit"
+        method="POST"
+        novalidate
+        data-contact-form
+        data-success={copy.successText}
+        data-error={copy.error}
+        data-required={copy.required}
+      >
+        <input type="hidden" name="access_key" value={web3formsKey} />
+        <input type="hidden" name="subject" value={copy.subject} />
+        <input type="hidden" name="from_name" value={site.fullName} />
+        <input type="hidden" name="inquiry_type" value={isEn ? 'General inquiry' : 'Consulta general'} />
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off" />
+
+        <label class="contact-field">
+          <span>{copy.name}</span>
+          <input required type="text" name="name" autocomplete="name" placeholder={copy.namePlaceholder} />
+        </label>
+
+        <label class="contact-field">
+          <span>{copy.email}</span>
+          <input required type="email" name="email" autocomplete="email" placeholder="you@example.com" />
+        </label>
+
+        <label class="contact-field">
+          <span>{copy.message}</span>
+          <textarea required name="message" rows="3" placeholder={copy.messagePlaceholder}></textarea>
+        </label>
+
+        <div class="flex flex-wrap items-center gap-6 pt-2">
+          <button
+            type="submit"
+            class="text-label border border-[var(--color-fg)] px-6 py-3 text-[var(--color-fg)] transition-colors hover:bg-[var(--color-fg)] hover:text-[var(--color-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={!web3formsKey}
+            data-submit-label={copy.submit}
+            data-sending-label={copy.sending}
+          >
+            {copy.submit}
+          </button>
+          <p class="min-h-6 text-label text-[var(--color-muted)]" data-form-status role="alert">
+            {!web3formsKey ? copy.unavailable : ''}
+          </p>
+        </div>
+      </form>
+
+      <div class="contact-success hidden" data-form-success role="status">
+        <p class="text-display-l font-display leading-none">{copy.successTitle}</p>
+        <span class="mt-6 block text-label text-[var(--color-muted)]">{copy.successText}</span>
+      </div>
     </div>
   </div>
 </div>
@@ -182,6 +184,32 @@ const copy = isEn
 </script>
 
 <style>
+  .contact-panel-shell {
+    isolation: isolate;
+    min-height: min(38rem, calc(100dvh - 8rem));
+    --contact-string-color: var(--accent, var(--color-accent, #c6923e));
+  }
+
+  .contact-panel-content {
+    min-height: inherit;
+  }
+
+  .contact-strings {
+    position: absolute;
+    inset: auto 0 10%;
+    z-index: 0;
+    display: grid;
+    gap: clamp(0.8rem, 1.8vw, 1.4rem);
+    opacity: 0.42;
+    transform: rotate(-2deg);
+  }
+
+  .contact-string {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--contact-string-color) 70%, transparent), transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--contact-string-color) 38%, transparent);
+  }
+
   .contact-email {
     display: block;
     width: max-content;
@@ -234,6 +262,16 @@ const copy = isEn
   }
 
   @media (max-width: 767px) {
+    .contact-panel-shell {
+      min-height: 0;
+    }
+
+    .contact-strings {
+      inset: 1.5rem -12vw auto;
+      gap: 0.8rem;
+      opacity: 0.36;
+    }
+
     .contact-intro {
       display: block;
     }
@@ -244,12 +282,13 @@ const copy = isEn
     }
 
     .contact-external-links {
-      display: none;
+      margin-top: 1.5rem;
     }
 
     .contact-form-column {
       margin-top: 1.75rem;
     }
+
   }
 
   @media (min-width: 1024px) {

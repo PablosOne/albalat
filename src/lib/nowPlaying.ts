@@ -12,6 +12,7 @@ export interface PlayerTrack {
   appleEmbed?: string;
   spotifyUrl?: string;
   appleUrl?: string;
+  youtubeUrl?: string;
   theme: AlbumTheme;
 }
 
@@ -64,6 +65,7 @@ export function buildQueue(album: Album): PlayerTrack[] {
     appleEmbed: album.appleEmbed,
     spotifyUrl: album.links.spotify,
     appleUrl: album.links.appleMusic,
+    youtubeUrl: album.links.youtube,
     theme: resolveTrackTheme(album, track),
   }));
 }

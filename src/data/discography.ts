@@ -127,7 +127,7 @@ export const discography = [
     links: {
       spotify: 'https://open.spotify.com/album/5vUZx32NxcgkM0F5aU8be7',
       appleMusic: 'https://music.apple.com/us/artist/eulogio-albalat/1849308945',
-      youtube: 'https://www.youtube.com/c/EulogioAlbalat/videos',
+      youtube: 'https://www.youtube.com/watch?v=CDERynrKA2s',
     },
     embeds: {
       spotify: 'https://open.spotify.com/embed/album/5vUZx32NxcgkM0F5aU8be7',
