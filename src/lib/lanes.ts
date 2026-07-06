@@ -131,7 +131,7 @@ function scrollToPanel(panelId: string): void {
   }
 }
 
-interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; trackTween?: { kill: () => void }; }
+interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; }
 
 function isDesktopMotion(): boolean {
   return !window.matchMedia('(max-width: 767px)').matches
@@ -182,26 +182,21 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
     if (isDesktopMotion()) {
       const { gsap } = await import('gsap');
-      const track = document.querySelector<HTMLElement>('[data-showcase-track]');
-      gsap.killTweensOf(lane);
-      // Set the start state (fully below) and reveal only AFTER gsap has loaded,
-      // so there is no one-frame flash of the lane sitting at rest during the
-      // dynamic import — the close path never flashes (its lane is already
-      // visible when it animates), so this makes open and close match.
-      gsap.set(lane, { yPercent: 100, autoAlpha: 1 });
       lane.hidden = false;
-      // Coordinated "same level" descent: the detail rises from below while the
-      // row of panels slides up and off the top at the same rate, so the two read
-      // as one continuous vertical scroll rather than a panel dropped on top. We
-      // move the TRACK (panels only), NOT the [data-showcase] section — the lanes
-      // are position:fixed children of the section, so a transform on the section
-      // would become their containing block and drag them along; the track's own
-      // (frozen, while a lane is open) x-scrub composes with this y through GSAP.
-      gsap.to(lane, { yPercent: 0, duration: 0.6, ease: 'power3.out' });
-      if (track) {
-        state.trackTween?.kill();
-        state.trackTween = gsap.to(track, { yPercent: -100, duration: 0.6, ease: 'power3.out' });
-      }
+      gsap.killTweensOf(lane);
+      // Slide the detail up from below with a weighted settle. Reveal + off-screen
+      // start happen in the same frame (no flash), and open/close share the same
+      // power3 contract (see closeLane) so the two directions match.
+      //
+      // NOTE: earlier this also slid the panel TRACK up to fake a "same level"
+      // scroll, but the track is the GSAP-pinned/scrubbed element — driving its y
+      // here fought the horizontal scrub and read as a jump. Reverted to a plain
+      // (reliable) lane slide; the covered background stays put.
+      gsap.fromTo(
+        lane,
+        { yPercent: 100, autoAlpha: 1 },
+        { yPercent: 0, autoAlpha: 1, duration: 0.6, ease: 'power3.out', overwrite: 'auto' },
+      );
 
       // 3) vertical parallax for [data-parallax-y] descendants, scrubbed by the
       // lane's own scroll container. Desktop/motion-enabled only; detached in
@@ -304,19 +299,14 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     };
     if (lane && isDesktopMotion()) {
       const { gsap } = await import('gsap');
-      const track = document.querySelector<HTMLElement>('[data-showcase-track]');
       gsap.killTweensOf(lane);
-      if (track) {
-        state.trackTween?.kill();
-        state.trackTween = gsap.to(track, { yPercent: 0, duration: 0.6, ease: 'power3.in' });
-      }
       // Await the tween's own completion (not just its kickoff) so callers that
       // `await closeLane()` before opening a different lane (see openLane above)
       // see state.openId cleared before they proceed — otherwise finish() would
       // fire later and clobber the newly-set state.openId back to null.
       await new Promise<void>((resolve) => {
         gsap.to(lane, {
-          yPercent: 100, duration: 0.6, ease: 'power3.in',
+          yPercent: 100, duration: 0.6, ease: 'power3.in', overwrite: 'auto',
           onComplete: () => { finish(); resolve(); },
         });
       });

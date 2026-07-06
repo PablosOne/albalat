@@ -91,7 +91,15 @@ html {
   background: var(--stage);
   color: var(--ink);
   font-family: var(--font-sans);
+  /* Hide the page's own vertical scrollbar site-wide. Desktop scrolls via Lenis
+     and the showcase is horizontal, so the native bar is never the affordance —
+     but it WAS toggling on/off when a detail lane opened (see the removed
+     [data-open-lane] overflow rule), and that toggle reflowed the layout by the
+     scrollbar's width, reading as a sideways "jump" as the lane rose. Hiding it
+     everywhere removes that shift and the old double-scrollbar in one go. */
+  scrollbar-width: none;
 }
+html::-webkit-scrollbar { display: none; }
 
 body {
   margin: 0;
@@ -660,14 +668,12 @@ body {
   }
 }
 
-/* While a detail lane owns the screen, hide the page's own scrollbar so it does
-   not double up with the lane's [data-detail-scroll] scrollbar. The page under
-   the fixed lane is a tall pinned showcase; the lane covers it entirely and the
-   wheel is handed to the lane (data-lenis-prevent), so the page must not keep a
-   second scrollbar (or scroll) alongside the detail's own. */
-html[data-open-lane] {
-  overflow: hidden;
-}
+/* (The page scrollbar is hidden site-wide on `html` above, so a detail lane no
+   longer needs to toggle `overflow: hidden` to avoid a double scrollbar — and
+   removing that toggle removes the scrollbar-width layout shift it caused. The
+   page still cannot scroll behind an open lane: the lane covers the viewport,
+   the wheel is handed to it via data-lenis-prevent, and the scroll container's
+   overscroll-behavior: contain stops scroll chaining to the page.) */
 
 @keyframes laneStageOut {
   from {
