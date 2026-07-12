@@ -216,35 +216,10 @@ body {
     min-height: 0 !important;
   }
 
-  [data-about-content] {
-    position: relative;
-    height: auto;
-    padding-top: 1rem;
-  }
-
-  [data-about-content] > div[aria-hidden="true"] {
-    position: relative !important;
-    inset: auto !important;
-    margin-bottom: 1.5rem;
-  }
-
-  [data-about-headline] {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    width: auto !important;
-    max-width: 100% !important;
-    white-space: normal !important;
-    font-size: clamp(2rem, 9vw, 3.5rem) !important;
-    line-height: 1 !important;
-  }
-
-  [data-about-content] > div:last-child {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    max-width: 100% !important;
-  }
+  /* [data-about-content]'s mobile layout (relative flow, ordered children,
+     headline sizing) now lives entirely in PanelAbout.astro's own scoped
+     <style> — that component-level layout supersedes what used to be
+     `!important` rescues here. */
 
   [data-showcase-panel]:not([data-showcase-panel-id="hero"]):not([data-showcase-panel-kind="separator"]):not([data-showcase-panel-id="contact"]) {
     border-top: none !important;

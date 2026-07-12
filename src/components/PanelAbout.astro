@@ -10,7 +10,7 @@ const { panel } = Astro.props;
 ---
 <div class="relative w-full h-full" data-about-content>
   <div
-    class="absolute inset-0 pointer-events-none overflow-visible"
+    class="about-decorative absolute inset-0 pointer-events-none overflow-visible"
     style="clip-path: inset(-100vh 0 -100vh -200vw);"
     aria-hidden="true"
   >
@@ -22,7 +22,7 @@ const { panel } = Astro.props;
     </h2>
   </div>
 
-  <div class="absolute top-[44%] left-[-3vw] max-w-[56ch]">
+  <div class="about-body absolute top-[44%] left-[-3vw] max-w-[56ch]">
     {panel.subheading && (
       <TextReveal as="p" text={panel.subheading} class="text-label text-[var(--color-muted)] mb-5" reveal="heading" mode="block" preset="label" data-parallax-x="-0.32" />
     )}
@@ -39,6 +39,51 @@ const { panel } = Astro.props;
   @media (min-width: 768px) {
     :global(.about-title) {
       font-size: clamp(2.75rem, 4vw + 0.5rem, 4.5rem) !important;
+    }
+  }
+
+  /* Mobile: the desktop layout layers the real heading/body over a giant
+     nowrap decorative quote using absolute positioning + horizontal parallax
+     bleed (see showcase.desktop.ts, disabled on mobile — see src/lib/showcase.ts).
+     That composition has no vertical-stack equivalent, so give this panel its
+     own relative-flow layout here instead of leaning on global.css's
+     `!important` rescues: real content (subheading, heading, body) reads
+     first, and the decorative tagline follows as a smaller, subdued line. */
+  @media (max-width: 767px) {
+    [data-about-content] {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      height: auto;
+      padding-top: 0.5rem;
+    }
+
+    .about-body {
+      position: relative;
+      top: auto;
+      left: auto;
+      order: 1;
+      max-width: 100%;
+    }
+
+    .about-decorative {
+      position: relative;
+      inset: auto;
+      order: 2;
+      margin-top: 2rem;
+    }
+
+    [data-about-headline] {
+      position: relative;
+      top: auto;
+      left: auto;
+      width: auto;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: break-word;
+      font-size: clamp(1.35rem, 6vw, 2rem);
+      line-height: 1.2;
+      opacity: 0.72;
     }
   }
 </style>
