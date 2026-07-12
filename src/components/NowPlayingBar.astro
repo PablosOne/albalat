@@ -35,7 +35,7 @@ const copy = {
       </div>
       <p data-np-hint class="mt-0.5 truncate text-[0.6rem] text-ink-muted">{copy.hint}</p>
     </div>
-    <div class="flex shrink-0 items-center gap-1">
+    <div class="np-controls flex shrink-0 items-center gap-1">
       <button data-np-prev type="button" aria-label={copy.prev} class="np-btn">⏮</button>
       <button data-np-toggle type="button" aria-label={copy.play} class="np-btn np-btn--primary">▶</button>
       <button data-np-next type="button" aria-label={copy.next} class="np-btn">⏭</button>
@@ -81,6 +81,22 @@ const copy = {
     #now-playing-bar {
       transition: none;
     }
+  }
+
+  @media (max-width: 767px) {
+    /* Let the bar wrap: row 1 = cover + title/seek, row 2 = controls. */
+    #now-playing-bar > .mx-auto { flex-wrap: wrap; }
+    /* Controls take their own full-width row and wrap centered, so they never
+       overflow 375px regardless of how many (up to 8) are visible. */
+    #now-playing-bar .np-controls {
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    /* ≥44px touch targets. */
+    .np-btn { width: 2.75rem; height: 2.75rem; }
+    .np-chip { height: 2.75rem; }
   }
 </style>
 
