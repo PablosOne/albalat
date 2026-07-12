@@ -125,6 +125,11 @@ const gaId = import.meta.env.PUBLIC_GA_ID ?? '';
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
       else run();
       document.addEventListener('astro:page-load', run);
+      // Re-init when crossing the mobile/desktop boundary so a resize/rotate
+      // never leaves a stale engine (desktop ScrollTrigger pin active on a phone
+      // width, or vice versa). run() tears down the previous engines first.
+      const breakpointMq = window.matchMedia('(max-width: 767px)');
+      breakpointMq.addEventListener('change', () => { void run(); });
     </script>
   </body>
 </html>
