@@ -19,3 +19,15 @@ describe('resolveInitialDetail', () => {
   it('falls back to hash', () => expect(resolveInitialDetail(null, '#music')).toBe('music'));
   it('null when neither', () => expect(resolveInitialDetail(null, '')).toBeNull());
 });
+
+import { nextStationId } from '@/lib/lanes';
+
+describe('nextStationId', () => {
+  const order = ['hero', 'about', 'music', 'videos', 'classes', 'contact'];
+  it('returns the following id', () =>
+    expect(nextStationId(order, 'music')).toBe('videos'));
+  it('null at the last station', () =>
+    expect(nextStationId(order, 'contact')).toBeNull());
+  it('null when the id is absent', () =>
+    expect(nextStationId(order, 'nope')).toBeNull());
+});

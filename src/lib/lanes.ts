@@ -1,5 +1,6 @@
 import type Lenis from 'lenis';
-import { MOBILE_BREAKPOINT_PX, buildShowcaseGeometry, SHOWCASE_PARALLAX_Y_GLOBAL_SCALE } from '@/lib/config';
+import { buildShowcaseGeometry, SHOWCASE_PARALLAX_Y_GLOBAL_SCALE } from '@/lib/config';
+import { laneMotion, isMobileViewport, prefersReducedMotion } from '@/lib/viewport';
 
 export function laneIdFromHash(hash: string): string | null {
   if (!hash) return null;
@@ -15,6 +16,14 @@ export function hasDetailLane(id: string, doc: Document = document): boolean {
 export function resolveInitialDetail(explicit: string | null, hash: string): string | null {
   if (explicit) return explicit;
   return laneIdFromHash(hash);
+}
+
+/** The station id that follows `currentId` in DOM order, or null if it is the
+ *  last station (or not found). Pure — pass the ordered list of panel ids. */
+export function nextStationId(orderedIds: readonly string[], currentId: string): string | null {
+  const i = orderedIds.indexOf(currentId);
+  if (i < 0 || i + 1 >= orderedIds.length) return null;
+  return orderedIds[i + 1] ?? null;
 }
 
 /** Document-Y of an element, traversing offsetParents. This stays correct while
@@ -42,17 +51,7 @@ function panelScrollY(panelId: string): number | null {
   if (!panel || !section) return null;
   const idx = panels.indexOf(panel);
 
-  const isMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`).matches;
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (isMobile && !prefersReduced) {
-    const track = document.querySelector<HTMLElement>('[data-showcase-track]');
-    const scrollContainer = section;
-    if (track && scrollContainer) {
-      scrollContainer.scrollTo({ left: panel.offsetLeft, behavior: 'smooth' });
-      return null;
-    }
-  }
-  if (isMobile || prefersReduced) {
+  if (isMobileViewport() || prefersReducedMotion()) {
     return absoluteTop(panel);
   }
 
@@ -84,23 +83,6 @@ function panelScrollY(panelId: string): number | null {
 function getCurrentPanelIndex(): number {
   const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'));
   if (!panels.length) return -1;
-
-  const isMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`).matches;
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (isMobile && !prefersReduced) {
-    const section = document.querySelector<HTMLElement>('[data-showcase]');
-    const left = section?.scrollLeft ?? 0;
-    let best = 0;
-    let bestDistance = Number.POSITIVE_INFINITY;
-    panels.forEach((panel, i) => {
-      const distance = Math.abs(panel.offsetLeft - left);
-      if (distance < bestDistance) {
-        best = i;
-        bestDistance = distance;
-      }
-    });
-    return best;
-  }
 
   const y = window.scrollY;
   let best = 0;
@@ -135,11 +117,6 @@ type GsapInstance = typeof import('gsap').gsap;
 
 interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; trackTween?: { kill: () => void }; closing?: boolean; }
 
-function isDesktopMotion(): boolean {
-  return !window.matchMedia('(max-width: 767px)').matches
-    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 export function initLanes(opts: { initialDetail?: string | null } = {}): () => void {
   if (typeof window === 'undefined') return () => {};
   const state: LaneState = { openId: null, restoreFocus: null };
@@ -154,53 +131,45 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     window.setTimeout(() => svg?.dispatchEvent(new PointerEvent('pointerleave')), 260);
   };
 
-  // Coordinated "same-level" descent, shared by open and close so both directions
-  // stay in lockstep. The detail lane and the panel row (main lane) move as one:
-  // opening, the lane rises from below while the panels slide up and off the top;
-  // closing reverses it. The panels ride the [data-showcase-descent] layer, which
-  // is a DIFFERENT element from the scrubbed track — so driving its y never fights
-  // the horizontal scrub (that owns the track's x). This decoupling is what makes
-  // the descent slide on every open, not only the first. state.trackTween clears
-  // any stale y-tween so repeat cycles always start from a clean 0/-100.
-  const descend = (
+  // Coordinated slide shared by open and close so both directions stay in
+  // lockstep. The detail lane and the panel row (the [data-showcase-descent]
+  // layer, NOT the scrubbed track — decoupling them is what lets the descent
+  // slide on every open, not only the first) move as one. `axis` picks the
+  // motion: 'y' = desktop descent (rise from below), 'x' = mobile slide (enter
+  // from the right). state.trackTween clears any stale tween so repeat cycles
+  // start from a clean 0 / -100.
+  const slide = (
     gsap: GsapInstance,
     lane: HTMLElement,
     panelsLayer: HTMLElement | null,
+    axis: 'x' | 'y',
     dir: 'open' | 'close',
     onComplete?: () => void,
   ) => {
     const ease = dir === 'open' ? 'power3.out' : 'power3.in';
-    // eslint-disable-next-line no-console
-    console.log('[descend]', dir, { panelsLayer: !!panelsLayer, lane: !!lane, laneHidden: lane.hidden, laneTransform: getComputedStyle(lane).transform });
+    const prop = axis === 'x' ? 'xPercent' : 'yPercent';
     if (panelsLayer) {
       state.trackTween?.kill();
       state.trackTween = gsap.to(panelsLayer, {
-        yPercent: dir === 'open' ? -100 : 0,
+        [prop]: dir === 'open' ? -100 : 0,
         duration: 0.6,
         ease,
-        onStart: () => console.log('[descend] panelsLayer onStart', getComputedStyle(panelsLayer).transform),
-        onUpdate() { if ((this as { _n?: number })._n === undefined) { (this as { _n?: number })._n = 1; console.log('[descend] panelsLayer first update', getComputedStyle(panelsLayer).transform); } },
-        onComplete: () => console.log('[descend] panelsLayer onComplete', getComputedStyle(panelsLayer).transform),
-        // Strip the inline transform once closed so the resting layer carries no
-        // lingering translate(0,0) (which would leave a stray stacking context).
+        // Strip the inline transform once closed so the resting layer carries
+        // no lingering translate (which would leave a stray stacking context).
         ...(dir === 'close' ? { clearProps: 'transform' } : {}),
       });
     }
-    // The lane's own tween uses fromTo (not a separate gsap.set + gsap.to) so the
-    // start/end values are captured atomically in one tween — a preceding gsap.set
-    // immediately followed by gsap.to on the same target left the open direction
-    // rendering with no visible motion (close, which has no preceding set, was fine).
+    // fromTo (not set+to) so start/end are captured atomically in one tween —
+    // a preceding set immediately followed by to left the open direction
+    // rendering with no visible motion.
     if (dir === 'open') {
       gsap.fromTo(
         lane,
-        { yPercent: 100, autoAlpha: 1 },
-        { yPercent: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto',
-          onStart: () => console.log('[descend] lane onStart', getComputedStyle(lane).transform),
-          onUpdate() { if ((this as { _n?: number })._n === undefined) { (this as { _n?: number })._n = 1; console.log('[descend] lane first update', getComputedStyle(lane).transform); } },
-          onComplete: () => { console.log('[descend] lane onComplete', getComputedStyle(lane).transform); onComplete?.(); } },
+        { [prop]: 100, autoAlpha: 1 },
+        { [prop]: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete },
       );
     } else {
-      gsap.to(lane, { yPercent: 100, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete });
+      gsap.to(lane, { [prop]: 100, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete });
     }
   };
 
@@ -227,22 +196,19 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     const scroller = lane.querySelector<HTMLElement>('[data-detail-scroll]');
     if (scroller) scroller.scrollTop = 0;
 
-    if (isDesktopMotion()) {
+    const motion = laneMotion();
+    if (motion === 'descend' || motion === 'slide') {
       const { gsap } = await import('gsap');
       // Drive the descent layer (panels), NOT the pinned [data-showcase] section
-      // (whose fixed-position lane children would ride a section transform) and
-      // NOT the scrubbed track (whose x the horizontal scrub owns).
+      // and NOT the scrubbed track (whose x the horizontal scrub owns).
       const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
       lane.hidden = false;
       gsap.killTweensOf(lane);
-      // Reveal + off-screen start + descend all happen inside the fromTo below
-      // (no flash), in one atomic tween — see descend()'s comment for why.
-      descend(gsap, lane, panelsLayer, 'open');
+      slide(gsap, lane, panelsLayer, motion === 'slide' ? 'x' : 'y', 'open');
 
-      // 3) vertical parallax for [data-parallax-y] descendants, scrubbed by the
-      // lane's own scroll container. Desktop/motion-enabled only; detached in
-      // closeLane so repeated open/close cycles never leave a stale listener.
-      if (scroller) {
+      // Vertical parallax for [data-parallax-y] descendants is a desktop-only
+      // affordance (the pinned-lane read); mobile detail is a plain scroll.
+      if (motion === 'descend' && scroller) {
         const yEls = Array.from(lane.querySelectorAll<HTMLElement>('[data-parallax-y]'));
         if (yEls.length) {
           const onScrollY = () => {
@@ -252,7 +218,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
               el.style.transform = `translateY(${(top * m * SHOWCASE_PARALLAX_Y_GLOBAL_SCALE * 0.1).toFixed(1)}px)`;
             });
           };
-          onScrollY(); // sync to the reset scrollTop=0 before the listener is live
+          onScrollY();
           state.detachY?.();
           state.detachY = undefined;
           scroller.addEventListener('scroll', onScrollY, { passive: true });
@@ -260,8 +226,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
         }
       }
     } else {
-      // Mobile / reduced-motion: lanes are inline in the native vertical stack,
-      // no slide — just reveal.
+      // Reduced-motion: lane is inline in the native vertical stack — just reveal.
       lane.hidden = false;
     }
     // Overscroll-to-exit: at the very top of the detail, continuing to pull up
@@ -271,7 +236,7 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     // threshold. Desktop/motion only — mobile/reduced-motion lanes are inline in
     // the native vertical stack, where native over-scroll already carries you out
     // to the neighbouring content.
-    if (isDesktopMotion() && scroller) {
+    if (laneMotion() === 'descend' && scroller) {
       const pullScroller = scroller;
       const exitPanels = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'));
       const curIdx = exitPanels.findIndex((p) => p.dataset.showcasePanelId === id);
@@ -346,16 +311,19 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       state.restoreFocus?.focus?.();
       scrollToPanel(target); // re-align: this station, or the next one on a forward exit
     };
-    if (lane && isDesktopMotion()) {
+    const motion = laneMotion();
+    if (lane && motion !== 'inline') {
       const { gsap } = await import('gsap');
       const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
       gsap.killTweensOf(lane);
-      // Await the tween's own completion (not just its kickoff) so callers that
-      // `await closeLane()` before opening a different lane (see openLane above)
-      // see state.openId cleared before they proceed — otherwise finish() would
-      // fire later and clobber the newly-set state.openId back to null.
+      // Await the tween's completion (not just its kickoff) so callers that
+      // `await closeLane()` before opening a different lane see state.openId
+      // cleared before they proceed.
       await new Promise<void>((resolve) => {
-        descend(gsap, lane, panelsLayer, 'close', () => { finish(); resolve(); });
+        slide(gsap, lane, panelsLayer, motion === 'slide' ? 'x' : 'y', 'close', () => {
+          finish();
+          resolve();
+        });
       });
     } else {
       finish();
@@ -371,9 +339,9 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       e.preventDefault();
       e.stopPropagation();
       if (state.openId) {
-        const order = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'));
-        const here = order.findIndex((p) => p.dataset.showcasePanelId === state.openId);
-        void closeLane(order[here + 1]?.dataset.showcasePanelId); // release forward to the next station
+        const order = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'))
+          .map((p) => p.dataset.showcasePanelId ?? '');
+        void closeLane(nextStationId(order, state.openId) ?? undefined);
       }
       return;
     }
