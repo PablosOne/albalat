@@ -769,3 +769,11 @@ body {
     to   { transform: translate3d(0, calc(var(--album-energy) * -1.2rem), 0) scale(calc(1 + var(--album-energy) * 0.02)); opacity: 0.82; }
   }
 }
+
+/* While a detail lane is open on mobile it is a fixed full-viewport slide layer
+   (DetailLane.astro), so lock the background scroll behind it. Reduced-motion
+   lanes are inline in the flow and must NOT be locked — hence the
+   no-preference guard. */
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  html[data-open-lane] body { overflow: hidden; }
+}
