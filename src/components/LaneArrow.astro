@@ -110,4 +110,11 @@ const chevron = `M8,20 L28,20 M28,20 L20,12 M28,20 L20,28`; // right-pointing ba
     .lane-arrow { transition: none; }
     .lane-arrow:active { transform: none; }
   }
+  @media (max-width: 767px) {
+    /* Mobile flips the detail axis: the detail slides in from the RIGHT, so the
+       open-detail arrow points right and Back points left. The next-station
+       arrow (data-lane-next) still advances vertically, so it stays down. */
+    .lane-arrow--down:not([data-lane-next]) .arrow { --rot: 0deg; }
+    .lane-arrow--up .arrow { --rot: 180deg; }
+  }
 </style>
