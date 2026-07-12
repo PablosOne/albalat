@@ -67,6 +67,7 @@
   --detail-space-sm: 1rem;
   --detail-space-md: 1.5rem;
   --detail-space-lg: 2rem;
+  --detail-surface-padding: 0rem;
 }
 
 /* Shared image-backed panel frame. Hero and photo panels previously repeated
@@ -112,6 +113,11 @@
   color: var(--color-ink-muted);
   font-size: clamp(1.125rem, 1.6vw, 1.25rem);
   line-height: 1.7;
+}
+
+.detail-hero,
+.detail-copy-inset {
+  padding-inline: var(--detail-surface-padding);
 }
 
 /* Display type scale — container-query relative sizing for responsive headings
@@ -230,6 +236,7 @@ html[data-nav-open] body {
     --main-lane-surface-edge: 0.75rem;
     --main-lane-surface-radius: 1rem;
     --detail-lane-edge: 0.75rem;
+    --detail-surface-padding: 0.75rem;
   }
 
   .detail-title {

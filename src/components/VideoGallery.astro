@@ -51,7 +51,7 @@ const copy = {
 
     {featured && (
       <div class="video-gallery__featured mt-14">
-        <div class="mb-5 flex items-center gap-4">
+        <div class="detail-copy-inset mb-5 flex items-center gap-4">
           <span class="grid size-3 place-items-center rounded-full border border-accent/70">
             <span class="size-1 rounded-full bg-accent"></span>
           </span>
@@ -67,7 +67,7 @@ const copy = {
     <div class="video-gallery__groups mt-20 space-y-20">
       {groups.map((group, groupIndex) => (
         <section class="relative" aria-labelledby={`video-group-${groupIndex}`}>
-          <div class="video-gallery__group-head mb-8 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:items-center">
+          <div class="detail-copy-inset video-gallery__group-head mb-8 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:items-center">
             <h2 id={`video-group-${groupIndex}`} class="font-display text-3xl font-light text-ink">
               {group.category}
             </h2>
