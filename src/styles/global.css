@@ -245,6 +245,10 @@ html[data-nav-open] body {
     line-height: 1.03;
   }
 
+  .detail-hero {
+    padding-top: var(--detail-surface-padding);
+  }
+
   .detail-intro {
     margin-top: 0.9rem;
     font-size: 1.05rem;
