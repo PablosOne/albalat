@@ -115,7 +115,7 @@ function scrollToPanel(panelId: string): void {
 
 type GsapInstance = typeof import('gsap').gsap;
 
-interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; trackTween?: { kill: () => void }; closing?: boolean; }
+interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; closing?: boolean; }
 
 export function initLanes(opts: { initialDetail?: string | null } = {}): () => void {
   if (typeof window === 'undefined') return () => {};
@@ -136,8 +136,9 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
   // layer, NOT the scrubbed track — decoupling them is what lets the descent
   // slide on every open, not only the first) move as one. `axis` picks the
   // motion: 'y' = desktop descent (rise from below), 'x' = mobile slide (enter
-  // from the right). state.trackTween clears any stale tween so repeat cycles
-  // start from a clean 0 / -100.
+  // from the right). gsap.killTweensOf(panelsLayer) clears any stale tween —
+  // including one left by a PRIOR initLanes() closure — so repeat cycles start
+  // from a clean 0 / -100.
   const slide = (
     gsap: GsapInstance,
     lane: HTMLElement,
@@ -148,10 +149,19 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
   ) => {
     const ease = dir === 'open' ? 'power3.out' : 'power3.in';
     const prop = axis === 'x' ? 'xPercent' : 'yPercent';
+    const otherProp = axis === 'x' ? 'yPercent' : 'xPercent';
     if (panelsLayer) {
-      state.trackTween?.kill();
-      state.trackTween = gsap.to(panelsLayer, {
+      // Kill by TARGET (not a closure-scoped tween handle) so a stale tween
+      // left by a PRIOR initLanes() closure — e.g. a breakpoint crossing
+      // re-init mid-open — is stopped too, not just tweens created within
+      // this closure's lifetime.
+      gsap.killTweensOf(panelsLayer);
+      // otherProp is force-reset to 0 alongside the animated prop so a stale
+      // off-axis value from a prior open on the OTHER axis (same scenario)
+      // can never combine into a diagonal transform.
+      gsap.to(panelsLayer, {
         [prop]: dir === 'open' ? -100 : 0,
+        [otherProp]: 0,
         duration: 0.6,
         ease,
         // Strip the inline transform once closed so the resting layer carries
@@ -161,15 +171,16 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     }
     // fromTo (not set+to) so start/end are captured atomically in one tween —
     // a preceding set immediately followed by to left the open direction
-    // rendering with no visible motion.
+    // rendering with no visible motion. otherProp is pinned to 0 at both ends
+    // for the same stale-axis reason as the panelsLayer tween above.
     if (dir === 'open') {
       gsap.fromTo(
         lane,
-        { [prop]: 100, autoAlpha: 1 },
-        { [prop]: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete },
+        { [prop]: 100, [otherProp]: 0, autoAlpha: 1 },
+        { [prop]: 0, [otherProp]: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete },
       );
     } else {
-      gsap.to(lane, { [prop]: 100, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete });
+      gsap.to(lane, { [prop]: 100, [otherProp]: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete });
     }
   };
 
@@ -238,9 +249,10 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     // to the neighbouring content.
     if (laneMotion() === 'descend' && scroller) {
       const pullScroller = scroller;
-      const exitPanels = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'));
-      const curIdx = exitPanels.findIndex((p) => p.dataset.showcasePanelId === id);
-      const nextId = exitPanels[curIdx + 1]?.dataset.showcasePanelId;
+      const exitOrder = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'))
+        .map((p) => p.dataset.showcasePanelId)
+        .filter((pid): pid is string => Boolean(pid));
+      const nextId = nextStationId(exitOrder, id) ?? undefined;
       let pull = 0; // signed px: >0 pulled down (top over-scroll), <0 pulled up (bottom over-scroll)
       let springTimer = 0;
       const MAX_PULL = 150;
@@ -340,7 +352,8 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       e.stopPropagation();
       if (state.openId) {
         const order = Array.from(document.querySelectorAll<HTMLElement>('[data-showcase-panel]'))
-          .map((p) => p.dataset.showcasePanelId ?? '');
+          .map((p) => p.dataset.showcasePanelId)
+          .filter((pid): pid is string => Boolean(pid));
         void closeLane(nextStationId(order, state.openId) ?? undefined);
       }
       return;
