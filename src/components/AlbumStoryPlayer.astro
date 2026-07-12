@@ -125,7 +125,7 @@ const copy = {
               data-album-cover={album.cover}
               data-album-label={album.label ?? copy.sleeve}
             >
-              <div class="grid gap-7 md:grid-cols-[180px_minmax(0,1fr)]">
+              <div class="album-chapter__layout grid gap-7 md:grid-cols-[180px_minmax(0,1fr)]">
                 <figure class="relative">
                   <img
                     src={album.cover}
@@ -145,14 +145,14 @@ const copy = {
                     <span>{album.year}</span>
                     {album.label && <span class="text-ink-muted">{album.label}</span>}
                   </div>
-                  <h2 class="mt-4 font-display text-4xl font-light leading-tight text-ink md:text-5xl">
+                  <h2 class="album-chapter__title mt-4 font-display text-4xl font-light leading-tight text-ink md:text-5xl">
                     {album.title}
                   </h2>
-                  <p class="mt-5 max-w-2xl text-base leading-7 text-ink-muted md:text-lg md:leading-8">
+                  <p class="album-chapter__notes mt-5 max-w-2xl text-base leading-7 text-ink-muted md:text-lg md:leading-8">
                     {album.notes[locale]}
                   </p>
 
-                  <div class="mt-7 flex flex-wrap gap-3">
+                  <div class="album-chapter__links mt-7 flex flex-wrap gap-3">
                     {album.links.spotify && (
                       <a class="music-link" href={album.links.spotify} target="_blank" rel="noreferrer">
                         <svg class="music-link__icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -184,7 +184,7 @@ const copy = {
                     )}
                   </div>
 
-                  <div class="mt-8">
+                  <div class="album-chapter__tracks mt-8">
                     <h3 class="font-mono text-xs uppercase tracking-wide text-ink-muted">{copy.tracklist}</h3>
                     <ol class="mt-4 divide-y divide-ink/10 border-y border-ink/10">
                       {album.tracklist.map((track, trackIndex) => (
@@ -261,8 +261,8 @@ const copy = {
 
   @media (max-width: 767px) {
     .album-story__content {
-      margin-top: 2.5rem;
-      gap: 2rem;
+      margin-top: var(--detail-space-lg);
+      gap: var(--detail-space-md);
     }
 
     .album-story__console {
@@ -270,7 +270,7 @@ const copy = {
     }
 
     .album-chapters {
-      margin-top: 1.5rem;
+      margin-top: var(--detail-space-md);
     }
 
     .album-chapters > :global(.album-chapter) + :global(.album-chapter) {
@@ -294,6 +294,32 @@ const copy = {
       min-width: min(17rem, calc(100vw - 3rem));
       scroll-snap-align: start;
       scroll-snap-stop: always;
+    }
+
+    .album-chapter__layout {
+      gap: var(--detail-space-sm);
+    }
+
+    .album-chapter__title {
+      margin-top: 0.75rem;
+    }
+
+    .album-chapter__notes {
+      margin-top: var(--detail-space-sm);
+      line-height: 1.6;
+    }
+
+    .album-chapter__links {
+      margin-top: var(--detail-space-md);
+      gap: 0.65rem;
+    }
+
+    .album-chapter__tracks {
+      margin-top: var(--detail-space-md);
+    }
+
+    .album-chapter__tracks :global(ol) {
+      margin-top: 0.75rem;
     }
   }
 

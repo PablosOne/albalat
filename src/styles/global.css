@@ -64,6 +64,9 @@
   --main-lane-surface-edge: 2rem;
   --main-lane-surface-radius: 1.5rem;
   --detail-lane-edge: clamp(1rem, 6vw, 7rem);
+  --detail-space-sm: 1rem;
+  --detail-space-md: 1.5rem;
+  --detail-space-lg: 2rem;
 }
 
 /* Shared image-backed panel frame. Hero and photo panels previously repeated

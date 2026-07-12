@@ -17,7 +17,8 @@ const dateLabel = video.date
 ---
 <article
   class:list={[
-    'group relative',
+    'video-card group relative',
+    featured ? 'video-card--featured' : '',
     featured
       ? 'grid gap-7 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:items-end'
       : 'flex flex-col gap-4',
@@ -31,7 +32,7 @@ const dateLabel = video.date
     class={featured ? 'border border-accent/25' : 'border border-ink/10'}
   />
 
-  <div class={featured ? 'pb-2' : ''}>
+  <div class:list={['video-card__copy', featured ? 'pb-2' : '']}>
     <div class="mb-3 flex items-center gap-3 font-mono text-[11px] font-medium uppercase tracking-wide text-accent">
       <span>{video.category[locale]}</span>
       {dateLabel && (
@@ -57,3 +58,24 @@ const dateLabel = video.date
     )}
   </div>
 </article>
+
+<style>
+  @media (max-width: 767px) {
+    .video-card {
+      gap: var(--detail-space-sm);
+    }
+
+    .video-card--featured {
+      gap: var(--detail-space-md);
+    }
+
+    .video-card__copy :global(h2) {
+      font-size: clamp(1.75rem, 8.5vw, 2.25rem);
+    }
+
+    .video-card__copy :global(p) {
+      margin-top: 0.65rem;
+      line-height: 1.55;
+    }
+  }
+</style>
