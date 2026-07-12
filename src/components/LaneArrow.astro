@@ -116,5 +116,19 @@ const chevron = `M8,20 L28,20 M28,20 L20,12 M28,20 L20,28`; // right-pointing ba
        arrow (data-lane-next) still advances vertically, so it stays down. */
     .lane-arrow--down:not([data-lane-next]) .arrow { --rot: 0deg; }
     .lane-arrow--up .arrow { --rot: 180deg; }
+    /* The 3-chevron chain's vertical overlap (margin-block) is tuned for a
+       vertically-stacked flow (down/up arrows). Once an icon is rotated to
+       point sideways (open/back), that same vertical stacking overlaps three
+       sideways-pointing icons on top of each other instead of flowing in
+       their pointing direction, reading as a cluttered blob. Reduce to a
+       single icon on mobile across the board — simpler, and reads cleanly
+       regardless of rotation. */
+    .lane-arrow .arrow--2,
+    .lane-arrow .arrow--3 {
+      display: none;
+    }
+    .lane-arrow .arrow--1 {
+      margin-block: 0;
+    }
   }
 </style>

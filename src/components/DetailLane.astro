@@ -60,4 +60,13 @@ const nextCta = locale === 'en' ? 'Next' : 'Siguiente';
     .detail-lane { position: relative; inset: auto; z-index: auto; }
     .detail-lane__scroll { height: auto; overflow: visible; }
   }
+  /* Mobile: the desktop clamp()s above assume the slotted content (VideoGallery,
+     AlbumStoryPlayer, ClassesContent) contributes its own top/side padding on
+     top of this — on mobile those components no longer add their own, so this
+     is now the ONLY padding source and needs to be much tighter, not the same
+     generous desktop clamp. */
+  @media (max-width: 767px) {
+    .detail-lane__header { padding-top: 1rem; gap: 0.5rem; }
+    .detail-lane__body { padding-top: 0.5rem; padding-left: 1.25rem; padding-right: 1.25rem; }
+  }
 </style>
