@@ -60,6 +60,55 @@
   --gfdu-mobile-pad-top: 2.5rem;
   --gfdu-mobile-pad-bottom: 2rem;
   --gfdu-mobile-arrow-space: 5.5rem;
+  --main-lane-gutter: 2rem;
+  --main-lane-surface-edge: 2rem;
+  --main-lane-surface-radius: 1.5rem;
+  --detail-lane-edge: clamp(1rem, 6vw, 7rem);
+}
+
+/* Shared image-backed panel frame. Hero and photo panels previously repeated
+   slightly different Tailwind inset/radius values, which made Music and Videos
+   visibly narrower than the hero. Variants only account for whether the frame
+   lives inside a padded panel; all visual geometry comes from these variables. */
+.main-lane-surface {
+  position: absolute;
+  inset: 4rem var(--main-lane-surface-edge) var(--main-lane-surface-edge);
+  overflow: hidden;
+  border-radius: var(--main-lane-surface-radius);
+}
+
+/* Detail-lane typography and spacing are shared by Music, Videos, and Classes.
+   The lane owns the outer gutter; slotted detail components must not add a
+   second responsive padding layer. */
+.detail-section {
+  width: 100%;
+}
+
+.detail-kicker {
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+  text-transform: uppercase;
+}
+
+.detail-title {
+  margin-top: 1.5rem;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-weight: 300;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.detail-intro {
+  margin-top: 1.25rem;
+  color: var(--color-ink-muted);
+  font-size: clamp(1.125rem, 1.6vw, 1.25rem);
+  line-height: 1.7;
 }
 
 /* Display type scale — container-query relative sizing for responsive headings
@@ -166,7 +215,51 @@ body {
   }
 }
 
+html[data-nav-open],
+html[data-nav-open] body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 @media (max-width: 767px) {
+  :root {
+    --main-lane-gutter: clamp(1.25rem, 6vw, 2rem);
+    --main-lane-surface-edge: 0.75rem;
+    --main-lane-surface-radius: 1rem;
+    --detail-lane-edge: 0.75rem;
+  }
+
+  .detail-title {
+    margin-top: 1rem;
+    font-size: clamp(2.65rem, 12vw, 3.5rem);
+    line-height: 1.03;
+  }
+
+  .detail-intro {
+    margin-top: 0.9rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  .detail-section input,
+  .detail-section select,
+  .detail-section textarea,
+  .detail-section button,
+  .detail-section a {
+    min-height: 2.75rem;
+  }
+
+  .main-lane-surface--hero {
+    inset: var(--main-lane-surface-edge);
+  }
+
+  .main-lane-surface--padded {
+    top: calc(var(--main-lane-surface-edge) - var(--gfdu-mobile-pad-top));
+    right: calc(var(--main-lane-surface-edge) - var(--main-lane-gutter));
+    bottom: calc(var(--main-lane-surface-edge) - var(--gfdu-mobile-pad-bottom) - var(--gfdu-mobile-arrow-space));
+    left: calc(var(--main-lane-surface-edge) - var(--main-lane-gutter));
+  }
+
   [data-showcase-track] {
     width: 100% !important;
     flex-direction: column !important;
@@ -181,12 +274,12 @@ body {
     min-height: 100svh;
     padding-top: var(--gfdu-mobile-pad-top);
     padding-bottom: var(--gfdu-mobile-pad-bottom);
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
+    padding-left: var(--main-lane-gutter) !important;
+    padding-right: var(--main-lane-gutter) !important;
     align-items: flex-start !important;
     overflow: hidden;
     position: relative;
-    scroll-margin-top: calc(3.5rem + env(safe-area-inset-top, 0px) + 0.5rem);
+    scroll-margin-top: calc(5rem + env(safe-area-inset-top, 0px) + 0.5rem);
   }
 
   [data-showcase-panel][data-showcase-panel-id="hero"] {
@@ -213,7 +306,9 @@ body {
   }
 
   [data-showcase-panel][data-showcase-panel-id="about"] {
-    min-height: 0 !important;
+    min-height: calc(100svh - 5rem) !important;
+    padding-left: var(--main-lane-surface-edge) !important;
+    padding-right: var(--main-lane-surface-edge) !important;
   }
 
   /* [data-about-content]'s mobile layout (relative flow, ordered children,
@@ -277,6 +372,18 @@ body {
   [data-showcase-panel]:not([data-showcase-panel-id="hero"]) .text-display-l {
     font-size: clamp(2rem, 9vw, 3.25rem) !important;
     line-height: 1.02 !important;
+  }
+
+  [data-showcase-panel]:not([data-showcase-panel-id="hero"]) .text-body-xl {
+    font-size: clamp(1.02rem, 4.45vw, 1.2rem);
+    line-height: 1.48 !important;
+  }
+
+  [data-showcase-panel] input,
+  [data-showcase-panel] textarea,
+  [data-showcase-panel] button,
+  [data-showcase-panel] .platform-link {
+    min-height: 2.75rem;
   }
 
   [data-showcase-panel] > .gfdu-mobile-next {
@@ -751,4 +858,18 @@ body {
    no-preference guard. */
 @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
   html[data-open-lane] body { overflow: hidden; }
+}
+
+/* An animated detail lane has its own Back control and navigation context.
+   Remove the global mobile/tablet menu while that lane is open so the two
+   controls never compete in the same top-right area. Reduced-motion lanes are
+   inline, so they keep the global navigation. */
+@media (max-width: 1279px) and (prefers-reduced-motion: no-preference) {
+  html[data-open-lane] [data-mobile-nav],
+  html:has(.detail-lane:not([hidden])) [data-mobile-nav] {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(-1rem);
+    visibility: hidden;
+  }
 }

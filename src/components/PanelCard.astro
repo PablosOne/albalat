@@ -17,10 +17,24 @@ const { panel } = Astro.props;
     </div>
   </div>
   {panel.visual.image && (
-    <div class="col-span-12 lg:col-span-5" data-reveal="visual">
-      <div class="aspect-[4/5] overflow-hidden rounded-xl bg-[var(--color-border)]">
+    <div class="panel-card__visual col-span-12 lg:col-span-5" data-reveal="visual">
+      <div class="panel-card__image aspect-[4/5] overflow-hidden rounded-xl bg-[var(--color-border)]">
         <img src={panel.visual.image} alt={panel.visual.imageAlt ?? ''} class="h-full w-full object-cover" />
       </div>
     </div>
   )}
 </div>
+
+<style>
+  @media (max-width: 767px) {
+    .panel-card__visual {
+      margin-top: 0.5rem;
+    }
+
+    .panel-card__image {
+      aspect-ratio: 4 / 3;
+      border: 1px solid color-mix(in srgb, var(--color-fg) 10%, transparent);
+      box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.22);
+    }
+  }
+</style>

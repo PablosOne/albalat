@@ -11,7 +11,6 @@ const { panel } = Astro.props;
 <div class="relative w-full h-full" data-about-content>
   <div
     class="about-decorative absolute inset-0 pointer-events-none overflow-visible"
-    style="clip-path: inset(-100vh 0 -100vh -200vw);"
     aria-hidden="true"
   >
     <h2
@@ -37,6 +36,10 @@ const { panel } = Astro.props;
 
 <style>
   @media (min-width: 768px) {
+    .about-decorative {
+      clip-path: inset(-100vh 0 -100vh -200vw);
+    }
+
     :global(.about-title) {
       font-size: clamp(2.75rem, 4vw + 0.5rem, 4.5rem) !important;
     }
@@ -55,8 +58,16 @@ const { panel } = Astro.props;
       flex-direction: column;
       position: relative;
       height: auto;
-      padding-top: 0.5rem;
       text-align: left;
+    }
+
+    [data-about-content]::before {
+      content: "";
+      width: 4.5rem;
+      height: 1px;
+      margin-bottom: 1.25rem;
+      background: var(--color-accent);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--color-accent) 35%, transparent);
     }
 
     .about-body {
@@ -66,20 +77,44 @@ const { panel } = Astro.props;
       order: 1;
       width: 100%;
       max-width: 100%;
+      padding-inline: 0.75rem;
       text-align: left;
+    }
+
+    :global(.about-body .text-label) {
+      margin-bottom: 1rem;
+      color: var(--color-accent);
+      letter-spacing: 0.1em;
+    }
+
+    :global(.about-title) {
+      max-width: 11ch;
+      margin-bottom: 1.5rem !important;
+      font-size: clamp(2.75rem, 13vw, 3.65rem) !important;
+      line-height: 0.94 !important;
+      text-wrap: balance;
+    }
+
+    :global(.about-body .text-body-xl) {
+      max-width: 31rem;
+    }
+
+    :global(.about-body .text-body-xl p) {
+      margin-bottom: 1rem;
     }
 
     .about-decorative {
       position: relative;
       inset: auto;
       order: 2;
-      margin-top: 2rem;
+      margin-top: 2.25rem;
       width: 100%;
       /* This clip-path is inline on the element (desktop-only horizontal-bleed
          geometry) and harmless once the headline below is width-constrained —
          but disable it explicitly on mobile too, since it serves no purpose
          in normal relative flow and removes any doubt about it clipping text. */
-      clip-path: none;
+      padding: 1.5rem 0.75rem 0;
+      border-top: 1px solid var(--color-border);
     }
 
     [data-about-headline] {
@@ -90,10 +125,14 @@ const { panel } = Astro.props;
       max-width: 100%;
       white-space: normal;
       overflow-wrap: break-word;
-      font-size: clamp(1.35rem, 6vw, 2rem);
-      line-height: 1.2;
-      opacity: 0.72;
+      max-width: 20ch;
+      color: var(--color-muted);
+      font-size: clamp(1.75rem, 8vw, 2.4rem);
+      font-weight: 400;
+      line-height: 1.08;
+      opacity: 0.78;
       text-align: left;
+      text-wrap: balance;
     }
   }
 </style>

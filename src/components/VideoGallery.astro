@@ -21,8 +21,8 @@ const copy = {
   es: {
     eyebrow: 'Videos',
     title: 'Sala de interpretaciones',
-    intro: 'Grabaciones y momentos de concierto presentados como una galeria de escucha visual.',
-    featured: 'Proyeccion destacada',
+    intro: 'Grabaciones y momentos de concierto presentados como una galería de escucha visual.',
+    featured: 'Proyección destacada',
   },
   en: {
     eyebrow: 'Videos',
@@ -32,25 +32,25 @@ const copy = {
   },
 } as const;
 ---
-<section class="relative overflow-hidden md:px-10 md:pb-32 md:pt-40">
+<section class="detail-section video-gallery relative overflow-hidden">
   <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(198,146,62,0.18),transparent_28%),linear-gradient(180deg,rgba(244,239,231,0.035),transparent_28%)]"></div>
   <div class="pointer-events-none absolute left-0 right-0 top-[29rem] h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent"></div>
 
   <div class="relative mx-auto max-w-6xl">
-    <header class="max-w-3xl">
-      <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">
+    <header class="detail-hero max-w-3xl">
+      <p class="detail-kicker">
         {copy[locale].eyebrow}
       </p>
-      <h1 class="mt-6 font-display text-5xl font-light leading-tight text-ink md:text-7xl">
+      <h1 class="detail-title">
         {copy[locale].title}
       </h1>
-      <p class="mt-5 max-w-2xl text-lg leading-8 text-ink-muted md:text-xl">
+      <p class="detail-intro max-w-2xl">
         {copy[locale].intro}
       </p>
     </header>
 
     {featured && (
-      <div class="mt-14">
+      <div class="video-gallery__featured mt-14">
         <div class="mb-5 flex items-center gap-4">
           <span class="grid size-3 place-items-center rounded-full border border-accent/70">
             <span class="size-1 rounded-full bg-accent"></span>
@@ -64,10 +64,10 @@ const copy = {
       </div>
     )}
 
-    <div class="mt-20 space-y-20">
+    <div class="video-gallery__groups mt-20 space-y-20">
       {groups.map((group, groupIndex) => (
         <section class="relative" aria-labelledby={`video-group-${groupIndex}`}>
-          <div class="mb-8 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:items-center">
+          <div class="video-gallery__group-head mb-8 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:items-center">
             <h2 id={`video-group-${groupIndex}`} class="font-display text-3xl font-light text-ink">
               {group.category}
             </h2>
@@ -92,3 +92,24 @@ const copy = {
     </div>
   </div>
 </section>
+
+<style>
+  @media (max-width: 767px) {
+    .video-gallery__featured {
+      margin-top: 2.5rem;
+    }
+
+    .video-gallery__groups {
+      margin-top: 3.5rem;
+    }
+
+    .video-gallery__groups > :global(section) + :global(section) {
+      margin-top: 3.75rem;
+    }
+
+    .video-gallery__group-head {
+      margin-bottom: 1.35rem;
+      gap: 0.75rem;
+    }
+  }
+</style>

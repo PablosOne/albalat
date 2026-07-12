@@ -200,12 +200,19 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     // correct id immediately, not only after the ~0.7s slide-in finishes.
     state.openId = id;
     state.restoreFocus = trigger;
+    // Publish the navigation state before any dynamic import or reveal work.
+    // This hides the global mobile navbar synchronously, so it can never flash
+    // over the detail lane's Back control on direct routes or slower devices.
+    document.documentElement.setAttribute('data-open-lane', id);
 
     pluckThreshold(id);
 
     // reveal + slide
     const scroller = lane.querySelector<HTMLElement>('[data-detail-scroll]');
     if (scroller) scroller.scrollTop = 0;
+    lane.querySelectorAll<HTMLElement>('[data-detail-horizontal]').forEach((rail) => {
+      rail.scrollLeft = 0;
+    });
 
     const motion = laneMotion();
     if (motion === 'descend' || motion === 'slide') {
@@ -293,7 +300,6 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
         pullScroller.style.transform = '';
       };
     }
-    document.documentElement.setAttribute('data-open-lane', id);
     history.replaceState(null, '', `#${id}`);
     lane.querySelector<HTMLElement>('[data-detail-scroll]')?.focus();
   }

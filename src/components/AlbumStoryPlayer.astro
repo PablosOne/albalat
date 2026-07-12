@@ -41,7 +41,7 @@ const copy = {
   },
 }[locale];
 ---
-<section class="relative overflow-hidden md:px-10 md:pb-28 md:pt-40" data-album-story>
+<section class="detail-section album-story relative overflow-hidden" data-album-story>
   <script is:inline set:html={`window.__albalatAlbums = ${JSON.stringify(albums)}`}></script>
   <div class="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" data-parallax-y="0.3">
     <div class="absolute inset-x-0 top-0 h-[42rem] bg-[radial-gradient(circle_at_16%_10%,rgba(198,146,62,.24),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(26,103,95,.24),transparent_30%),linear-gradient(180deg,rgba(93,26,45,.16),transparent_72%)]"></div>
@@ -49,19 +49,19 @@ const copy = {
   </div>
 
   <div class="relative mx-auto max-w-7xl">
-    <div class="max-w-4xl">
-      <p class="font-mono text-xs font-medium uppercase tracking-wide text-accent">{copy.eyebrow}</p>
-      <h1 class="mt-6 font-display text-5xl font-light leading-tight text-ink md:text-7xl">
+    <div class="detail-hero max-w-4xl">
+      <p class="detail-kicker">{copy.eyebrow}</p>
+      <h1 class="detail-title">
         {copy.title}
       </h1>
-      <p class="mt-6 max-w-2xl text-lg leading-8 text-ink-muted md:text-xl md:leading-9">
+      <p class="detail-intro max-w-2xl">
         {copy.intro}
       </p>
     </div>
 
-    <div class="mt-14 grid gap-10 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] lg:items-start">
+    <div class="album-story__content mt-14 grid gap-10 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] lg:items-start">
       <aside class="lg:sticky lg:top-28" aria-label={copy.console}>
-        <div class="border border-ink/12 bg-[#12100e]/95 p-4 shadow-2xl shadow-black/35">
+        <div class="album-story__console border border-ink/12 bg-[#12100e]/95 p-3 md:p-4 shadow-2xl shadow-black/35">
           {/* The "now selected" mirror card and the YouTube embed only earn their
               space as a sticky companion to the scrolling album list — below `lg`
               there's no sticky sidebar, so they'd just be redundant clutter above
@@ -109,16 +109,16 @@ const copy = {
         </div>
       </aside>
 
-      <div>
-        <nav class="album-rail -mx-6 flex gap-4 overflow-x-auto px-6 pb-5 lg:mx-0 lg:grid lg:overflow-visible lg:px-0" aria-label={copy.timeline}>
+      <div class="min-w-0">
+        <nav class="album-rail flex gap-4 overflow-x-auto pb-3 lg:grid lg:overflow-visible" aria-label={copy.timeline} data-detail-horizontal>
           {albums.map((album, index) => <AlbumCard album={album} locale={locale} index={index} />)}
         </nav>
 
-        <div class="mt-8 space-y-8">
+        <div class="album-chapters mt-8 space-y-8">
           {albums.map((album, index) => (
             <article
               id={album.id}
-              class="album-chapter scroll-mt-28 border border-ink/10 bg-ink/[0.035] p-5 md:p-7"
+              class="album-chapter scroll-mt-28 border border-ink/10 bg-ink/[0.035] p-3 md:p-7"
               data-album-section={album.id}
               data-album-title={album.title}
               data-album-year={album.year}
@@ -256,6 +256,44 @@ const copy = {
   @media (max-width: 1023px) {
     .album-card[data-active="true"] {
       transform: translateY(-0.2rem);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .album-story__content {
+      margin-top: 2.5rem;
+      gap: 2rem;
+    }
+
+    .album-story__console {
+      padding: 0;
+    }
+
+    .album-chapters {
+      margin-top: 1.5rem;
+    }
+
+    .album-chapters > :global(.album-chapter) + :global(.album-chapter) {
+      margin-top: 1.5rem;
+    }
+
+    .album-rail {
+      margin-inline: calc(-1 * var(--detail-lane-edge));
+      padding-inline: var(--detail-lane-edge);
+      scroll-padding-inline: var(--detail-lane-edge);
+      scrollbar-width: none;
+      overscroll-behavior-inline: contain;
+      scroll-snap-type: x mandatory;
+    }
+
+    .album-rail::-webkit-scrollbar {
+      display: none;
+    }
+
+    .album-rail :global(.album-card) {
+      min-width: min(17rem, calc(100vw - 3rem));
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
     }
   }
 

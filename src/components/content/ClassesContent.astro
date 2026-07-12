@@ -40,14 +40,14 @@ const copy = {
 
 const t = copy[locale];
 ---
-<section class="relative overflow-hidden md:px-10 md:pb-28 md:pt-40">
+<section class="detail-section classes-detail relative overflow-hidden">
   <div class="pointer-events-none absolute inset-x-0 top-24 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent"></div>
   <div class="pointer-events-none absolute right-[-12vw] top-28 h-[38rem] w-[38rem] rounded-full border border-accent/20"></div>
   <div class="pointer-events-none absolute right-[-5vw] top-48 h-[24rem] w-[24rem] rounded-full border border-ink/10"></div>
 
   <div class="mx-auto grid max-w-7xl grid-cols-12 gap-y-10 gap-x-0 lg:gap-x-16 xl:gap-x-20">
     <div class="col-span-12 min-w-0 lg:col-span-6">
-      <p data-reveal="label" class="font-mono text-xs font-medium uppercase tracking-[0.22em] text-accent">{t.eyebrow}</p>
+      <p data-reveal="label" class="detail-kicker">{t.eyebrow}</p>
       <h1 data-reveal="heading" class="contact-heading mt-7 max-w-3xl font-display font-light leading-[0.9] text-ink">
         {t.heading}
       </h1>
@@ -82,7 +82,7 @@ const t = copy[locale];
         <ul data-reveal="cta" class="mt-10 flex flex-wrap gap-4">
           {profileLinks.map((social) => (
             <li>
-              <a class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-muted transition-colors hover:text-ink" href={social.href} target="_blank" rel="noreferrer">
+              <a class="inline-flex min-h-11 items-center text-sm font-semibold uppercase tracking-[0.16em] text-ink-muted transition-colors hover:text-ink" href={social.href} target="_blank" rel="noreferrer">
                 {social.label} ->
               </a>
             </li>
@@ -108,13 +108,29 @@ const t = copy[locale];
 <style>
   .contact-email {
     overflow-wrap: anywhere;
-    font-size: clamp(1.9rem, 8vw, 3.4rem);
+    font-size: clamp(1.35rem, 6.2vw, 3.4rem);
   }
 
   .contact-heading {
     overflow-wrap: anywhere;
     font-size: clamp(3.5rem, 15vw, 5.2rem);
     text-wrap: balance;
+  }
+
+  @media (max-width: 767px) {
+    .classes-detail :global(article) {
+      min-height: 0;
+      padding: 1rem;
+    }
+
+    .classes-detail :global(article h2) {
+      margin-top: 1.25rem;
+      font-size: 2rem;
+    }
+
+    .classes-detail :global(article p) {
+      margin-top: 0.75rem;
+    }
   }
 
   @media (min-width: 1024px) {

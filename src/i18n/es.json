@@ -1,5 +1,5 @@
 {
-  "nav": { "home": "Inicio", "about": "Biografía", "music": "Música", "videos": "Vídeos", "classes": "Clases y conciertos", "contact": "Contacto" },
+  "nav": { "home": "Inicio", "menu": "Menú", "about": "Biografía", "music": "Música", "videos": "Vídeos", "classes": "Clases y conciertos", "contact": "Contacto" },
   "cta": { "listen": "Escuchar", "bookConcert": "Reservar un concierto", "bookClass": "Reservar una clase" },
-  "a11y": { "skipToContent": "Saltar al contenido", "toggleLang": "English" }
+  "a11y": { "skipToContent": "Saltar al contenido", "toggleLang": "English", "openMenu": "Abrir menú de navegación", "closeMenu": "Cerrar menú de navegación" }
 }

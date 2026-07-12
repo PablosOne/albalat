@@ -12,7 +12,7 @@ const { panel } = Astro.props;
 ---
 <div class="relative w-full h-full">
   {panel.visual.image && (
-    <div class="absolute top-14 md:top-16 inset-x-4 md:inset-x-8 bottom-4 md:bottom-8 overflow-hidden rounded-2xl md:rounded-3xl bg-[var(--color-bg)]">
+    <div class="main-lane-surface main-lane-surface--padded bg-[var(--color-bg)]">
       <img src={panel.visual.image} alt={panel.visual.imageAlt ?? ''} class="absolute inset-0 w-full h-full object-cover opacity-55" />
       <div class="photo-wash absolute inset-0 bg-gradient-to-r from-[var(--color-bg)] via-[var(--color-bg)]/72 to-transparent pointer-events-none" aria-hidden="true"></div>
     </div>
