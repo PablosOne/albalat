@@ -1,4 +1,4 @@
-import { MOBILE_BREAKPOINT_PX } from '@/lib/config';
+import { isMobileViewport, prefersReducedMotion } from '@/lib/viewport';
 
 /**
  * Showcase scroll engine — viewport-aware dispatcher.
@@ -37,12 +37,12 @@ export async function initShowcase(): Promise<() => void> {
   if (!section || !track) return () => {};
 
   const panels = track.querySelectorAll<HTMLElement>('[data-showcase-panel]');
-  const isMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`).matches;
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = isMobileViewport();
+  const prefersReduced = prefersReducedMotion();
 
   if (isMobile || prefersReduced) {
     const { initShowcaseMobile } = await import('./showcase.mobile');
-    return initShowcaseMobile(track, panels, prefersReduced ? 'stack' : 'carousel');
+    return initShowcaseMobile(panels);
   }
 
   const { initShowcaseDesktop } = await import('./showcase.desktop');
