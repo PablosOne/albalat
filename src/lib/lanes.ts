@@ -217,12 +217,52 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     const motion = laneMotion();
     if (motion === 'descend' || motion === 'slide') {
       const { gsap } = await import('gsap');
+      // Any main-thread stall beyond ~2 frames (first raster of a just-revealed
+      // lane, image decode) advances the ticker by only one frame instead of
+      // the full elapsed time, so clock-based tweens pause through jank rather
+      // than teleport past it. Threshold measured, not guessed: a throttled-CPU
+      // probe showed the open's raster stall paints its first frame ~133ms in —
+      // under a 150ms threshold the clock swallowed it whole, and with the
+      // ease's front-loaded velocity that single gap ate 53% of the travel
+      // (the "open reads as a jump" report). 50ms catches those mid-size
+      // stalls; real frames (16-33ms) stay untouched. (Scroll-scrubbed tweens
+      // are unaffected — they are driven by scroll position, not the clock.)
+      gsap.ticker.lagSmoothing(50, 16);
       // Drive the descent layer (panels), NOT the pinned [data-showcase] section
       // and NOT the scrubbed track (whose x the horizontal scrub owns).
       const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
-      lane.hidden = false;
+      const axis = motion === 'slide' ? 'x' : 'y';
       gsap.killTweensOf(lane);
-      slide(gsap, lane, panelsLayer, motion === 'slide' ? 'x' : 'y', 'open');
+      // Pre-position the lane offscreen and pay the (large, display:none until
+      // now) lane's first layout + paint BEFORE the tween starts. Starting the
+      // tween in the same frame as the un-hide let that first layout block the
+      // main thread while the clock-based tween kept running — by the first
+      // painted frame most of the slide was already over, so the open read as
+      // a jump instead of a slide.
+      gsap.set(lane, axis === 'x'
+        ? { xPercent: 100, yPercent: 0, autoAlpha: 1 }
+        : { yPercent: 100, xPercent: 0, autoAlpha: 1 });
+      lane.hidden = false;
+      void lane.getBoundingClientRect(); // force the layout now, off the tween clock
+      // Decode the lane's images off the tween clock too. The layout warm-up
+      // above doesn't cover rasterization: the browser skips painting the
+      // offscreen (translated-away) lane, so its image decode + first raster
+      // otherwise land exactly on the tween's first on-screen frames — the
+      // biggest single stall the throttled-CPU probe measured. decode() runs
+      // the decode off-thread; the timeout cap keeps a slow/broken image from
+      // delaying the open noticeably.
+      const laneImgs = Array.from(lane.querySelectorAll<HTMLImageElement>('img'));
+      await Promise.race([
+        Promise.allSettled(laneImgs.map((img) => img.decode().catch(() => {}))),
+        // Cap tuned against the click→motion delay budget: a warm open's
+        // decodes resolve in a microtask (no added delay); a cold first open
+        // waits at most this long before sliding with whatever has decoded.
+        new Promise((resolve) => setTimeout(resolve, 200)),
+      ]);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      // The waits above yielded to other handlers — bail if a close raced in.
+      if (state.openId !== id || state.closing) return;
+      slide(gsap, lane, panelsLayer, axis, 'open');
 
       // Vertical parallax for [data-parallax-y] descendants is a desktop-only
       // affordance (the pinned-lane read); mobile detail is a plain scroll.
