@@ -244,23 +244,13 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
         : { yPercent: 100, xPercent: 0, autoAlpha: 1 });
       lane.hidden = false;
       void lane.getBoundingClientRect(); // force the layout now, off the tween clock
-      // Decode the lane's images off the tween clock too. The layout warm-up
-      // above doesn't cover rasterization: the browser skips painting the
-      // offscreen (translated-away) lane, so its image decode + first raster
-      // otherwise land exactly on the tween's first on-screen frames — the
-      // biggest single stall the throttled-CPU probe measured. decode() runs
-      // the decode off-thread; the timeout cap keeps a slow/broken image from
-      // delaying the open noticeably.
-      const laneImgs = Array.from(lane.querySelectorAll<HTMLImageElement>('img'));
-      await Promise.race([
-        Promise.allSettled(laneImgs.map((img) => img.decode().catch(() => {}))),
-        // Cap tuned against the click→motion delay budget: a warm open's
-        // decodes resolve in a microtask (no added delay); a cold first open
-        // waits at most this long before sliding with whatever has decoded.
-        new Promise((resolve) => setTimeout(resolve, 200)),
-      ]);
-      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-      // The waits above yielded to other handlers — bail if a close raced in.
+      // One frame to let that first layout/raster land before the clock starts.
+      // The expensive part — image load + decode — is NOT paid here: warmLanes()
+      // below already did it at idle. Awaiting decode at click time instead cost
+      // a dead ~250ms before anything moved, which read as "no animation, it
+      // just jumps".
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      // The wait above yielded to other handlers — bail if a close raced in.
       if (state.openId !== id || state.closing) return;
       slide(gsap, lane, panelsLayer, axis, 'open');
 
@@ -446,6 +436,38 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
   document.addEventListener('click', onClick, { capture: true });
   document.addEventListener('keydown', onKey);
+
+  // ─── Idle warm-up: the fix for "the open jumps, there is no animation" ────
+  // A detail lane sits in a `hidden` (display:none) subtree until it opens, and
+  // its images are `loading="lazy"`. Lazy images inside a display:none subtree
+  // NEVER start loading — so the click was the first time the browser fetched
+  // AND decoded them, and that load+decode landed squarely on the open tween's
+  // first frames. The clock-driven tween kept advancing through the stall while
+  // nothing painted, so the first frame the user actually saw was already deep
+  // into the travel: a jump, not a slide. (Close was always smooth because by
+  // then everything is loaded, decoded and rastered — exactly the asymmetry the
+  // bug report described.)
+  //
+  // Paying that cost here, at idle, while the user is still reading the main
+  // lane, means the open has nothing expensive left to do and can start moving
+  // on the very next frame.
+  const warmLanes = () => {
+    document.querySelectorAll<HTMLElement>('[data-detail-lane]').forEach((lane) => {
+      lane.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
+        // Flipping lazy → eager is what actually kicks off the load for an image
+        // the lazy-loader has parked because it is in a display:none subtree.
+        if (img.loading === 'lazy') img.loading = 'eager';
+        // decode() resolves once the bitmap is ready, off the main thread. It
+        // rejects on a broken/aborted image — ignore, this is best-effort warmth.
+        void img.decode().catch(() => {});
+      });
+    });
+  };
+  const idle = (window as Window & {
+    requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+  }).requestIdleCallback;
+  if (idle) idle(warmLanes, { timeout: 3000 });
+  else window.setTimeout(warmLanes, 1500);
 
   // Open initialDetail (route deep-link or hash) once the showcase has laid out.
   const initial = resolveInitialDetail(opts.initialDetail ?? null, window.location.hash);
