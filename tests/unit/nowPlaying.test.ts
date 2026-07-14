@@ -64,7 +64,7 @@ describe('createEngine', () => {
     engine.subscribe(cb);
     engine.load(buildQueue(torroba), 0);
     expect(cb).toHaveBeenCalled();
-    expect(cb.mock.calls.at(-1)![0].track.title).toContain('Turegano');
+    expect(cb.mock.calls.at(-1)![0].track.title).toContain('Turégano');
   });
 
   it('expandFull switches mode and pauses the preview audio', () => {

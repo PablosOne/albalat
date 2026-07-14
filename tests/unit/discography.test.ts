@@ -11,7 +11,10 @@ describe('discography data', () => {
       expect(album.cover).toContain('/images/albums/');
       expect(album.notes.es).toBeTruthy();
       expect(album.notes.en).toBeTruthy();
-      expect(album.tracklist.length).toBeGreaterThan(0);
+      // Video-only releases (no streaming tracklist) must at least link out.
+      if (album.tracklist.length === 0) {
+        expect(album.links.youtube).toBeTruthy();
+      }
     }
   });
 
@@ -22,9 +25,13 @@ describe('discography data', () => {
     expect(discography.every((a) => !a.notes.en.includes('TODO-ASSET'))).toBe(true);
   });
 
-  it('derives a spotify URI and a base palette for every album', () => {
+  it('derives a spotify URI (when streamable) and a base palette for every album', () => {
     for (const album of discography) {
-      expect(album.spotifyUri).toMatch(/^spotify:album:[A-Za-z0-9]+$/);
+      if (album.spotifyUri !== undefined) {
+        expect(album.spotifyUri).toMatch(/^spotify:album:[A-Za-z0-9]+$/);
+      } else {
+        expect(album.links.youtube).toBeTruthy();
+      }
       expect(album.palette.glow).toMatch(/^#/);
       expect(album.palette.accent).toMatch(/^#/);
       expect(album.palette.depth).toMatch(/^#/);

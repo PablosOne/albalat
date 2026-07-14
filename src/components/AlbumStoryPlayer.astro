@@ -13,8 +13,8 @@ const selected = albums.find((album) => album.featured) ?? albums[0];
 const copy = {
   es: {
     eyebrow: 'Archivo sonoro',
-    title: 'Discografia como estanteria viva',
-    intro: 'Cada album funciona como un capitulo: funda, repertorio, enlaces y un reproductor que espera hasta que decidas abrirlo.',
+    title: 'Discografía como estantería viva',
+    intro: 'Cada álbum funciona como un capítulo: funda, repertorio, enlaces y un reproductor que espera hasta que decidas abrirlo.',
     console: 'Consola de escucha',
     selected: 'Seleccionado ahora',
     tracklist: 'Pistas destacadas',
@@ -23,7 +23,7 @@ const copy = {
     appleMusic: 'Apple Music',
     youtube: 'YouTube',
     sleeve: 'Funda provisional',
-    timeline: 'Linea de albums',
+    timeline: 'Línea de álbumes',
   },
   en: {
     eyebrow: 'Sound archive',
@@ -98,7 +98,7 @@ const copy = {
               class="inline-flex items-center justify-center gap-2 border border-ink/20 bg-ink px-4 py-3 text-sm font-semibold text-stage transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <span aria-hidden="true">▶</span>
-              <span>{locale === 'es' ? 'Reproducir album' : 'Play album'}</span>
+              <span>{locale === 'es' ? 'Reproducir álbum' : 'Play album'}</span>
             </button>
             {selected?.embeds?.youtube && (
               <div class="hidden lg:block">
@@ -184,26 +184,28 @@ const copy = {
                     )}
                   </div>
 
-                  <div class="album-chapter__tracks mt-8">
-                    <h3 class="font-mono text-xs uppercase tracking-wide text-ink-muted">{copy.tracklist}</h3>
-                    <ol class="mt-4 divide-y divide-ink/10 border-y border-ink/10">
-                      {album.tracklist.map((track, trackIndex) => (
-                        <li>
-                          <button
-                            type="button"
-                            data-play-track
-                            data-album-id={album.id}
-                            data-track-index={trackIndex}
-                            class="track-row grid w-full grid-cols-[3ch_minmax(0,1fr)_auto] items-center gap-4 py-3 text-left text-sm text-ink/90 transition-colors hover:text-accent focus-visible:outline-none focus-visible:text-accent"
-                          >
-                            <span class="font-mono text-ink-muted">{track.no}</span>
-                            <span class="truncate">{track.title}</span>
-                            {track.duration && <span class="font-mono text-ink-muted">{track.duration}</span>}
-                          </button>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  {album.tracklist.length > 0 && (
+                    <div class="album-chapter__tracks mt-8">
+                      <h3 class="font-mono text-xs uppercase tracking-wide text-ink-muted">{copy.tracklist}</h3>
+                      <ol class="mt-4 divide-y divide-ink/10 border-y border-ink/10">
+                        {album.tracklist.map((track, trackIndex) => (
+                          <li>
+                            <button
+                              type="button"
+                              data-play-track
+                              data-album-id={album.id}
+                              data-track-index={trackIndex}
+                              class="track-row grid w-full grid-cols-[3ch_minmax(0,1fr)_auto] items-center gap-4 py-3 text-left text-sm text-ink/90 transition-colors hover:text-accent focus-visible:outline-none focus-visible:text-accent"
+                            >
+                              <span class="font-mono text-ink-muted">{track.no}</span>
+                              <span class="truncate">{track.title}</span>
+                              {track.duration && <span class="font-mono text-ink-muted">{track.duration}</span>}
+                            </button>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
               </div>
             </article>

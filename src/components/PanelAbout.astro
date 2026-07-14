@@ -1,6 +1,7 @@
 ---
 import type { Panel } from '@/data/site';
 import TextReveal from './TextReveal.astro';
+import LaneArrow from './LaneArrow.astro';
 
 interface Props {
   panel: Panel;
@@ -31,6 +32,11 @@ const { panel } = Astro.props;
         <TextReveal as="p" text={paragraph} class="mb-4 text-[var(--color-muted)]" reveal="body" mode="phrases" preset="body" />
       ))}
     </div>
+    {panel.detail && panel.openLabel && (
+      <div data-reveal="cta" class="mt-8">
+        <LaneArrow direction="down" targetId={panel.id} label={panel.openLabel} withString />
+      </div>
+    )}
   </div>
 </div>
 

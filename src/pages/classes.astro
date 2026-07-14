@@ -6,8 +6,8 @@ import { site } from '@/data/site';
 import { laneSwitch } from '@/lib/transitions';
 
 const locale = 'es';
-const title = `${site.fullName} - Clases, conciertos y contacto`;
-const description = 'Clases privadas de guitarra clasica, conciertos y contacto directo con Eulogio Albalat.';
+const title = `${site.fullName} - Masterclass, conciertos y contacto`;
+const description = 'Masterclass de guitarra clásica, propuestas de concierto y contacto directo con Eulogio Albalat.';
 const pageURL = new URL('/classes/', Astro.site);
 const email = site.socials.find((social) => social.href.startsWith('mailto:'))?.href.replace('mailto:', '') ?? 'hello@eulogioalbalat.com';
 const jsonLd = {
@@ -28,22 +28,22 @@ const jsonLd = {
       '@id': `${pageURL}#breadcrumb`,
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Inicio', item: new URL('/', Astro.site).toString() },
-        { '@type': 'ListItem', position: 2, name: 'Clases y conciertos', item: pageURL.toString() },
+        { '@type': 'ListItem', position: 2, name: 'Masterclass y conciertos', item: pageURL.toString() },
       ],
     },
     {
       '@type': 'Course',
-      '@id': `${pageURL}#private-classes`,
-      name: 'Clases privadas de guitarra clasica',
-      description: 'Clases privadas de guitarra clasica adaptadas al nivel, repertorio y objetivos de cada alumno.',
+      '@id': `${pageURL}#masterclass`,
+      name: 'Masterclass de guitarra clásica',
+      description: 'Masterclass de guitarra clásica adaptadas al nivel, repertorio y objetivos de cada alumno.',
       provider: { '@type': 'Person', name: site.fullName },
       inLanguage: 'es',
     },
     {
       '@type': 'Service',
       '@id': `${pageURL}#concert-booking`,
-      name: 'Conciertos de guitarra clasica',
-      description: 'Consultas para recitales, conciertos privados y propuestas musicales.',
+      name: 'Conciertos de guitarra clásica',
+      description: 'Programas de concierto desde J. S. Bach hasta el siglo XX, con especialización en repertorio español.',
       provider: { '@type': 'Person', name: site.fullName },
       serviceType: 'Classical guitar performance',
       inLanguage: 'es',

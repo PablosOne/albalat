@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('music page renders the album story with real covers', async ({ page }) => {
   await page.goto('/music');
-  await expect(page.getByRole('heading', { name: 'Discografia como estanteria viva' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Discografía como estantería viva' })).toBeVisible();
   await expect(page.locator('[data-album-card]')).toHaveCount(2);
   await expect(page.locator('[data-album-section]')).toHaveCount(2);
   await expect(page.locator('#now-playing-bar')).toBeHidden();

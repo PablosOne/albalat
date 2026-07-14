@@ -191,7 +191,9 @@ const copy = {
       const s = engine.getState();
       if (!s.track) return;
       const provider: 'spotify' | 'apple' = s.track.appleEmbed ? 'apple' : 'spotify';
-      const src = provider === 'apple' ? s.track.appleEmbed! : `https://open.spotify.com/embed/${s.track.spotifyUri.split(':').slice(1).join('/')}`;
+      const src = s.track.appleEmbed
+        ?? (s.track.spotifyUri ? `https://open.spotify.com/embed/${s.track.spotifyUri.split(':').slice(1).join('/')}` : null);
+      if (!src) return;
       const iframe = document.createElement('iframe');
       iframe.src = src;
       iframe.loading = 'lazy';

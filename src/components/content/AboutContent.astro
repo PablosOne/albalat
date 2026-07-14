@@ -1,0 +1,159 @@
+---
+import { site } from '@/data/site';
+import type { Locale } from '@/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const copy = {
+  es: {
+    eyebrow: 'Biografía',
+    title: 'Una vida entre las artes.',
+    intro: 'Guitarrista clásico formado en el corazón de la cultura gallega, catedrático durante más de tres décadas e intérprete en escenarios de toda Europa.',
+    sections: [
+      {
+        label: 'Raíces',
+        paragraphs: [
+          'La formación artística y humanística de Eulogio Albalat estuvo profundamente marcada por el entorno cultural de su familia. Desde muy temprana edad vivió inmerso en los mundos de la pintura, la escultura y la arquitectura, en estrecho contacto con destacadas personalidades de la cultura gallega y española: Díaz Pardo, Seoane, Dieste, Fernández de la Vega, Fole, Novoneyra, Piñeiro, Garcés, Criado, González Pascual o Bonet Correa y, en el terreno musical, Jesús Bal y Gay y Manuel Carra.',
+          'Igualmente decisiva fue la sólida tradición musical de sus antepasados, que trazó el rumbo de una vida entera dedicada a las artes. Su abuela materna, María Lois, mantuvo relación con el compositor y pianista Enrique Granados y con el violinista y director de orquesta Fernando Arbós, entre otros.',
+        ],
+      },
+      {
+        label: 'Formación',
+        paragraphs: [
+          'Sus estudios formales comenzaron en el conservatorio bajo la guía excepcional del maestro José Sanluis Rey, alumno distinguido y amigo personal de Andrés Segovia. Más tarde se trasladó a Madrid para completar el grado superior con José Luis Rodrigo en el Real Conservatorio. Tras graduarse continuó perfeccionándose con eminentes maestros, tanto de forma particular como en clases magistrales internacionales, en contacto directo con David Russell, John Williams y Manuel Barrueco.',
+        ],
+      },
+      {
+        label: 'Trayectoria',
+        paragraphs: [
+          'Su carrera se ha desarrollado en dos ámbitos complementarios: la docencia y la interpretación. Como pedagogo ha enseñado al más alto nivel, cuatro años como profesor y treinta y tres como catedrático del Conservatorio Superior de A Coruña. Como intérprete ha actuado extensamente como solista —en recital y con orquesta— y en diversas formaciones de cámara, con conciertos por España, Francia, Italia, Inglaterra, Noruega y Grecia, entre otros países.',
+          'Es además máster en Investigación Musical por la Universidad Internacional de Valencia, con un trabajo centrado en Isaac Albéniz y su relación con la guitarra.',
+        ],
+      },
+      {
+        label: 'Estrenos y discografía',
+        paragraphs: [
+          'Su discografía incluye varios registros en CD, entre los que destaca el dedicado a los quintetos para guitarra y cuerdas de Luigi Boccherini. Ha estrenado numerosas obras escritas expresamente para él —incluidos dos conciertos para guitarra, uno de ellos grabado en disco— de compositores como Pedro Elías, Xurxo Berdullas, Manuel Mosquera y Enrique Rodríguez Iglesias.',
+        ],
+      },
+    ],
+  },
+  en: {
+    eyebrow: 'About',
+    title: 'A life among the arts.',
+    intro: 'A classical guitarist raised at the heart of Galician culture, a conservatory professor for more than three decades, and a performer on stages across Europe.',
+    sections: [
+      {
+        label: 'Roots',
+        paragraphs: [
+          "Eulogio Albalat's artistic and humanistic education was deeply shaped by his family's cultural world. From a very early age he lived immersed in painting, sculpture, and architecture, in close contact with leading figures of Galician and Spanish culture: Díaz Pardo, Seoane, Dieste, Fernández de la Vega, Fole, Novoneyra, Piñeiro, Garcés, Criado, González Pascual, and Bonet Correa — and, in music, Jesús Bal y Gay and Manuel Carra.",
+          'Just as decisive was the solid musical tradition of his ancestors, which set the course for a whole life devoted to the arts. His maternal grandmother, María Lois, was acquainted with the composer and pianist Enrique Granados and with the violinist and conductor Fernando Arbós, among others.',
+        ],
+      },
+      {
+        label: 'Training',
+        paragraphs: [
+          'His formal studies began at the conservatory under the exceptional guidance of José Sanluis Rey, a distinguished pupil and personal friend of Andrés Segovia. He later moved to Madrid to complete his advanced degree with José Luis Rodrigo at the Royal Conservatory. After graduating he went on refining his playing with eminent teachers, both privately and in international masterclasses, working directly with David Russell, John Williams, and Manuel Barrueco.',
+        ],
+      },
+      {
+        label: 'Career',
+        paragraphs: [
+          'His career has unfolded across two complementary fields: teaching and performance. As a teacher he has worked at the highest level — four years as professor and thirty-three as full professor at the Conservatorio Superior of A Coruña. As a performer he has appeared extensively as a soloist, in recital and with orchestra, and in chamber ensembles, giving concerts across Spain, France, Italy, England, Norway, and Greece, among other countries.',
+          "He also holds a master's degree in Musical Research from the Universidad Internacional de Valencia, with a study devoted to Isaac Albéniz and his relationship with the guitar.",
+        ],
+      },
+      {
+        label: 'Premieres and recordings',
+        paragraphs: [
+          "His discography includes several CD recordings, most notably one devoted to Luigi Boccherini's quintets for guitar and strings. He has premiered numerous works written expressly for him — including two guitar concertos, one of them recorded on disc — by composers such as Pedro Elías, Xurxo Berdullas, Manuel Mosquera, and Enrique Rodríguez Iglesias.",
+        ],
+      },
+    ],
+  },
+} as const;
+
+const t = copy[locale];
+---
+<section class="detail-section about-detail relative overflow-hidden">
+  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_6%,rgba(198,146,62,0.16),transparent_30%),linear-gradient(180deg,rgba(244,239,231,0.03),transparent_26%)]"></div>
+  <div class="pointer-events-none absolute inset-x-0 top-24 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent"></div>
+
+  <div class="relative mx-auto max-w-6xl">
+    <header class="detail-hero max-w-3xl">
+      <p data-reveal="label" class="detail-kicker">{t.eyebrow}</p>
+      <h1 data-reveal="heading" class="detail-title">{t.title}</h1>
+      <p data-reveal="body" class="detail-intro max-w-2xl">{t.intro}</p>
+    </header>
+
+    <div class="about-detail__content mt-14 grid gap-10 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] lg:items-start">
+      <figure class="about-detail__portrait lg:sticky lg:top-28" data-reveal="body">
+        <img
+          src={site.about.portrait.src}
+          alt={site.about.portrait.alt[locale]}
+          width="720"
+          height="900"
+          loading="lazy"
+          class="w-full border border-ink/10 object-cover"
+        />
+        <figcaption class="mt-3 font-mono text-[0.68rem] uppercase tracking-wide text-ink-muted">
+          Eulogio Albalat
+        </figcaption>
+      </figure>
+
+      <div class="min-w-0">
+        {t.sections.map((section, index) => (
+          <section
+            class:list={['about-detail__section pt-8', index > 0 ? 'mt-12 border-t border-ink/10' : '']}
+            data-reveal="body"
+          >
+            <div class="flex items-baseline gap-4">
+              <span class="font-mono text-xs uppercase tracking-[0.2em] text-accent">{String(index + 1).padStart(2, '0')}</span>
+              <h2 class="font-display text-3xl font-light text-ink md:text-4xl">{section.label}</h2>
+            </div>
+            {section.paragraphs.map((paragraph) => (
+              <p class="mt-5 max-w-2xl text-base leading-7 text-ink-muted md:text-lg md:leading-8">{paragraph}</p>
+            ))}
+          </section>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  @media (max-width: 767px) {
+    .about-detail__content {
+      margin-top: var(--detail-space-lg);
+      gap: var(--detail-space-md);
+    }
+
+    .about-detail__portrait {
+      max-width: 18rem;
+    }
+
+    .about-detail__section {
+      padding-top: 0;
+    }
+
+    .about-detail__section + .about-detail__section,
+    .about-detail__section.mt-12 {
+      margin-top: var(--detail-space-lg);
+      padding-top: var(--detail-space-md);
+    }
+
+    .about-detail__section h2 {
+      font-size: 1.8rem;
+      line-height: 1.05;
+    }
+
+    .about-detail__section p {
+      margin-top: 0.9rem;
+      line-height: 1.6;
+    }
+  }
+</style>

@@ -100,25 +100,24 @@ export const site = {
       en: 'About',
     },
     paragraphs: {
-      // TODO-CONTENT: replace with Eulogio's real bio detail (training,
-      // milestones, venues, recordings) once provided. These paragraphs avoid
-      // invented specifics and stay at a truthful general level.
+      // Condensed from the full biography rendered in
+      // src/components/content/AboutContent.astro (the About detail lane).
       es: [
-        'La guitarra clásica ha sido el hilo conductor de una vida entre el estudio, la interpretación y la enseñanza.',
-        'Su trabajo se articula alrededor del sonido, la respiración de la frase y la relación íntima entre intérprete, instrumento y oyente.',
-        'En este espacio se reunirá su actividad artística: grabaciones, vídeos, notas sobre la guitarra y vías de contacto para clases privadas o propuestas de concierto.',
+        'Formado desde niño entre la pintura, la escultura y la música del entorno cultural gallego, la guitarra clásica ha sido el hilo conductor de una vida dedicada al estudio, la interpretación y la enseñanza.',
+        'Catedrático del Conservatorio Superior de A Coruña durante treinta y tres años, ha actuado como solista y en formaciones de cámara por España, Francia, Italia, Inglaterra, Noruega y Grecia.',
+        'Su trabajo se articula en torno al sonido, la respiración de la frase y la relación íntima entre intérprete, instrumento y oyente.',
       ],
       en: [
-        'The classical guitar has been the throughline of a life spent between study, performance, and teaching.',
-        'His work is shaped by sound, phrasing, and the intimate relationship between performer, instrument, and listener.',
-        'This space will gather his artistic activity: recordings, videos, notes on the guitar, and contact routes for private classes or concert proposals.',
+        "Raised from childhood among the painting, sculpture, and music of Galicia's cultural world, the classical guitar has been the throughline of a life devoted to study, performance, and teaching.",
+        'Full professor at the Conservatorio Superior of A Coruña for thirty-three years, he has performed as a soloist and in chamber ensembles across Spain, France, Italy, England, Norway, and Greece.',
+        'His work is shaped by sound, the breathing of the phrase, and the intimate relationship between performer, instrument, and listener.',
       ],
     },
     portrait: {
       src: '/images/eulo.webp',
       alt: {
-        es: 'TODO-ASSET: retrato provisional hasta recibir una fotografía real de Eulogio Albalat.',
-        en: 'TODO-ASSET: placeholder portrait until a real photograph of Eulogio Albalat is provided.',
+        es: 'Retrato de Eulogio Albalat.',
+        en: 'Portrait of Eulogio Albalat.',
       },
     },
   } satisfies AboutContent,
@@ -149,15 +148,16 @@ export const site = {
       },
       body: {
         es: [
-          'La guitarra clásica ha sido el hilo conductor de una vida entre el estudio, la interpretación y la enseñanza.',
-          'Esa dedicación se reparte hoy entre los escenarios, el aula y la grabación, siempre al servicio del repertorio del instrumento.',
+          'Formado desde niño entre la pintura, la escultura y la música del entorno cultural gallego, la guitarra clásica ha sido el hilo conductor de una vida dedicada al estudio, la interpretación y la enseñanza.',
+          'Catedrático del Conservatorio Superior de A Coruña durante treinta y tres años, ha actuado como solista y en formaciones de cámara por España y buena parte de Europa.',
         ],
         en: [
-          'The classical guitar has been the throughline of a life spent between study, performance, and teaching.',
-          "That dedication is shared today across the stage, the studio, and the classroom, always in service of the instrument's repertoire.",
+          "Raised from childhood among the painting, sculpture, and music of Galicia's cultural world, the classical guitar has been the throughline of a life devoted to study, performance, and teaching.",
+          'Full professor at the Conservatorio Superior of A Coruña for thirty-three years, he has performed as a soloist and in chamber ensembles across Spain and much of Europe.',
         ],
       },
       href: '/about',
+      detail: true,
     },
     {
       id: 'music',
@@ -191,12 +191,12 @@ export const site = {
       id: 'classes',
       kind: 'teaser',
       heading: {
-        es: 'Clases y conciertos',
-        en: 'Classes & Concerts',
+        es: 'Masterclass y conciertos',
+        en: 'Masterclass & Concerts',
       },
       tagline: {
-        es: 'Clases privadas, conciertos y contacto directo en una sola consulta.',
-        en: 'Private classes, concert bookings, and direct contact in one place.',
+        es: 'Masterclass, propuestas de concierto y contacto directo en una sola consulta.',
+        en: 'Masterclasses, concert bookings, and direct contact in one place.',
       },
       href: '/classes',
       detail: true,
@@ -220,7 +220,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
       index: 1,
       heading: site.fullName,
       subheading: site.role[locale],
-      role: isEn ? 'Classical guitar' : 'Guitarra clasica',
+      role: isEn ? 'Classical guitar' : 'Guitarra clásica',
       body: [],
       visual: {
         kind: 'hero',
@@ -231,8 +231,8 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
     {
       id: 'about',
       index: 2,
-      heading: isEn ? 'About.' : 'Biografia.',
-      subheading: isEn ? 'Sound, phrase, repertoire' : 'Sonido, frase, repertorio',
+      heading: isEn ? 'About.' : 'Biografía.',
+      subheading: isEn ? 'Sound, phrasing, repertoire' : 'Sonido, fraseo, repertorio',
       role: site.about.eyebrow[locale],
       body: [
         site.about.paragraphs[locale][0] ?? '',
@@ -240,14 +240,16 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
       ].filter(Boolean),
       tagline: isEn
         ? 'A life devoted to the classical guitar.'
-        : 'Una vida dedicada a la guitarra clasica.',
+        : 'Una vida dedicada a la guitarra clásica.',
+      detail: true,
+      openLabel: isEn ? 'Open the full biography' : 'Abrir la biografía completa',
       visual: { kind: 'about' },
     },
     {
       id: 'sep-listen',
       index: 3,
-      tagline: isEn ? 'Listen.\nRecordings and albums.' : 'Escuchar.\nGrabaciones y albumes.',
-      taglineHighlight: isEn ? 'Recordings and albums.' : 'Grabaciones y albumes.',
+      tagline: isEn ? 'Listen.\nRecordings and albums.' : 'Escuchar.\nGrabaciones y álbumes.',
+      taglineHighlight: isEn ? 'Recordings and albums.' : 'Grabaciones y álbumes.',
       accent: '#C6923E',
       body: [],
       visual: { kind: 'separator' },
@@ -255,68 +257,68 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
     {
       id: 'music',
       index: 4,
-      heading: isEn ? 'Music.' : 'Musica.',
-      subheading: isEn ? 'Recordings gathered by album' : 'Grabaciones reunidas por album',
-      role: isEn ? 'Discography' : 'Discografia',
-      dates: isEn ? 'Albums and works' : 'Albumes y obras',
+      heading: isEn ? 'Music.' : 'Música.',
+      subheading: isEn ? 'Recordings gathered by album' : 'Grabaciones reunidas por álbum',
+      role: isEn ? 'Discography' : 'Discografía',
+      dates: isEn ? 'Albums and works' : 'Álbumes y obras',
       body: [
         isEn
-          ? 'Recordings, releases, and selected works gathered in one listening space.'
-          : 'Grabaciones, lanzamientos y obras seleccionadas reunidas en un espacio de escucha.',
+          ? 'From Moreno Torroba to Boccherini: recordings and albums gathered in one listening space.'
+          : 'De Moreno Torroba a Boccherini: grabaciones y álbumes reunidos en un mismo espacio de escucha.',
       ],
       links: [
         { label: 'Spotify', href: spotify },
       ],
       detail: true,
-      openLabel: isEn ? 'Open Music details' : 'Abrir Musica',
+      openLabel: isEn ? 'Open Music details' : 'Abrir Música',
       visual: {
         kind: 'photo',
         image: '/images/portrait_cover.webp',
-        imageAlt: isEn ? 'Album cover placeholder' : 'Portada provisional de album',
+        imageAlt: isEn ? 'Album cover placeholder' : 'Portada provisional de álbum',
       },
     },
     {
       id: 'videos',
       index: 5,
-      heading: 'Videos.',
+      heading: isEn ? 'Videos.' : 'Vídeos.',
       subheading: isEn ? 'Performances and concert moments' : 'Interpretaciones y momentos de concierto',
       role: isEn ? 'Film' : 'Imagen',
       dates: isEn ? 'Live and studio' : 'Directo y estudio',
       body: [
         isEn
-          ? 'Performances and concert moments on film, presented with the same quiet focus as the instrument.'
-          : 'Interpretaciones y momentos de concierto en imagen, con la misma atencion al detalle que el instrumento.',
+          ? 'Performances live and in the studio: from Bach and Weiss to Torroba, Turina, and Villa-Lobos.'
+          : 'Interpretaciones en directo y en estudio: de Bach y Weiss a Torroba, Turina y Villa-Lobos.',
       ],
       links: [
         { label: 'YouTube', href: youtube },
       ],
       detail: true,
-      openLabel: isEn ? 'Open Videos details' : 'Abrir Videos',
+      openLabel: isEn ? 'Open Videos details' : 'Abrir Vídeos',
       visual: {
         kind: 'photo',
         image: '/images/concert.webp',
-        imageAlt: isEn ? 'Placeholder performance image' : 'Imagen provisional de interpretacion',
+        imageAlt: isEn ? 'Placeholder performance image' : 'Imagen provisional de interpretación',
       },
     },
     {
       id: 'classes',
       index: 6,
-      heading: isEn ? 'Classes and concerts.' : 'Clases y conciertos.',
+      heading: isEn ? 'Masterclass and concerts.' : 'Masterclass y conciertos.',
       headingHighlight: isEn ? 'concerts.' : 'conciertos.',
-      subheading: isEn ? 'Private lessons, bookings, direct contact' : 'Clases privadas, conciertos y contacto directo',
+      subheading: isEn ? 'Masterclasses, bookings, direct contact' : 'Masterclass, conciertos y contacto directo',
       body: [
         isEn
-          ? 'A direct route for private classes, concert proposals, and artistic enquiries.'
-          : 'Una via directa para clases privadas, propuestas de concierto y consultas artisticas.',
+          ? 'A direct route for masterclasses, concert proposals, and artistic enquiries.'
+          : 'Una vía directa para masterclass, propuestas de concierto y consultas artísticas.',
       ],
       bullets: isEn
-        ? ['Private classes', 'Concert proposals', 'Direct enquiries']
-        : ['Clases privadas', 'Propuestas de concierto', 'Consultas directas'],
+        ? ['Masterclasses', 'Concert proposals', 'Direct enquiries']
+        : ['Masterclass', 'Propuestas de concierto', 'Consultas directas'],
       links: [
         { label: 'Email', href: email },
       ],
       detail: true,
-      openLabel: isEn ? 'Open Classes & Concerts details' : 'Abrir Clases y conciertos',
+      openLabel: isEn ? 'Open Masterclass & Concerts details' : 'Abrir Masterclass y conciertos',
       visual: { kind: 'services' },
     },
     {

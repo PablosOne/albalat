@@ -8,7 +8,7 @@ export interface PlayerTrack {
   albumTitle: string;
   cover: string;
   previewUrl?: string;
-  spotifyUri: string;
+  spotifyUri?: string;
   appleEmbed?: string;
   spotifyUrl?: string;
   appleUrl?: string;

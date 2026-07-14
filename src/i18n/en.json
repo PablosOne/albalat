@@ -1,5 +1,5 @@
 {
-  "nav": { "home": "Home", "menu": "Menu", "about": "About", "music": "Music", "videos": "Videos", "classes": "Classes & Concerts", "contact": "Contact" },
-  "cta": { "listen": "Listen", "bookConcert": "Book a concert", "bookClass": "Book a private class" },
+  "nav": { "home": "Home", "menu": "Menu", "about": "About", "music": "Music", "videos": "Videos", "classes": "Masterclass & Concerts", "contact": "Contact" },
+  "cta": { "listen": "Listen", "bookConcert": "Book a concert", "bookClass": "Book a masterclass" },
   "a11y": { "skipToContent": "Skip to content", "toggleLang": "Español", "openMenu": "Open navigation menu", "closeMenu": "Close navigation menu" }
 }

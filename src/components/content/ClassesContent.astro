@@ -14,22 +14,26 @@ const mailCharCount = email.length;
 
 const copy = {
   es: {
-    eyebrow: 'Clases · conciertos · contacto',
-    heading: 'Abrir una conversacion musical.',
-    intro: 'Para clases privadas, recitales o propuestas especiales, lo mas util es empezar por el contexto: nivel, repertorio, fecha, lugar y tipo de escucha.',
-    classTitle: 'Clase privada',
-    classDescription: 'Tecnica, sonido, lectura y repertorio con una direccion de estudio clara.',
-    concertTitle: 'Concierto',
-    concertDescription: 'Programas de guitarra clasica para ciclos, espacios culturales y eventos privados.',
+    eyebrow: 'Masterclass · conciertos · contacto',
+    heading: 'Abrir una conversación musical.',
+    intro: 'Para masterclass, recitales o propuestas de concierto, lo más útil es empezar por el contexto: nivel, repertorio, fecha, lugar y tipo de escucha.',
+    classTitle: 'Masterclass',
+    classDescription: 'Técnica, sonido, lectura y repertorio con una dirección de estudio clara.',
+    concertTitle: 'Propuestas de concierto',
+    concertDescription: 'Un abanico amplio de programas listos para llevar al escenario, desde J. S. Bach hasta el siglo XX, para ciclos, espacios culturales y eventos privados.',
+    repertoireTitle: 'Repertorio español',
+    repertoireDescription: 'Especializado en el repertorio español, los compositores de las generaciones del 98 y del 27 son piedra de toque habitual en sus programas: Albéniz, Granados, Falla, Turina, Torroba, Rodrigo, Llobet, Pujol y ambos Sainz de la Maza, por citar algunos.',
   },
   en: {
-    eyebrow: 'Classes · concerts · contact',
+    eyebrow: 'Masterclass · concerts · contact',
     heading: 'Start a musical conversation.',
-    intro: 'For private classes, recitals, or special proposals, the best starting point is context: level, repertoire, date, place, and kind of listening.',
-    classTitle: 'Private class',
+    intro: 'For masterclasses, recitals, or concert proposals, the best starting point is context: level, repertoire, date, place, and kind of listening.',
+    classTitle: 'Masterclass',
     classDescription: 'Technique, sound, reading, and repertoire with a clear direction for study.',
-    concertTitle: 'Concert',
-    concertDescription: 'Classical guitar programs for series, cultural venues, and private events.',
+    concertTitle: 'Concert proposals',
+    concertDescription: 'A wide range of concert-ready programs, from J. S. Bach to the twentieth century, for series, cultural venues, and private events.',
+    repertoireTitle: 'Spanish repertoire',
+    repertoireDescription: 'A specialist in Spanish repertoire: the composers of the generations of 1898 and 1927 — Albeniz, Granados, Falla, Turina, Torroba, Rodrigo, Llobet, Pujol, and both Sainz de la Maza, to name a few — are a regular touchstone of his programs.',
   },
 } as const;
 
@@ -72,6 +76,11 @@ const t = copy[locale];
           <span class="font-mono text-xs uppercase tracking-[0.2em] text-accent">02</span>
           <h2 class="mt-7 font-display text-4xl font-light text-ink">{t.concertTitle}</h2>
           <p class="mt-4 text-sm leading-6 text-ink-muted">{t.concertDescription}</p>
+        </article>
+        <article data-reveal="body" class="relative overflow-hidden border border-ink/10 p-5 sm:col-span-2">
+          <span class="font-mono text-xs uppercase tracking-[0.2em] text-accent">03</span>
+          <h2 class="mt-7 font-display text-4xl font-light text-ink">{t.repertoireTitle}</h2>
+          <p class="mt-4 max-w-3xl text-sm leading-6 text-ink-muted">{t.repertoireDescription}</p>
         </article>
       </div>
 

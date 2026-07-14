@@ -7,18 +7,18 @@ test('home renders hero and nav', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Eulogio Albalat' })).toBeVisible();
 });
 
-test('About station has no detail lane and stays on home', async ({ page }) => {
+test('About station opens its detail lane from the nav', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#about"]').click();
-  await expect(page.locator('[data-showcase-panel-id="about"]')).toBeInViewport();
-  await expect(page.locator('[data-detail-lane]')).toHaveCount(3); // music,videos,classes
+  await expect(page.locator('[data-detail-lane="about"]')).toBeVisible();
+  await expect(page.locator('[data-detail-lane]')).toHaveCount(4); // about,music,videos,classes
 });
 
 test('home nav jumps between horizontal stage stations', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#about"]').click();
-  await expect(page).toHaveURL(/\/#about$/);
-  await expect(page.locator('[data-showcase-panel-id="about"]')).toBeInViewport();
+  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#contact"]').click();
+  await expect(page).toHaveURL(/\/#contact$/);
+  await expect(page.locator('[data-showcase-panel-id="contact"]')).toBeInViewport();
 });
 
 test('desktop vertical scroll scrubs the stage horizontally and updates HUD station', async ({ page }) => {

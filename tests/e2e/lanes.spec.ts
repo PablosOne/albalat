@@ -32,11 +32,11 @@ test('up-arrow closes the lane and returns to the main lane', async ({ page }) =
   await expect(lane).toBeHidden();
 });
 
-test('the about panel has no lane-opening link and no detail lane exists for it', async ({ page }) => {
+test('the about panel opens its biography detail lane', async ({ page }) => {
   await page.goto('/');
-  const aboutPanel = page.locator('[data-showcase-panel-id="about"]');
-  await expect(aboutPanel.locator('a[href="#about"]')).toHaveCount(0);
-  await expect(page.locator('[data-detail-lane="about"]')).toHaveCount(0);
+  await page.locator('[data-showcase-panel-id="about"] [data-lane-open="about"]').click();
+  await expect(page.locator('[data-detail-lane="about"]')).toBeVisible();
+  await expect(page).toHaveURL(/#about$/);
 });
 
 test('nav entry opens the matching lane', async ({ page }) => {
