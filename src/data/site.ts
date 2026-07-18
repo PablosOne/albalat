@@ -236,7 +236,6 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
       role: site.about.eyebrow[locale],
       body: [
         site.about.paragraphs[locale][0] ?? '',
-        site.about.paragraphs[locale][1] ?? '',
       ].filter(Boolean),
       tagline: isEn
         ? 'A life devoted to the classical guitar.'

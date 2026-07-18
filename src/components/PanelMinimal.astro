@@ -57,8 +57,8 @@ const copy = isEn
     ))}
   </div>
 
-  <div class="contact-panel-content relative z-[2] grid grid-cols-12 gap-8 lg:gap-24 xl:gap-32 items-center">
-    <div class="contact-intro col-span-12 lg:col-span-6 flex flex-col justify-between gap-10">
+  <div class="contact-panel-content relative z-[2] grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-24 xl:gap-32 items-center">
+    <div class="contact-intro flex flex-col justify-between gap-10">
       <TextReveal as="h2" text={panel.heading} class="text-display-xl font-display" reveal="heading" mode="words" preset="headline" />
       {mailLink && (
         <a
@@ -81,7 +81,7 @@ const copy = isEn
       )}
     </div>
 
-    <div class="contact-form-column col-span-12 lg:col-span-6" data-reveal="body">
+    <div class="contact-form-column" data-reveal="body">
       <form
         class="contact-form flex flex-col gap-5"
         action="https://api.web3forms.com/submit"
@@ -337,6 +337,51 @@ const copy = isEn
       margin-top: 2.5rem;
     }
 
+  }
+
+  /* The main lane switches to its desktop/horizontal architecture at 768px,
+     but Tailwind's default two-column contact layout starts at 1024px. That
+     mismatch made 768–1023px short screens stack both columns inside a fixed
+     100dvh panel. Use two compact columns for that specific short-screen band. */
+  @media (min-width: 768px) and (max-height: 800px) {
+    .contact-panel-shell,
+    .contact-panel-content {
+      min-height: 0;
+    }
+
+    .contact-intro {
+      gap: 1.25rem;
+    }
+
+    .contact-form {
+      gap: 0.75rem;
+    }
+
+    .contact-field input,
+    .contact-field textarea {
+      padding-block: 0.3rem 0.45rem;
+    }
+
+    .contact-field textarea {
+      max-height: 4.5rem;
+    }
+
+    .site-credit {
+      margin-top: 1rem;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) and (max-height: 800px) {
+    .contact-panel-content {
+      column-gap: 2rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .contact-email {
+      font-size: min(2rem, calc(50vw / (var(--mail-chars) * 0.72)));
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
   }
 
   @media (min-width: 1024px) {
