@@ -62,8 +62,8 @@ export const discography = [
     label: 'Da Vinci Classics',
     featured: true,
     notes: {
-      es: 'Monográfico dedicado a Federico Moreno Torroba, planteado como un recorrido por castillos, danzas y sonatinas para guitarra.',
-      en: 'A Federico Moreno Torroba monograph shaped as a journey through castles, dances, and guitar sonatinas.',
+      es: 'Monográfico dedicado a Federico Moreno Torroba (Da Vinci Classics): un recorrido por castillos, danzas y sonatinas, programado por BBC Radio 3 y elogiado por la crítica europea y japonesa.',
+      en: 'A Federico Moreno Torroba monograph on Da Vinci Classics — castles, dances, and sonatinas — programmed by BBC Radio 3 and praised by critics across Europe and Japan.',
     },
     spotifyUri: 'spotify:album:7dRT52ybtElgNDbHqcFZoF',
     appleEmbed: 'https://embed.music.apple.com/us/album/1849357917',
@@ -200,4 +200,4 @@ export const discography = [
   },
 ] satisfies Album[];
 
-export const featuredAlbum = discography.find((album) => album.featured) ?? discography[0];
+export const featuredAlbum = (discography.find((album) => album.featured) ?? discography[0]) as Album;
