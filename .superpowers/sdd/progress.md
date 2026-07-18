@@ -172,3 +172,18 @@ Scratch file prefix: mobilenav- (avoids collision with other sessions' shared ta
 
 ## PLAN COMPLETE — all 9 tasks + prerequisite infra fix + final review + fix + re-review, all clean.
 Final HEAD: 0db1272
+
+# Ambient Torroba Autoplay Progress Ledger
+
+Plan: docs/superpowers/plans/2026-07-18-ambient-torroba-autoplay.md
+Branch: main (in place)
+
+## Tasks
+- Task 1: complete
+- Task 2: complete
+- Task 3: pending
+- Task 4: pending
+
+## Log
+- Task 1: complete (commits a35b010..fcdf89a, review clean; 2 Minor notes not fixed: toggleMute double-negation style, missing loadAmbient+close direct test)
+- Task 2: complete (commits fcdf89a..2bd58b9, incl. e7b1654 impl + 2bd58b9 fix; review round 1 found 1 Important issue — implementer's commit e7b1654 bundled an unrelated, undisclosed edit to the Torroba album's bilingual bio copy in discography.ts (pre-existing uncommitted content from before this session) alongside the required `as Album` type-cast fix. Fixed in 2bd58b9 by reverting just the bio-copy lines, leaving the type-cast intact. Round 2 re-review confirmed the discography.ts diff nets to only the `as Album` cast, no other issues, Approved. `src/lib/ambientAutoplay.ts` itself was spec-compliant and clean from round 1.)
