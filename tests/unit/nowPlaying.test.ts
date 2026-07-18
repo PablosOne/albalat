@@ -86,6 +86,25 @@ describe('createEngine', () => {
     expect(audio.paused).toBe(true);
   });
 
+  it('close clears the track so it does not fall back to the ambient toggle', () => {
+    const audio = mockAudio();
+    const engine = createEngine({ audio });
+    engine.load(buildQueue(torroba), 0);
+    engine.close();
+    expect(engine.getState().track).toBeNull();
+  });
+
+  it('load resets mute so explicit playback is never silently muted by a prior ambient mute', () => {
+    const audio = mockAudio();
+    const engine = createEngine({ audio });
+    engine.loadAmbient(buildQueue(torroba), 0);
+    engine.toggleMute();
+    expect(engine.getState().muted).toBe(true);
+    engine.load(buildQueue(torroba), 1);
+    expect(engine.getState().muted).toBe(false);
+    expect(audio.muted).toBe(false);
+  });
+
   it('loadAmbient plays the track but keeps the bar hidden', () => {
     const audio = mockAudio();
     const engine = createEngine({ audio });

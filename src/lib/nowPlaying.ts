@@ -128,7 +128,14 @@ export function createEngine(opts: { audio?: AudioLike } = {}): NowPlayingEngine
   }
 
   return {
-    load(q, index) { ambient = false; queue = q; state.queueLength = q.length; playIndex(index); },
+    load(q, index) {
+      ambient = false;
+      audio.muted = false;
+      state.muted = false;
+      queue = q;
+      state.queueLength = q.length;
+      playIndex(index);
+    },
     loadAmbient(q, index) { ambient = true; queue = q; state.queueLength = q.length; playIndex(index); },
     setMuted(m) { audio.muted = m; state.muted = m; emit(); },
     toggleMute() { audio.muted = !state.muted; state.muted = !state.muted; emit(); },
@@ -141,7 +148,17 @@ export function createEngine(opts: { audio?: AudioLike } = {}): NowPlayingEngine
     next, prev,
     expandFull(provider) { audio.pause(); state.mode = 'full'; state.provider = provider; state.isPaused = true; emit(); },
     collapse() { state.mode = 'preview'; state.provider = null; emit(); },
-    close() { ambient = false; audio.pause(); state.isPaused = true; state.visible = false; state.mode = 'preview'; state.provider = null; emit(); },
+    close() {
+      ambient = false;
+      audio.pause();
+      state.isPaused = true;
+      state.visible = false;
+      state.mode = 'preview';
+      state.provider = null;
+      state.track = null;
+      state.index = -1;
+      emit();
+    },
     subscribe(cb) { subs.add(cb); return () => subs.delete(cb); },
     getState() { return { ...state }; },
   };
