@@ -217,40 +217,32 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     const motion = laneMotion();
     if (motion === 'descend' || motion === 'slide') {
       const { gsap } = await import('gsap');
-      // Any main-thread stall beyond ~2 frames (first raster of a just-revealed
-      // lane, image decode) advances the ticker by only one frame instead of
-      // the full elapsed time, so clock-based tweens pause through jank rather
-      // than teleport past it. Threshold measured, not guessed: a throttled-CPU
-      // probe showed the open's raster stall paints its first frame ~133ms in —
-      // under a 150ms threshold the clock swallowed it whole, and with the
-      // ease's front-loaded velocity that single gap ate 53% of the travel
-      // (the "open reads as a jump" report). 50ms catches those mid-size
-      // stalls; real frames (16-33ms) stay untouched. (Scroll-scrubbed tweens
-      // are unaffected — they are driven by scroll position, not the clock.)
-      gsap.ticker.lagSmoothing(50, 16);
+      // Stalls longer than 100ms advance the tween clock by only one frame,
+      // so a mid-tween decode/raster hitch pauses the slide instead of
+      // teleporting it. (Scroll-scrubbed tweens are unaffected.)
+      gsap.ticker.lagSmoothing(100, 16);
       // Drive the descent layer (panels), NOT the pinned [data-showcase] section
       // and NOT the scrubbed track (whose x the horizontal scrub owns).
       const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
       const axis = motion === 'slide' ? 'x' : 'y';
+      const prop = axis === 'x' ? 'xPercent' : 'yPercent';
+      const otherProp = axis === 'x' ? 'yPercent' : 'xPercent';
       gsap.killTweensOf(lane);
-      // Pre-position the lane offscreen and pay the (large, display:none until
-      // now) lane's first layout + paint BEFORE the tween starts. Starting the
-      // tween in the same frame as the un-hide let that first layout block the
-      // main thread while the clock-based tween kept running — by the first
-      // painted frame most of the slide was already over, so the open read as
-      // a jump instead of a slide.
-      gsap.set(lane, axis === 'x'
-        ? { xPercent: 100, yPercent: 0, autoAlpha: 1 }
-        : { yPercent: 100, xPercent: 0, autoAlpha: 1 });
+      // Reveal the lane parked offscreen and pay its first layout + paint
+      // BEFORE the tweens start. Starting them in the same frame as the
+      // un-hide let that first paint (a large, previously display:none
+      // subtree) stall the main thread while the clock-based tweens kept
+      // running — by the first painted frame most of the slide was already
+      // over, so open read as a jump with no motion on either layer.
+      gsap.set(lane, { [prop]: 100, [otherProp]: 0, autoAlpha: 1 });
       lane.hidden = false;
-      void lane.getBoundingClientRect(); // force the layout now, off the tween clock
-      // One frame to let that first layout/raster land before the clock starts.
-      // The expensive part — image load + decode — is NOT paid here: warmLanes()
-      // below already did it at idle. Awaiting decode at click time instead cost
-      // a dead ~250ms before anything moved, which read as "no animation, it
-      // just jumps".
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      // The wait above yielded to other handlers — bail if a close raced in.
+      lane.getBoundingClientRect(); // force layout now, not inside the tween
+      // Double rAF: the first callback fires BEFORE that frame's (expensive)
+      // paint; only the second guarantees the paint has actually happened.
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      // The wait yielded to other handlers — bail if a close raced in.
       if (state.openId !== id || state.closing) return;
       slide(gsap, lane, panelsLayer, axis, 'open');
 
@@ -437,30 +429,13 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
   document.addEventListener('click', onClick, { capture: true });
   document.addEventListener('keydown', onKey);
 
-  // ─── Idle warm-up: the fix for "the open jumps, there is no animation" ────
-  // A detail lane sits in a `hidden` (display:none) subtree until it opens, and
-  // its images are `loading="lazy"`. Lazy images inside a display:none subtree
-  // NEVER start loading — so the click was the first time the browser fetched
-  // AND decoded them, and that load+decode landed squarely on the open tween's
-  // first frames. The clock-driven tween kept advancing through the stall while
-  // nothing painted, so the first frame the user actually saw was already deep
-  // into the travel: a jump, not a slide. (Close was always smooth because by
-  // then everything is loaded, decoded and rastered — exactly the asymmetry the
-  // bug report described.)
-  //
-  // Paying that cost here, at idle, while the user is still reading the main
-  // lane, means the open has nothing expensive left to do and can start moving
-  // on the very next frame.
+  // Idle warm-up: lazy images inside a hidden (display:none) lane never start
+  // loading, so without this the click is the first fetch+decode and it lands
+  // on the open tween's first frames. Pay it at idle instead.
   const warmLanes = () => {
-    document.querySelectorAll<HTMLElement>('[data-detail-lane]').forEach((lane) => {
-      lane.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
-        // Flipping lazy → eager is what actually kicks off the load for an image
-        // the lazy-loader has parked because it is in a display:none subtree.
-        if (img.loading === 'lazy') img.loading = 'eager';
-        // decode() resolves once the bitmap is ready, off the main thread. It
-        // rejects on a broken/aborted image — ignore, this is best-effort warmth.
-        void img.decode().catch(() => {});
-      });
+    document.querySelectorAll<HTMLImageElement>('[data-detail-lane] img').forEach((img) => {
+      if (img.loading === 'lazy') img.loading = 'eager';
+      void img.decode().catch(() => {});
     });
   };
   const idle = (window as Window & {
