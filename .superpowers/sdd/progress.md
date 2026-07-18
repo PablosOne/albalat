@@ -181,9 +181,10 @@ Branch: main (in place)
 ## Tasks
 - Task 1: complete
 - Task 2: complete
-- Task 3: pending
+- Task 3: complete
 - Task 4: pending
 
 ## Log
 - Task 1: complete (commits a35b010..fcdf89a, review clean; 2 Minor notes not fixed: toggleMute double-negation style, missing loadAmbient+close direct test)
 - Task 2: complete (commits fcdf89a..2bd58b9, incl. e7b1654 impl + 2bd58b9 fix; review round 1 found 1 Important issue — implementer's commit e7b1654 bundled an unrelated, undisclosed edit to the Torroba album's bilingual bio copy in discography.ts (pre-existing uncommitted content from before this session) alongside the required `as Album` type-cast fix. Fixed in 2bd58b9 by reverting just the bio-copy lines, leaving the type-cast intact. Round 2 re-review confirmed the discography.ts diff nets to only the `as Album` cast, no other issues, Approved. `src/lib/ambientAutoplay.ts` itself was spec-compliant and clean from round 1.)
+- Task 3: complete (commit dd774b9..359d731, `src/components/AmbientToggle.astro` new file only; review clean, byte-for-byte match to brief, transition:persist + fresh document.documentElement.lang copy resolution confirmed, visibility logic `!!s.track && !s.visible` confirmed, no other files touched, reduced-motion handled. Note: component not yet wired into a layout — that's Task 4.)
