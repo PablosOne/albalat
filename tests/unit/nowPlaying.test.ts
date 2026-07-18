@@ -5,7 +5,7 @@ import { discography } from '@/data/discography';
 function mockAudio(): AudioLike & { emit: (t: string) => void } {
   const listeners: Record<string, Array<() => void>> = {};
   return {
-    src: '', currentTime: 0, duration: 0, paused: true,
+    src: '', currentTime: 0, duration: 0, paused: true, muted: false,
     play: vi.fn(async function (this: AudioLike) { this.paused = false; }),
     pause: vi.fn(function (this: AudioLike) { this.paused = true; }),
     addEventListener: (t: string, cb: () => void) => { (listeners[t] ??= []).push(cb); },
@@ -84,5 +84,45 @@ describe('createEngine', () => {
     engine.close();
     expect(engine.getState().visible).toBe(false);
     expect(audio.paused).toBe(true);
+  });
+
+  it('loadAmbient plays the track but keeps the bar hidden', () => {
+    const audio = mockAudio();
+    const engine = createEngine({ audio });
+    engine.loadAmbient(buildQueue(torroba), 0);
+    const s = engine.getState();
+    expect(s.visible).toBe(false);
+    expect(s.track?.title).toContain('Turégano');
+    expect(audio.play).toHaveBeenCalled();
+  });
+
+  it('ambient playback stays hidden across auto-advance', () => {
+    const audio = mockAudio();
+    const engine = createEngine({ audio });
+    engine.loadAmbient(buildQueue(torroba), 0);
+    audio.emit('ended');
+    expect(engine.getState().index).toBe(1);
+    expect(engine.getState().visible).toBe(false);
+  });
+
+  it('a normal load after ambient reveals the bar', () => {
+    const audio = mockAudio();
+    const engine = createEngine({ audio });
+    engine.loadAmbient(buildQueue(torroba), 0);
+    engine.load(buildQueue(torroba), 1);
+    expect(engine.getState().visible).toBe(true);
+  });
+
+  it('setMuted and toggleMute flip state.muted and audio.muted', () => {
+    const audio = mockAudio();
+    const engine = createEngine({ audio });
+    engine.loadAmbient(buildQueue(torroba), 0);
+    expect(engine.getState().muted).toBe(false);
+    engine.toggleMute();
+    expect(engine.getState().muted).toBe(true);
+    expect(audio.muted).toBe(true);
+    engine.setMuted(false);
+    expect(engine.getState().muted).toBe(false);
+    expect(audio.muted).toBe(false);
   });
 });
