@@ -103,14 +103,14 @@ export const site = {
       // Condensed from the full biography rendered in
       // src/components/content/AboutContent.astro (the About detail lane).
       es: [
-        'Formado desde niño entre la pintura, la escultura y la música del entorno cultural gallego, la guitarra clásica ha sido el hilo conductor de una vida dedicada al estudio, la interpretación y la enseñanza.',
-        'Catedrático del Conservatorio Superior de A Coruña durante treinta y tres años, ha actuado como solista y en formaciones de cámara por España, Francia, Italia, Inglaterra, Noruega y Grecia.',
-        'Su trabajo se articula en torno al sonido, la respiración de la frase y la relación íntima entre intérprete, instrumento y oyente.',
+        'Intérprete, catedrático e investigador, su trayectoria está dedicada a la interpretación, la investigación y la difusión del patrimonio musical español para guitarra, con fidelidad al espíritu de la música.',
+        'Catedrático del Conservatorio Superior de Música de A Coruña durante más de tres décadas, ha llevado un repertorio que va del Renacimiento a la creación contemporánea por España y Europa.',
+        'En la actualidad interpreta, investiga y graba desde su propio estudio en el histórico Pazo de Souto, en Begonte (Lugo).',
       ],
       en: [
-        "Raised from childhood among the painting, sculpture, and music of Galicia's cultural world, the classical guitar has been the throughline of a life devoted to study, performance, and teaching.",
-        'Full professor at the Conservatorio Superior of A Coruña for thirty-three years, he has performed as a soloist and in chamber ensembles across Spain, France, Italy, England, Norway, and Greece.',
-        'His work is shaped by sound, the breathing of the phrase, and the intimate relationship between performer, instrument, and listener.',
+        'Performer, professor, and researcher, his career is devoted to the interpretation, study, and dissemination of the Spanish guitar heritage, with a deep fidelity to the spirit of the music.',
+        'Full professor at the Conservatorio Superior de Música of A Coruña for more than three decades, he has taken a repertoire spanning the Renaissance to contemporary creation across Spain and Europe.',
+        'Today he performs, researches, and records from his own studio at the historic Pazo de Souto in Begonte (Lugo).',
       ],
     },
     portrait: {
@@ -143,17 +143,17 @@ export const site = {
         en: 'About',
       },
       tagline: {
-        es: 'Una trayectoria dedicada a la guitarra clásica.',
-        en: 'A life devoted to the classical guitar.',
+        es: 'Interpretación, docencia e investigación al servicio de la guitarra española.',
+        en: 'Performance, teaching, and research in the service of the Spanish guitar.',
       },
       body: {
         es: [
-          'Formado desde niño entre la pintura, la escultura y la música del entorno cultural gallego, la guitarra clásica ha sido el hilo conductor de una vida dedicada al estudio, la interpretación y la enseñanza.',
-          'Catedrático del Conservatorio Superior de A Coruña durante treinta y tres años, ha actuado como solista y en formaciones de cámara por España y buena parte de Europa.',
+          'Intérprete, catedrático e investigador, su trayectoria está dedicada a la interpretación, la investigación y la difusión del patrimonio musical español para guitarra, con fidelidad al espíritu de la música.',
+          'Catedrático del Conservatorio Superior de Música de A Coruña durante más de tres décadas, ha llevado un repertorio que va del Renacimiento a la creación contemporánea por España y Europa.',
         ],
         en: [
-          "Raised from childhood among the painting, sculpture, and music of Galicia's cultural world, the classical guitar has been the throughline of a life devoted to study, performance, and teaching.",
-          'Full professor at the Conservatorio Superior of A Coruña for thirty-three years, he has performed as a soloist and in chamber ensembles across Spain and much of Europe.',
+          'Performer, professor, and researcher, his career is devoted to the interpretation, study, and dissemination of the Spanish guitar heritage, with a deep fidelity to the spirit of the music.',
+          'Full professor at the Conservatorio Superior de Música of A Coruña for more than three decades, he has taken a repertoire spanning the Renaissance to contemporary creation across Spain and Europe.',
         ],
       },
       href: '/about',
