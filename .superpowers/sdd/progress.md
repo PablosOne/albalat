@@ -182,9 +182,11 @@ Branch: main (in place)
 - Task 1: complete
 - Task 2: complete
 - Task 3: complete
-- Task 4: pending
+- Task 4: complete
 
 ## Log
 - Task 1: complete (commits a35b010..fcdf89a, review clean; 2 Minor notes not fixed: toggleMute double-negation style, missing loadAmbient+close direct test)
 - Task 2: complete (commits fcdf89a..2bd58b9, incl. e7b1654 impl + 2bd58b9 fix; review round 1 found 1 Important issue — implementer's commit e7b1654 bundled an unrelated, undisclosed edit to the Torroba album's bilingual bio copy in discography.ts (pre-existing uncommitted content from before this session) alongside the required `as Album` type-cast fix. Fixed in 2bd58b9 by reverting just the bio-copy lines, leaving the type-cast intact. Round 2 re-review confirmed the discography.ts diff nets to only the `as Album` cast, no other issues, Approved. `src/lib/ambientAutoplay.ts` itself was spec-compliant and clean from round 1.)
 - Task 3: complete (commit dd774b9..359d731, `src/components/AmbientToggle.astro` new file only; review clean, byte-for-byte match to brief, transition:persist + fresh document.documentElement.lang copy resolution confirmed, visibility logic `!!s.track && !s.visible` confirmed, no other files touched, reduced-motion handled. Note: component not yet wired into a layout — that's Task 4.)
+- Task 4: complete (commit c35be03..d1ce264, `src/layouts/Base.astro` only, 5-line wiring diff implemented directly by the controller (small/mechanical); review clean, exact match to brief placement. Environment note: `pnpm test`/`pnpm check`/`pnpm build` all fail in this environment via an unrelated `ERR_PNPM_IGNORED_BUILDS` pre-install gate (esbuild/sharp build-script approval never granted) — worked around by calling `./node_modules/.bin/vitest run`, `npx astro check`, `./node_modules/.bin/tsx scripts/check-i18n-keys.ts`, and `./node_modules/.bin/astro build` directly. All green: 52/52 unit tests, 0 type errors (1 pre-existing unrelated hint), i18n keys in sync, build produces 12 pages with 0 errors.)
+- ALL 4 TASKS COMPLETE — proceeding to final whole-branch review.
