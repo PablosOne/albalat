@@ -2,6 +2,7 @@
 import '@/styles/global.css';
 import Seo from '@/components/Seo.astro';
 import NowPlayingBar from '@/components/NowPlayingBar.astro';
+import AmbientToggle from '@/components/AmbientToggle.astro';
 import type { Locale } from '@/i18n';
 import { ClientRouter } from 'astro:transitions';
 
@@ -74,12 +75,16 @@ const gaId = import.meta.env.PUBLIC_GA_ID ?? '';
   <body>
     <slot />
     <NowPlayingBar locale={locale} />
+    <AmbientToggle locale={locale} />
     <script>
       import { initScroll } from '@/lib/scroll';
       import { heroEntrance } from '@/lib/motion';
       import { initShowcase } from '@/lib/showcase';
       import { initLanes } from '@/lib/lanes';
       import { initSignature } from '@/lib/string';
+      import { initAmbientAutoplay } from '@/lib/ambientAutoplay';
+
+      initAmbientAutoplay();
 
       // This script's text is identical on every route, so Astro's ClientRouter
       // treats it as "already ran" after the first load and will not re-execute
