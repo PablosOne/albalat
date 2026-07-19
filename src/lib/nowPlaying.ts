@@ -1,5 +1,6 @@
 import type { Album, AlbumTheme } from '@/data/discography';
 import { resolveTrackTheme } from '@/lib/trackTheme';
+import { trackEvent } from '@/lib/analytics';
 
 export interface PlayerTrack {
   albumId: string;
@@ -110,6 +111,7 @@ export function createEngine(opts: { audio?: AudioLike } = {}): NowPlayingEngine
       audio.src = track.previewUrl;
       audio.currentTime = 0;
       void audio.play().catch(() => {});
+      if (!ambient) trackEvent('track_play', { album_id: track.albumId, track_no: track.trackNo, title: track.title });
     } else {
       // No preview for this track: hold on the bar; the user can expand to full.
       audio.pause();

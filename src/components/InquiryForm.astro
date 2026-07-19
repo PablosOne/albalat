@@ -173,6 +173,9 @@ const showInquiryType = intent === 'class';
         if (success instanceof HTMLElement && success.matches('[data-form-success]')) {
           success.classList.remove('hidden');
         }
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'generate_lead', { inquiry_type: formEl.querySelector('[name="inquiry_type"]')?.value ?? '' });
+        }
       } catch {
         if (status) status.textContent = formEl.dataset.error || '';
       } finally {

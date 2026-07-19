@@ -109,6 +109,8 @@ const copy = {
 )}
 
 <script>
+  import { trackEvent } from '@/lib/analytics';
+
   const initMediaFacades = () => {
     document.querySelectorAll<HTMLElement>('[data-embed-facade], [data-media-facade]').forEach((facade) => {
       const button = facade.querySelector<HTMLButtonElement>('[data-embed-load]');
@@ -128,6 +130,7 @@ const copy = {
 
         facade.textContent = '';
         facade.append(iframe);
+        trackEvent('video_play', { provider: facade.dataset.provider ?? '', title: facade.dataset.title ?? '' });
       }, { once: true });
     });
 
@@ -149,6 +152,7 @@ const copy = {
         iframe.className = 'absolute inset-0 h-full w-full border-0';
 
         facade.replaceChildren(iframe);
+        trackEvent('video_play', { provider: 'youtube', title, youtube_id: id });
       }, { once: true });
     });
   };
