@@ -17,6 +17,8 @@ const mailCharCount = mailLink?.label.length ?? 1;
 const normalizedHeading = panel.heading?.trim().toLowerCase();
 const isEn = normalizedHeading === 'contact' || normalizedHeading === 'contact.';
 const currentYear = new Date().getFullYear();
+const privacyHref = isEn ? '/en/privacy/' : '/privacy/';
+const cookieHref = isEn ? '/en/cookies/' : '/cookies/';
 const copy = isEn
   ? {
       name: 'Name',
@@ -31,6 +33,12 @@ const copy = isEn
       error: 'Something went wrong. You can write directly by email.',
       unavailable: 'The form will be active once Web3Forms is configured. Direct email remains available.',
       required: 'Please complete the required fields before sending.',
+      privacyNotice: 'Web3Forms delivers the details you submit so we can answer your inquiry.',
+      privacyLink: 'How we use your data',
+      legalNav: 'Legal and privacy',
+      privacy: 'Privacy',
+      cookies: 'Cookies',
+      settings: 'Cookie settings',
       subject: `New inquiry from ${site.fullName}`,
       credit: siteConfig.credits.label.en,
     }
@@ -47,6 +55,12 @@ const copy = isEn
       error: 'No se ha podido enviar el formulario. Puedes escribir directamente por email.',
       unavailable: 'El formulario se activara al configurar Web3Forms. El email directo sigue disponible.',
       required: 'Completa los campos obligatorios antes de enviar.',
+      privacyNotice: 'Web3Forms entrega los datos que envías para que podamos responder a tu consulta.',
+      privacyLink: 'Cómo utilizamos tus datos',
+      legalNav: 'Legal y privacidad',
+      privacy: 'Privacidad',
+      cookies: 'Cookies',
+      settings: 'Ajustes de cookies',
       subject: `Nueva consulta desde ${site.fullName}`,
       credit: siteConfig.credits.label.es,
     };
@@ -114,6 +128,10 @@ const copy = isEn
           <textarea required name="message" rows="3" placeholder={copy.messagePlaceholder}></textarea>
         </label>
 
+        <p class="contact-privacy-note">
+          {copy.privacyNotice} <a href={privacyHref} target="_blank" rel="noreferrer">{copy.privacyLink}</a>.
+        </p>
+
         <div class="flex flex-wrap items-center gap-6 pt-2">
           <button
             type="submit"
@@ -138,15 +156,22 @@ const copy = isEn
   </div>
 
   <footer class="site-credit relative z-[2] text-label text-[var(--color-muted)]" data-reveal="body">
-    <span>&copy; {currentYear} {site.fullName}</span>
-    <a
-      href={siteConfig.credits.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="site-credit-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
-    >
-      {copy.credit} {siteConfig.credits.name}
-    </a>
+    <div class="site-credit-main">
+      <span>&copy; {currentYear} {site.fullName}</span>
+      <a
+        href={siteConfig.credits.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="site-credit-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+      >
+        {copy.credit} {siteConfig.credits.name}
+      </a>
+    </div>
+    <nav class="site-legal" aria-label={copy.legalNav}>
+      <a href={privacyHref}>{copy.privacy}</a>
+      <a href={cookieHref}>{copy.cookies}</a>
+      <button type="button" data-contact-consent>{copy.settings}</button>
+    </nav>
   </footer>
 </div>
 
@@ -197,6 +222,20 @@ const copy = isEn
       }
     });
   });
+</script>
+
+<script>
+  import { requestConsent } from '@/lib/consent';
+
+  const initContactConsent = () => {
+    document.querySelectorAll<HTMLButtonElement>('[data-contact-consent]:not([data-ready])').forEach((button) => {
+      button.dataset.ready = 'true';
+      button.addEventListener('click', () => requestConsent());
+    });
+  };
+
+  initContactConsent();
+  document.addEventListener('astro:page-load', initContactConsent);
 </script>
 
 <style>
@@ -277,15 +316,62 @@ const copy = isEn
     border-color: var(--color-fg);
   }
 
+  .contact-privacy-note {
+    margin: -0.25rem 0 0;
+    color: var(--color-muted);
+    font-size: 0.68rem;
+    line-height: 1.55;
+  }
+
+  .contact-privacy-note a {
+    color: var(--color-fg);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
   .site-credit {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
     gap: 1rem;
     margin-top: clamp(2rem, 4vw, 3.75rem);
     font-family: var(--font-mono);
     letter-spacing: 0.04em;
     line-height: 1.5;
     text-transform: uppercase;
+  }
+
+  .site-credit-main,
+  .site-legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.25rem;
+  }
+
+  .site-legal {
+    justify-content: flex-end;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .site-legal a,
+  .site-legal button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    font: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--color-muted) 38%, transparent);
+    text-underline-offset: 0.22em;
+    text-transform: inherit;
+    transition: color 180ms ease, text-decoration-color 180ms ease;
+  }
+
+  .site-legal a:hover,
+  .site-legal button:hover {
+    color: var(--color-accent);
+    text-decoration-color: var(--color-accent);
   }
 
   .site-credit-link {
@@ -333,9 +419,18 @@ const copy = isEn
     }
 
     .site-credit {
-      flex-direction: column;
       gap: 0.35rem;
       margin-top: 2.5rem;
+    }
+
+    .site-credit-main,
+    .site-legal {
+      justify-content: flex-start;
+    }
+
+    .site-legal {
+      margin-top: 0.5rem;
+      padding-top: 0.75rem;
     }
 
   }

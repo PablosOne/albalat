@@ -92,3 +92,59 @@ test.describe('mobile legal navigation', () => {
     });
   }
 });
+
+test('dismissed cookie consent leaves no floating control and remains editable from the privacy page', async ({ page }) => {
+  await page.goto('/');
+
+  const banner = page.locator('[data-consent-banner]');
+  await expect(banner).toBeVisible();
+  await banner.locator('[data-consent-reject]').click();
+  await expect(banner).toBeHidden();
+  await expect(page.locator('[data-consent-reopen]')).toHaveCount(0);
+
+  await page.locator('.nav-item a[href="/privacy/"]').click();
+  await expect(page).toHaveURL(/\/privacy\/$/);
+  await page.locator('[data-legal-consent]').click();
+  await expect(page.locator('[data-consent-modal]')).toBeVisible();
+});
+
+test('contact footer exposes legal pages and reopens cookie settings', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('site-consent-v1', JSON.stringify({
+      version: 1,
+      necessary: true,
+      analytics: false,
+      externalMedia: false,
+      updatedAt: new Date().toISOString(),
+    }));
+  });
+  await page.goto('/');
+
+  const footer = page.locator('.site-credit');
+  await expect(footer.locator('a[href="/privacy/"]')).toHaveCount(1);
+  await expect(footer.locator('a[href="/cookies/"]')).toHaveCount(1);
+  await expect(page.locator('.contact-privacy-note a[href="/privacy/"]')).toHaveCount(1);
+
+  await footer.locator('[data-contact-consent]').evaluate((button: HTMLButtonElement) => button.click());
+  await expect(page.locator('[data-consent-modal]')).toBeVisible();
+});
+
+test('expired consent is discarded and the banner asks again with equal choices', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('site-consent-v1', JSON.stringify({
+      version: 1,
+      necessary: true,
+      analytics: true,
+      externalMedia: true,
+      updatedAt: '2020-01-01T00:00:00.000Z',
+      expiresAt: '2022-01-01T00:00:00.000Z',
+    }));
+  });
+  await page.goto('/');
+
+  const banner = page.locator('[data-consent-banner]');
+  await expect(banner).toBeVisible({ timeout: 10_000 });
+  await expect(banner.locator('[data-consent-accept]')).not.toHaveClass(/consent-button--primary/);
+  await expect(banner.locator('[data-consent-reject]')).not.toHaveClass(/consent-button--primary/);
+  expect(await page.evaluate(() => localStorage.getItem('site-consent-v1'))).toBeNull();
+});

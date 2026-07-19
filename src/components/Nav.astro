@@ -34,6 +34,12 @@ const navItems = [
     href: isHome ? '#contact' : `${localizedPagePath('home', locale)}#contact`,
     laneId: undefined,
   },
+  {
+    id: 'privacy',
+    label: locale === 'en' ? 'Privacy' : 'Privacidad',
+    href: locale === 'en' ? '/en/privacy/' : '/privacy/',
+    laneId: undefined,
+  },
 ].map((item, index) => ({ ...item, number: String(index + 1).padStart(2, '0') }));
 
 const homeHref = localizedPagePath('home', locale);

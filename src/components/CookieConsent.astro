@@ -27,9 +27,8 @@ const copy = {
     acceptAll: 'Aceptar todo',
     reject: 'Rechazar opcionales',
     customize: 'Personalizar',
-    settings: 'Privacidad',
     modalTitle: 'Ajustes de privacidad',
-    modalIntro: 'Elige las categorías que permites. Puedes cambiar de opinión en cualquier momento desde el botón de privacidad.',
+    modalIntro: 'Elige las categorías que permites. Puedes cambiarlas en cualquier momento desde la página de privacidad.',
     close: 'Cerrar ajustes',
     necessary: 'Necesarias',
     necessaryBody: 'Guardan tu elección de privacidad y permiten las funciones básicas. Siempre activas.',
@@ -51,9 +50,8 @@ const copy = {
     acceptAll: 'Accept all',
     reject: 'Reject optional',
     customize: 'Customise',
-    settings: 'Privacy',
     modalTitle: 'Privacy settings',
-    modalIntro: 'Choose which categories you allow. You can change your mind at any time using the privacy button.',
+    modalIntro: 'Choose which categories you allow. You can change them at any time from the privacy page.',
     close: 'Close settings',
     necessary: 'Necessary',
     necessaryBody: 'Stores your privacy choice and enables core functions. Always active.',
@@ -90,16 +88,11 @@ const copy = {
       </nav>
     </div>
     <div class="consent-actions">
-      <button class="consent-button consent-button--primary" type="button" data-consent-accept>{copy.acceptAll}</button>
+      <button class="consent-button" type="button" data-consent-accept>{copy.acceptAll}</button>
       <button class="consent-button" type="button" data-consent-reject>{copy.reject}</button>
       <button class="consent-text-button" type="button" data-consent-customize>{copy.customize} <span aria-hidden="true">↗</span></button>
     </div>
   </section>
-
-  <button class="consent-reopen" type="button" data-consent-reopen aria-label={copy.modalTitle} title={copy.modalTitle} hidden>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9M12 3a4.5 4.5 0 0 0 0 9 4.5 4.5 0 0 1 0 9M12 3v18M3 12h18"></path></svg>
-    <span>{copy.settings}</span>
-  </button>
 
   <div class="consent-modal-wrap" data-consent-modal-wrap hidden>
     <button class="consent-scrim" type="button" data-consent-close tabindex="-1" aria-label={copy.close}></button>
@@ -143,6 +136,7 @@ const copy = {
 <script>
   import {
     CONSENT_REQUEST_EVENT,
+    SITE_CONTENT_READY_EVENT,
     readConsent,
     saveConsent,
     type ConsentPreferences,
@@ -210,20 +204,31 @@ const copy = {
     const banner = root.querySelector<HTMLElement>('[data-consent-banner]');
     const modalWrap = root.querySelector<HTMLElement>('[data-consent-modal-wrap]');
     const modal = root.querySelector<HTMLElement>('[data-consent-modal]');
-    const reopen = root.querySelector<HTMLButtonElement>('[data-consent-reopen]');
     const analytics = root.querySelector<HTMLInputElement>('[data-consent-analytics]');
     const media = root.querySelector<HTMLInputElement>('[data-consent-media]');
-    if (!banner || !modalWrap || !modal || !reopen || !analytics || !media) return;
+    if (!banner || !modalWrap || !modal || !analytics || !media) return;
 
     let lastFocused: HTMLElement | null = null;
     let current = readConsent();
     let modalHideTimer: number | undefined;
+    let bannerRevealTimer: number | undefined;
+    let contentReady = document.documentElement.hasAttribute('data-site-content-ready');
+
+    const revealBanner = () => {
+      if (readConsent() || !modalWrap.hidden || banner.hasAttribute('data-visible')) return;
+      if (bannerRevealTimer) window.clearTimeout(bannerRevealTimer);
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      bannerRevealTimer = window.setTimeout(() => {
+        if (readConsent() || !modalWrap.hidden) return;
+        banner.hidden = false;
+        requestAnimationFrame(() => requestAnimationFrame(() => banner.setAttribute('data-visible', '')));
+      }, reduceMotion ? 0 : 180);
+    };
 
     const closeBanner = () => {
+      if (bannerRevealTimer) window.clearTimeout(bannerRevealTimer);
       banner.removeAttribute('data-visible');
-      window.setTimeout(() => { banner.hidden = true; }, 460);
-      reopen.hidden = false;
-      requestAnimationFrame(() => reopen.setAttribute('data-visible', ''));
+      window.setTimeout(() => { banner.hidden = true; }, 620);
     };
 
     const closeModal = () => {
@@ -233,6 +238,7 @@ const copy = {
       if (modalWrap.hidden) return;
       modalHideTimer = window.setTimeout(() => { modalWrap.hidden = true; }, 360);
       lastFocused?.focus();
+      if (!readConsent() && contentReady) revealBanner();
     };
 
     const openModal = (category?: string) => {
@@ -273,11 +279,15 @@ const copy = {
     root.querySelectorAll<HTMLButtonElement>('[data-consent-reject]').forEach((button) => button.addEventListener('click', rejectAll));
     root.querySelector<HTMLButtonElement>('[data-consent-save]')?.addEventListener('click', save);
     root.querySelector<HTMLButtonElement>('[data-consent-customize]')?.addEventListener('click', () => openModal());
-    reopen.addEventListener('click', () => openModal());
     root.querySelectorAll<HTMLButtonElement>('[data-consent-close]').forEach((button) => button.addEventListener('click', closeModal));
 
     const onRequest = (event: Event) => openModal((event as CustomEvent<{ category?: string }>).detail?.category);
     window.addEventListener(CONSENT_REQUEST_EVENT, onRequest);
+    const onContentReady = () => {
+      contentReady = true;
+      revealBanner();
+    };
+    window.addEventListener(SITE_CONTENT_READY_EVENT, onContentReady);
 
     modal.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') { event.preventDefault(); closeModal(); return; }
@@ -291,17 +301,18 @@ const copy = {
 
     if (current) {
       banner.hidden = true;
-      reopen.hidden = false;
-      requestAnimationFrame(() => reopen.setAttribute('data-visible', ''));
       if (current.analytics) loadAnalytics(root);
     } else {
-      reopen.hidden = true;
-      banner.hidden = false;
-      requestAnimationFrame(() => banner.setAttribute('data-visible', ''));
+      banner.hidden = true;
+      if (contentReady) revealBanner();
     }
 
     consentCleanup?.();
-    consentCleanup = () => window.removeEventListener(CONSENT_REQUEST_EVENT, onRequest);
+    consentCleanup = () => {
+      window.removeEventListener(CONSENT_REQUEST_EVENT, onRequest);
+      window.removeEventListener(SITE_CONTENT_READY_EVENT, onContentReady);
+      if (bannerRevealTimer) window.clearTimeout(bannerRevealTimer);
+    };
   };
 
   initConsent();
@@ -316,10 +327,11 @@ const copy = {
     width: min(34rem, calc(100vw - 1.5rem)); max-height: calc(100dvh - 1.5rem); overflow: hidden auto; padding: 1rem 1.1rem;
     border: 1px solid rgba(244,239,231,.16); border-radius: 1rem; background: rgba(11,10,9,.96); color: #f4efe7;
     box-shadow: 0 2rem 6rem rgba(0,0,0,.48); backdrop-filter: blur(24px) saturate(130%); -webkit-backdrop-filter: blur(24px) saturate(130%);
-    opacity: 0; transform: translateY(calc(100% + 3rem)) scale(.98); visibility: hidden;
-    transition: opacity 320ms ease, transform 560ms cubic-bezier(.22,1,.36,1), visibility 560ms;
+    opacity: 0; clip-path: inset(0 0 100% 0 round 1rem); transform: translateY(1.25rem) scale(.985); visibility: hidden;
+    will-change: clip-path, transform, opacity;
+    transition: opacity 280ms ease, clip-path 720ms cubic-bezier(.76,0,.24,1), transform 720ms cubic-bezier(.22,1,.36,1), visibility 720ms;
   }
-  .consent-banner[data-visible] { opacity: 1; transform: translateY(0) scale(1); visibility: visible; }
+  .consent-banner[data-visible] { opacity: 1; clip-path: inset(0 0 0 0 round 1rem); transform: translateY(0) scale(1); visibility: visible; }
   .consent-copy { position: relative; z-index: 1; }
   .consent-eyebrow { display: flex; align-items: center; gap: .5rem; margin: 0 0 .45rem; color: #c6923e; font-family: var(--font-mono); font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; }
   .consent-eyebrow span { width: 1.15rem; height: 1px; background: currentColor; }
@@ -335,15 +347,23 @@ const copy = {
   .consent-links { display: flex; gap: .8rem; margin-top: .4rem; }
   .consent-links a { color: rgba(244,239,231,.66); font-size: .68rem; text-decoration: underline; text-underline-offset: .2rem; }
   .consent button:focus-visible, .consent a:focus-visible, .consent input:focus-visible + span { outline: 2px solid #c6923e; outline-offset: 3px; }
-  .consent-strings { position: absolute; inset: -35% -5% auto 25%; display: grid; gap: .7rem; opacity: .13; transform: rotate(-8deg); pointer-events: none; }
+  .consent-banner .consent-eyebrow,
+  .consent-banner .consent-copy h2,
+  .consent-banner .consent-copy > p:not(.consent-eyebrow),
+  .consent-banner .consent-links,
+  .consent-banner .consent-actions {
+    opacity: 0;
+    transform: translateY(.7rem);
+    transition: opacity 380ms ease, transform 520ms cubic-bezier(.22,1,.36,1);
+  }
+  .consent-banner[data-visible] .consent-eyebrow { opacity: 1; transform: translateY(0); transition-delay: 150ms; }
+  .consent-banner[data-visible] .consent-copy h2 { opacity: 1; transform: translateY(0); transition-delay: 210ms; }
+  .consent-banner[data-visible] .consent-copy > p:not(.consent-eyebrow) { opacity: 1; transform: translateY(0); transition-delay: 280ms; }
+  .consent-banner[data-visible] .consent-links { opacity: 1; transform: translateY(0); transition-delay: 340ms; }
+  .consent-banner[data-visible] .consent-actions { opacity: 1; transform: translateY(0); transition-delay: 390ms; }
+  .consent-strings { position: absolute; inset: -35% -5% auto 25%; display: grid; gap: .7rem; opacity: 0; transform: rotate(-8deg) translateX(3rem); pointer-events: none; transition: opacity 500ms ease 180ms, transform 900ms cubic-bezier(.22,1,.36,1) 100ms; }
+  .consent-banner[data-visible] .consent-strings { opacity: .13; transform: rotate(-8deg) translateX(0); }
   .consent-strings i { width: 55rem; height: 1px; background: linear-gradient(90deg, transparent, #c6923e, transparent); }
-
-  .consent-reopen { position: fixed; right: max(.75rem, env(safe-area-inset-right)); bottom: max(.75rem, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: .45rem; min-height: 2.65rem; padding: .6rem .85rem; border: 1px solid rgba(244,239,231,.15); border-radius: 999px; background: rgba(11,10,9,.82); color: rgba(244,239,231,.76); box-shadow: 0 .8rem 2rem rgba(0,0,0,.24); backdrop-filter: blur(14px); cursor: pointer; opacity: 0; transform: translateY(1rem); transition: opacity 260ms ease, transform 360ms cubic-bezier(.22,1,.36,1), color 180ms ease, border-color 180ms ease; }
-  .consent-reopen[data-visible] { opacity: 1; transform: translateY(0); }
-  .consent-reopen:hover { color: #c6923e; border-color: #c6923e; }
-  .consent-reopen svg { width: 1rem; fill: none; stroke: currentColor; stroke-width: 1.4; }
-  .consent-reopen span { font: .62rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
-  :global(html[data-now-playing-active]) .consent-reopen { bottom: max(5.5rem, calc(4.75rem + env(safe-area-inset-bottom))); }
 
   .consent-modal-wrap { position: fixed; inset: 0; display: grid; place-items: center; padding: 1rem; opacity: 0; visibility: hidden; transition: opacity 260ms ease, visibility 360ms; }
   .consent-modal-wrap[data-visible] { opacity: 1; visibility: visible; }
@@ -374,9 +394,6 @@ const copy = {
     .consent-copy > p:not(.consent-eyebrow) { font-size: .76rem; line-height: 1.4; }
     .consent-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .consent-text-button { grid-column: 1 / -1; padding-block: .25rem; }
-    .consent-reopen span { display: none; }
-    .consent-reopen { width: 2.65rem; justify-content: center; padding: .6rem; }
-    :global(html[data-now-playing-active]) .consent-reopen { bottom: max(.75rem, env(safe-area-inset-bottom)); }
     .consent-modal footer { display: grid; grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 420px) {
@@ -395,6 +412,17 @@ const copy = {
     .consent-button { min-height: 2.35rem; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .consent-banner, .consent-reopen, .consent-modal-wrap, .consent-modal, .consent-button, .consent-switch span, .consent-switch span::after { transition-duration: .01ms !important; }
+    .consent-banner,
+    .consent-banner .consent-eyebrow,
+    .consent-banner .consent-copy h2,
+    .consent-banner .consent-copy > p:not(.consent-eyebrow),
+    .consent-banner .consent-links,
+    .consent-banner .consent-actions,
+    .consent-strings,
+    .consent-modal-wrap,
+    .consent-modal,
+    .consent-button,
+    .consent-switch span,
+    .consent-switch span::after { transition-duration: .01ms !important; transition-delay: 0ms !important; }
   }
 </style>

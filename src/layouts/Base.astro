@@ -58,6 +58,7 @@ const themeCss = `:root{--stage:${siteConfig.theme.stage};--ink:${siteConfig.the
       import { initLanes } from '@/lib/lanes';
       import { initSignature } from '@/lib/string';
       import { initAmbientAutoplay } from '@/lib/ambientAutoplay';
+      import { SITE_CONTENT_READY_EVENT } from '@/lib/consent';
 
       initAmbientAutoplay();
 
@@ -83,10 +84,13 @@ const themeCss = `:root{--stage:${siteConfig.theme.stage};--ink:${siteConfig.the
       // clipped/invisible. Only the winning run() call (see gen check below)
       // flips this, so a superseded double-fire on first load can't burn the
       // one real reveal on a call that immediately tears itself down.
-      let heroIntroPlayed = false;
+      let heroIntroStarted = false;
+      let heroIntroTarget: HTMLImageElement | null = null;
+      let heroIntroSettled = false;
 
       const run = async () => {
         const gen = ++runGen;
+        document.documentElement.removeAttribute('data-site-content-ready');
         teardown.forEach((fn) => fn());
         teardown = [];
 
@@ -98,8 +102,27 @@ const themeCss = `:root{--stage:${siteConfig.theme.stage};--ink:${siteConfig.the
           return;
         }
         teardown = cleanups;
-        heroEntrance(document, { instant: heroIntroPlayed });
-        heroIntroPlayed = true;
+        const currentHero = document.querySelector<HTMLImageElement>('[data-hero-background]');
+        const signalContentReady = () => {
+          // A late image-load callback from a page that has since been swapped
+          // out must never release the consent banner over the new page.
+          if (document.querySelector('[data-hero-background]') !== currentHero) return;
+          if (heroIntroTarget === currentHero) heroIntroSettled = true;
+          document.documentElement.setAttribute('data-site-content-ready', '');
+          window.dispatchEvent(new CustomEvent(SITE_CONTENT_READY_EVENT));
+        };
+
+        // Native load and Astro's initial page-load can both initialise the
+        // same DOM. If the cinematic intro is already running, let that one
+        // finish and signal readiness; an instant second call would clear its
+        // styles and make the banner appear before the choreography settles.
+        if (heroIntroStarted && heroIntroTarget === currentHero && !heroIntroSettled) return;
+
+        const instant = heroIntroStarted;
+        heroIntroStarted = true;
+        heroIntroTarget = currentHero;
+        heroIntroSettled = instant;
+        heroEntrance(document, { instant, onComplete: signalContentReady });
       };
 
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);

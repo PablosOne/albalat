@@ -431,139 +431,128 @@ function animateBorderWipe(card: HTMLElement): gsap.core.Tween {
   });
 }
 
-/** Hero on-load choreography, gated on the background image load.
- * Until the background image is ready, everything stays black: no text, no chrome, no images.
+/** Hero on-load choreography.
  *
  * Act 1 - Stage, toolbar, bottom text, and side hint unmask top-down from the same beat.
  * Act 2 - Headline words rise word-by-word.
  * Act 3 - Foreground person slides in from the left and fades in.
  *
- * MOBILE: The desktop clip-path top-down wipe delays the foreground (LCP element, at
- * the bottom of the stage) until t=2.25s of the animation. On mobile we swap to an
- * opacity fade so the full stage — including the foreground — reveals at t=0, and
- * the person can start appearing at t=0.45s, cutting LCP by ~1.5-2s. */
-export function heroEntrance(root: ParentNode = document, opts: { instant?: boolean } = {}) {
+ * Mobile uses one short stage fade. Keeping the title, signature and foreground out
+ * of separate timelines avoids leaving one of them hidden when a mobile browser
+ * interrupts an animation during load, rotation or a client-side page swap. */
+export function heroEntrance(
+  root: ParentNode = document,
+  opts: { instant?: boolean; onComplete?: () => void } = {},
+) {
   const bg = root.querySelector<HTMLImageElement>('[data-hero-background]');
-  if (!bg) return null;
-
-  // Every route's markup ships the hero (and, on Home, the nav toolbar) pre-hidden
-  // via inline clip-path/opacity, so the session's *first* paint can play the
-  // cinematic reveal below. Client-side navigations land on a freshly-hidden copy
-  // of that same markup, but the reveal is a one-time flourish — so callers pass
-  // `instant` on every navigation after the first, snapping straight to the
-  // resting (visible) state instead of replaying the multi-second timeline.
-  if (opts.instant) {
-    const headline = root.querySelector<HTMLElement>('[data-hero-headline]');
-    const words = root.querySelectorAll<HTMLElement>('[data-hero-word-text]');
-    const foreground = root.querySelector<HTMLElement>('[data-hero-foreground]');
-    const stage = root.querySelector<HTMLElement>('[data-hero-stage]');
-    const subtitle = root.querySelector<HTMLElement>('[data-hero-subtitle]');
-    const signature = root.querySelector<HTMLElement>('[data-hero-signature]');
-    const toolbar = root.querySelectorAll<HTMLElement>('[data-toolbar]');
-    const hint = root.querySelector<HTMLElement>('[data-hero-scroll-hint]');
-    if (headline) headline.style.visibility = 'visible';
-    gsap.set(words, { clearProps: 'transform' });
-    gsap.set(foreground, { clearProps: 'transform,opacity' });
-    gsap.set(
-      [stage, ...Array.from(toolbar), subtitle, signature, hint].filter((el): el is HTMLElement => Boolean(el)),
-      { clearProps: 'clipPath,opacity,willChange' },
-    );
+  if (!bg) {
+    opts.onComplete?.();
     return null;
   }
 
-  // Pin initial hidden states through GSAP so its transform state stays canonical.
-  // Inline % transforms collapse to a pixel matrix at computed-style time, and then
-  // GSAP's yPercent/xPercent tween cannot clear that pixel offset. Letting GSAP own
-  // the initial state avoids that trap.
-  const words = root.querySelectorAll<HTMLElement>('[data-hero-word-text]');
   const headline = root.querySelector<HTMLElement>('[data-hero-headline]');
+  const words = root.querySelectorAll<HTMLElement>('[data-hero-word-text]');
   const foreground = root.querySelector<HTMLElement>('[data-hero-foreground]');
+  const stage = root.querySelector<HTMLElement>('[data-hero-stage]');
+  const subtitle = root.querySelector<HTMLElement>('[data-hero-subtitle]');
+  const signature = root.querySelector<HTMLElement>('[data-hero-signature]');
+  const toolbar = root.querySelectorAll<HTMLElement>('[data-toolbar]');
+  const hint = root.querySelector<HTMLElement>('[data-hero-scroll-hint]');
+  const revealTargets = [stage, ...Array.from(toolbar), subtitle, signature, hint]
+    .filter((el): el is HTMLElement => Boolean(el));
 
-  const isMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`).matches;
+  // Always finish by removing every server-rendered hidden state. This is also
+  // used by the instant/reduced-motion paths and as an interruption safety net.
+  const settle = () => {
+    if (headline) headline.style.visibility = 'visible';
+    gsap.set(words, { clearProps: 'transform,opacity' });
+    gsap.set(foreground, { clearProps: 'transform,opacity' });
+    gsap.set(revealTargets, { clearProps: 'clipPath,opacity,transform,willChange' });
+  };
 
-  gsap.set(words, { yPercent: 220 });
-  gsap.set(foreground, { x: isMobile ? -40 : -60 });
-  if (headline) headline.style.visibility = 'visible';
-
-  if (isMobile) {
-    // Swap clip-path → opacity so the foreground at the bottom of the stage is not
-    // occluded during the top-down wipe. All elements already have opacity: 0 via
-    // inline style; removing clip-path just lets GSAP control visibility via opacity.
-    const stage = root.querySelector<HTMLElement>('[data-hero-stage]');
-    root.querySelectorAll<HTMLElement>('[data-toolbar], [data-hero-subtitle], [data-hero-signature]')
-      .forEach(el => { el.style.clipPath = ''; });
-    if (stage) stage.style.clipPath = '';
+  // Client-side navigations and reduced-motion visits skip the one-time flourish.
+  if (opts.instant || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    settle();
+    opts.onComplete?.();
+    return null;
   }
 
-  const start = () => buildTimeline(root, isMobile);
-  if (bg.complete && bg.naturalWidth > 0) return start();
+  const isMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX - 1}px)`).matches;
+  let completed = false;
+  const complete = () => {
+    if (completed) return;
+    completed = true;
+    settle();
+    opts.onComplete?.();
+  };
+
+  // Mobile no longer waits on image load: cached/broken images can already be
+  // complete before their load/error listener is attached, which used to leave
+  // the SSR-hidden title invisible forever. One parent fade is sufficient here.
+  if (isMobile) {
+    settle();
+    const timeline = gsap.timeline({ defaults: { ease: 'power2.out' } })
+      .fromTo(stage, { opacity: 0 }, { opacity: 1, duration: 0.65 }, 0);
+    timeline.eventCallback('onComplete', complete);
+    timeline.eventCallback('onInterrupt', complete);
+    return timeline;
+  }
+
+  // Pin desktop's initial hidden states through GSAP so its transform state stays
+  // canonical. The background gate is retained for the longer cinematic wipe.
+  gsap.set(words, { yPercent: 220 });
+  gsap.set(foreground, { x: -60 });
+  if (headline) headline.style.visibility = 'visible';
+
+  let started = false;
+  const start = () => {
+    if (started) return null;
+    started = true;
+    const timeline = buildDesktopTimeline(revealTargets, words, foreground);
+    timeline.eventCallback('onComplete', complete);
+    timeline.eventCallback('onInterrupt', complete);
+    return timeline;
+  };
+  // `complete` also covers a cached image error. Waiting for another event in
+  // that state would strand all of the inline hidden styles.
+  if (bg.complete) return start();
 
   bg.addEventListener('load', start, { once: true });
   bg.addEventListener('error', start, { once: true });
   return null;
 }
 
-function buildTimeline(root: ParentNode, isMobile = false) {
-  const words = root.querySelectorAll<HTMLElement>('[data-hero-word-text]');
-  const stage = root.querySelector<HTMLElement>('[data-hero-stage]');
-  const subtitle = root.querySelector<HTMLElement>('[data-hero-subtitle]');
-  const signature = root.querySelector<HTMLElement>('[data-hero-signature]');
-  const foreground = root.querySelector<HTMLElement>('[data-hero-foreground]');
-  const toolbar = root.querySelectorAll<HTMLElement>('[data-toolbar]');
-  const hint = root.querySelector<HTMLElement>('[data-hero-scroll-hint]');
-  const topDownReveal = [stage, ...Array.from(toolbar), subtitle, signature, hint]
-    .filter((target): target is HTMLElement => Boolean(target));
-
+function buildDesktopTimeline(
+  revealTargets: HTMLElement[],
+  words: NodeListOf<HTMLElement>,
+  foreground: HTMLElement | null,
+) {
   const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
 
-  if (isMobile) {
-    // Mobile: opacity fade for the whole stage so the foreground at the bottom is
-    // not blocked by the clip-path wipe. Foreground starts at t=0.45s (vs 2.25s on
-    // desktop), cutting the time the LCP element is invisible by ~1.5–2s.
-    tl.fromTo(
-      topDownReveal,
-      { opacity: 0 },
-      { opacity: 1, duration: 0.85, ease: 'power2.inOut', clearProps: 'opacity' },
-      0
+  tl.fromTo(
+    revealTargets,
+    { clipPath: 'inset(0% 0% 100% 0%)', opacity: 1, willChange: 'clip-path' },
+    {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      opacity: 1,
+      duration: 1.8,
+      ease: 'power3.inOut',
+      clearProps: 'clipPath,willChange',
+    },
+    0
+  )
+    .fromTo(
+      words,
+      { yPercent: 220 },
+      { yPercent: 0, duration: 1.1, stagger: 0.18, ease: 'power3.out' },
+      1.15
     )
-      .fromTo(
-        words,
-        { yPercent: 220 },
-        { yPercent: 0, duration: 0.95, stagger: 0.14, ease: 'power3.out' },
-        0.35
-      )
-      .fromTo(
-        foreground,
-        { x: -40, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.85, ease: 'power3.out' },
-        0.45
-      );
-  } else {
-    tl.fromTo(
-      topDownReveal,
-      { clipPath: 'inset(0% 0% 100% 0%)', opacity: 1, willChange: 'clip-path' },
-      {
-        clipPath: 'inset(0% 0% 0% 0%)',
-        opacity: 1,
-        duration: 1.8,
-        ease: 'power3.inOut',
-        clearProps: 'clipPath,willChange',
-      },
-      0
-    )
-      .fromTo(
-        words,
-        { yPercent: 220 },
-        { yPercent: 0, duration: 1.1, stagger: 0.18, ease: 'power3.out' },
-        1.15
-      )
-      .fromTo(
-        foreground,
-        { x: -60, opacity: 0 },
-        { x: 0, opacity: 1, duration: 1.0, ease: 'power3.out' },
-        2.25
-      );
-  }
+    .fromTo(
+      foreground,
+      { x: -60, opacity: 0 },
+      { x: 0, opacity: 1, duration: 1.0, ease: 'power3.out' },
+      2.25
+    );
 
   return tl;
 }
