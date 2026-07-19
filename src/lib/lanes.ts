@@ -129,15 +129,62 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     window.setTimeout(() => svg?.dispatchEvent(new PointerEvent('pointerleave')), 260);
   };
 
-  // The coordinated open/close slide (lane rises from below / enters from the
-  // right while the [data-showcase-descent] panel row moves away in lockstep)
-  // is CSS transitions in global.css, keyed off two switches maintained here:
-  //   html[data-open-lane]   → descent layer's off position
-  //   .detail-lane.is-open   → lane's on-screen position
-  // See the global.css comment for why this is deliberately NOT a JS tween:
-  // transform transitions run on the compositor, so a main-thread stall (the
-  // just-unhidden lane's first layout/paint) can no longer swallow the motion.
   const SLIDE_MS = 600;
+  let desktopAnimations: Animation[] = [];
+  let desktopRun = 0;
+
+  // Desktop uses one explicit compositor timeline for both layers. Keeping the
+  // two transforms in the same Web Animations run prevents independent CSS
+  // transitions from restarting or drifting apart. The close direction uses
+  // the exact same endpoints in reverse.
+  const runDesktopSlide = async (lane: HTMLElement, direction: 'open' | 'close') => {
+    const main = document.querySelector<HTMLElement>('[data-showcase-descent]');
+    if (!main) return true;
+
+    const laneFrom = direction === 'open'
+      ? 'translate3d(0, 100%, 0)'
+      : getComputedStyle(lane).transform;
+    const mainFrom = direction === 'open'
+      ? 'translate3d(0, 0, 0)'
+      : getComputedStyle(main).transform;
+    const laneTo = direction === 'open'
+      ? 'translate3d(0, 0, 0)'
+      : 'translate3d(0, 100%, 0)';
+    const mainTo = direction === 'open'
+      ? 'translate3d(0, -100%, 0)'
+      : 'translate3d(0, 0, 0)';
+    const easing = direction === 'open'
+      ? 'cubic-bezier(0.215, 0.61, 0.355, 1)'
+      : 'cubic-bezier(0.55, 0.055, 0.675, 0.19)';
+
+    desktopAnimations.forEach((animation) => animation.cancel());
+    const run = ++desktopRun;
+    const options: KeyframeAnimationOptions = {
+      duration: SLIDE_MS,
+      easing,
+      fill: 'both',
+    };
+    const animations = [
+      main.animate([{ transform: mainFrom }, { transform: mainTo }], options),
+      lane.animate([{ transform: laneFrom }, { transform: laneTo }], options),
+    ];
+    desktopAnimations = animations;
+
+    try {
+      await Promise.all(animations.map((animation) => animation.finished));
+    } catch {
+      return false;
+    }
+    if (run !== desktopRun) return false;
+
+    // Persist the end frame, then discard the animation objects. This leaves a
+    // single source of truth and gives a later close a stable starting point.
+    main.style.transform = mainTo;
+    lane.style.transform = laneTo;
+    animations.forEach((animation) => animation.cancel());
+    desktopAnimations = [];
+    return true;
+  };
 
   // Wait until the lane's transform transition finishes (or a fallback timeout,
   // for the no-transition edge: reduced-motion flips mid-session, a close racing
@@ -158,31 +205,6 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     const timer = window.setTimeout(settle, SLIDE_MS + 200);
     lane.addEventListener('transitionend', onEnd);
     lane.addEventListener('transitioncancel', onEnd);
-  };
-
-  // Desktop detail lanes can be expensive to rasterise (the music lane in
-  // particular contains large gradients, artwork and a scroll surface). Paint
-  // that surface invisibly before moving either lane. Three animation frames
-  // guarantee two paint opportunities between revealing and parking it; the
-  // subsequent transform transition can then stay entirely on the compositor.
-  const prepareDesktopLane = async (lane: HTMLElement) => {
-    lane.hidden = false;
-    lane.setAttribute('aria-hidden', 'true');
-    lane.inert = true;
-    lane.classList.add('is-preparing');
-    await new Promise<void>((resolve) => {
-      let frames = 3;
-      const next = () => {
-        frames -= 1;
-        if (frames === 0) resolve();
-        else requestAnimationFrame(next);
-      };
-      requestAnimationFrame(next);
-    });
-    lane.classList.remove('is-preparing');
-    lane.classList.add('is-positioning');
-    lane.getBoundingClientRect();
-    lane.classList.remove('is-positioning');
   };
 
   const setLaneInteractive = (lane: HTMLElement, interactive: boolean) => {
@@ -218,27 +240,28 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
     const motion = laneMotion();
     if (motion === 'descend' || motion === 'slide') {
-      // Mobile is already smooth. Desktop first pre-paints the detail without
-      // moving the main lane, avoiding the first-frame raster stall that made
-      // the reveal jump while the reverse transition remained smooth.
-      if (motion === 'descend') await prepareDesktopLane(lane);
-      else {
-        lane.hidden = false;
-        // Mobile does not need the desktop pre-paint, but it still needs its
-        // offscreen X start committed before .is-open removes that transform.
-        lane.getBoundingClientRect();
-      }
-
-      // A close may have raced the asynchronous desktop preparation.
+      lane.hidden = false;
+      // Let the closed offscreen position render once before starting motion.
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
       if (state.openId !== id || state.closing) {
-        lane.classList.remove('is-preparing', 'is-positioning');
+        lane.hidden = true;
         return;
       }
-
-      setLaneInteractive(lane, true);
-      // These two switches start both inverse transforms in the same frame.
       document.documentElement.setAttribute('data-open-lane', id);
-      lane.classList.add('is-open');
+      lane.classList.add('is-opening', 'is-open');
+
+      if (motion === 'descend') {
+        const completed = await runDesktopSlide(lane, 'open');
+        if (!completed || state.openId !== id || state.closing) return;
+        lane.classList.remove('is-opening');
+        setLaneInteractive(lane, true);
+      } else {
+        // Keep the already-correct mobile CSS slide unchanged.
+        setLaneInteractive(lane, true);
+        afterSlide(lane, () => lane.classList.remove('is-opening'));
+      }
 
       // Vertical parallax for [data-parallax-y] descendants is a desktop-only
       // affordance (the pinned-lane read); mobile detail is a plain scroll.
@@ -339,9 +362,12 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       state.detachY?.();
       state.detachY = undefined;
       if (lane) {
-        lane.classList.remove('is-open', 'is-preparing', 'is-positioning');
+        lane.classList.remove('is-open', 'is-opening', 'is-closing');
+        lane.style.transform = '';
         lane.hidden = true;
       }
+      const main = document.querySelector<HTMLElement>('[data-showcase-descent]');
+      if (main) main.style.transform = '';
       document.documentElement.removeAttribute('data-open-lane');
       history.replaceState(null, '', window.location.pathname + window.location.search);
       state.openId = null;
@@ -350,12 +376,12 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       scrollToPanel(target); // re-align: this station, or the next one on a forward exit
     };
     const motion = laneMotion();
-    if (lane && motion !== 'inline' && lane.classList.contains('is-open')) {
-      // Flip both CSS switches: the lane transitions back offscreen and the
-      // descent layer (keyed off html[data-open-lane]) returns in lockstep.
-      // Await the transition's completion (not just its kickoff) so callers
-      // that `await closeLane()` before opening a different lane see
-      // state.openId cleared before they proceed.
+    if (lane && motion === 'descend' && lane.classList.contains('is-open')) {
+      lane.classList.remove('is-opening');
+      lane.classList.add('is-closing');
+      await runDesktopSlide(lane, 'close');
+      finish();
+    } else if (lane && motion === 'slide' && lane.classList.contains('is-open')) {
       lane.classList.remove('is-open');
       document.documentElement.removeAttribute('data-open-lane');
       await new Promise<void>((resolve) => {
@@ -455,6 +481,9 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
   }));
 
   return () => {
+    desktopRun += 1;
+    desktopAnimations.forEach((animation) => animation.cancel());
+    desktopAnimations = [];
     document.removeEventListener('click', onClick, { capture: true });
     document.removeEventListener('keydown', onKey);
   };

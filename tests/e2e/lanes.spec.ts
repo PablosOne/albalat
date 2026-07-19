@@ -27,10 +27,9 @@ test("clicking a panel's music lane opener opens its detail lane", async ({ page
 test('opening a detail animates both lanes through intermediate positions', async ({ page }) => {
   await page.goto('/');
 
-  const result = await page.evaluate(async () => {
+  const resultPromise = page.evaluate(async () => {
     const lane = document.querySelector<HTMLElement>('[data-detail-lane="music"]')!;
     const main = document.querySelector<HTMLElement>('[data-showcase-descent]')!;
-    const opener = document.querySelector<HTMLElement>('[data-showcase-panel-id="music"] [data-lane-open="music"]')!;
     const frames: Array<{ laneY: number; mainY: number; hidden: boolean }> = [];
     const started = performance.now();
 
@@ -45,11 +44,15 @@ test('opening a detail animates both lanes through intermediate positions', asyn
         else resolve();
       };
       requestAnimationFrame(sample);
-      opener.click();
     });
 
     return { frames, height: window.innerHeight };
   });
+
+  // Use a real pointer click: this verifies the same event path as a visitor
+  // and gives the page's async showcase/lane bootstrap time to attach.
+  await page.locator('[data-showcase-panel-id="music"] [data-lane-open="music"]').click();
+  const result = await resultPromise;
 
   const intermediateFrames = result.frames.filter(({ laneY, mainY, hidden }) =>
     !hidden
@@ -60,6 +63,29 @@ test('opening a detail animates both lanes through intermediate positions', asyn
   );
 
   expect(intermediateFrames.length).toBeGreaterThan(3);
+  const maxLockstepError = Math.max(...intermediateFrames.map(({ laneY, mainY }) =>
+    Math.abs((laneY - mainY) - result.height),
+  ));
+  expect(maxLockstepError).toBeLessThan(2);
+});
+
+test('desktop detail reveal pauses competing descendant motion', async ({ page }) => {
+  await page.goto('/');
+  const lane = page.locator('[data-detail-lane="videos"]');
+
+  await page.locator('[data-showcase-panel-id="videos"] [data-lane-open="videos"]').click();
+  await expect(lane).toHaveClass(/is-opening/);
+
+  const runningTransformEffects = await lane.evaluate((element) =>
+    element.getAnimations({ subtree: true }).filter((animation) => {
+      const effect = animation.effect as KeyframeEffect | null;
+      return effect?.target !== element
+        && animation.playState === 'running'
+        && effect.getKeyframes().some((frame) => frame.transform || frame.scale);
+    }).length,
+  );
+
+  expect(runningTransformEffects).toBe(0);
 });
 
 test('up-arrow closes the lane and returns to the main lane', async ({ page }) => {
