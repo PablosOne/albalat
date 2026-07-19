@@ -437,9 +437,8 @@ function animateBorderWipe(card: HTMLElement): gsap.core.Tween {
  * Act 2 - Headline words rise word-by-word.
  * Act 3 - Foreground person slides in from the left and fades in.
  *
- * Mobile uses one short stage fade. Keeping the title, signature and foreground out
- * of separate timelines avoids leaving one of them hidden when a mobile browser
- * interrupts an animation during load, rotation or a client-side page swap. */
+ * Mobile keeps the faster staggered choreography, but starts independently of the
+ * background image so a missed image event can never strand the title off-screen. */
 export function heroEntrance(
   root: ParentNode = document,
   opts: { instant?: boolean; onComplete?: () => void } = {},
@@ -488,11 +487,10 @@ export function heroEntrance(
 
   // Mobile no longer waits on image load: cached/broken images can already be
   // complete before their load/error listener is attached, which used to leave
-  // the SSR-hidden title invisible forever. One parent fade is sufficient here.
+  // the SSR-hidden title invisible forever. The staggered sequence still plays.
   if (isMobile) {
     settle();
-    const timeline = gsap.timeline({ defaults: { ease: 'power2.out' } })
-      .fromTo(stage, { opacity: 0 }, { opacity: 1, duration: 0.65 }, 0);
+    const timeline = buildMobileTimeline(revealTargets, words, foreground);
     timeline.eventCallback('onComplete', complete);
     timeline.eventCallback('onInterrupt', complete);
     return timeline;
@@ -520,6 +518,32 @@ export function heroEntrance(
   bg.addEventListener('load', start, { once: true });
   bg.addEventListener('error', start, { once: true });
   return null;
+}
+
+function buildMobileTimeline(
+  revealTargets: HTMLElement[],
+  words: NodeListOf<HTMLElement>,
+  foreground: HTMLElement | null,
+) {
+  return gsap.timeline({ defaults: { ease: 'power2.out' } })
+    .fromTo(
+      revealTargets,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.85, ease: 'power2.inOut', clearProps: 'opacity' },
+      0,
+    )
+    .fromTo(
+      words,
+      { yPercent: 220 },
+      { yPercent: 0, duration: 0.95, stagger: 0.14, ease: 'power3.out' },
+      0.35,
+    )
+    .fromTo(
+      foreground,
+      { x: -40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.85, ease: 'power3.out' },
+      0.45,
+    );
 }
 
 function buildDesktopTimeline(
