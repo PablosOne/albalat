@@ -70,6 +70,40 @@ test('english music page renders localized copy', async ({ page }) => {
 test.describe('mobile playback control', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
+  test('keeps ambient playback inside the active navigation header', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('site-consent-v1', JSON.stringify({
+        version: 1,
+        necessary: true,
+        analytics: false,
+        externalMedia: true,
+        updatedAt: new Date().toISOString(),
+      }));
+    });
+    await page.goto('/');
+    await page.locator('[data-hero-stage]').click({ position: { x: 80, y: 300 } });
+    await page.waitForFunction(() => {
+      const state = (window as any).__nowPlaying?.getState();
+      return !!state?.track && state.visible === false;
+    });
+
+    await expect(page.locator('.nav-mobile-bar [data-ambient-mobile-toggle]')).toBeVisible();
+    await expect(page.locator('#ambient-toggle')).toBeHidden();
+
+    await page.locator('[data-nav-trigger]').click();
+    await page.locator('[data-mobile-nav] [data-lane-open="music"]').click();
+    const detailControl = page.locator('[data-detail-lane="music"] [data-ambient-mobile-toggle]');
+    await expect(detailControl).toBeVisible();
+
+    const [controlBox, headerBox] = await Promise.all([
+      detailControl.boundingBox(),
+      page.locator('[data-detail-lane="music"] .detail-lane__header').boundingBox(),
+    ]);
+    expect(controlBox).not.toBeNull();
+    expect(headerBox).not.toBeNull();
+    expect(controlBox!.x).toBeGreaterThan(headerBox!.width / 2);
+  });
+
   test('joins the active header and disappears when paused', async ({ page }) => {
     await page.goto('/music');
     await page.locator('[data-play-track]').first().click();

@@ -59,22 +59,11 @@ const copy = {
     box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.28), 0 0 1.4rem rgba(198, 146, 62, 0.28);
   }
 
-  /* Mobile: the nav collapses to a compact pill in the top-right corner, and the
-     bottom edge belongs to the OS (home indicator / browser chrome). Mirror the
-     nav as a matching pill in the top-left corner — a paired header control that
-     stays out of the thumb zone and never fights bottom-anchored UI. */
+  /* On phones the interactive copies live inside the active navigation header.
+     This persisted desktop control remains the state owner but has no mobile box. */
   @media (max-width: 767px) {
     .ambient-toggle {
-      bottom: auto;
-      top: max(0.55rem, env(safe-area-inset-top));
-      left: max(0.55rem, env(safe-area-inset-left));
-      width: 3.5rem;
-      height: 3.5rem;
-      transform: translateY(-0.4rem) scale(0.94);
-    }
-
-    .ambient-toggle[data-active='true'] {
-      transform: translateY(0) scale(1);
+      display: none;
     }
   }
 
@@ -153,17 +142,33 @@ const copy = {
     const copy = COPY[currentLocale()];
     const applyLabel = (muted: boolean) =>
       btn.setAttribute('aria-label', muted ? copy.unmute : copy.mute);
+    const syncMobileControls = (s: PlayerState) => {
+      const isAmbient = !!s.track && !s.visible;
+      document.documentElement.toggleAttribute('data-ambient-active', isAmbient);
+      document.querySelectorAll<HTMLButtonElement>('[data-ambient-mobile-toggle]').forEach((control) => {
+        control.hidden = !isAmbient;
+        control.dataset.muted = String(s.muted);
+        control.setAttribute('aria-pressed', String(s.muted));
+        control.setAttribute('aria-label', s.muted ? copy.unmute : copy.mute);
+      });
+    };
 
     // Re-apply the current locale's label on every page-load, even when already
     // bound, so the persisted node's label follows navigation.
     if (btn.dataset.bound === 'true') {
-      applyLabel(btn.dataset.muted === 'true');
+      const state = getNowPlaying().getState();
+      applyLabel(state.muted);
+      syncMobileControls(state);
       return;
     }
     btn.dataset.bound = 'true';
 
     const engine = getNowPlaying();
     btn.addEventListener('click', () => engine.toggleMute());
+    document.addEventListener('click', (event) => {
+      const target = event.target as Element | null;
+      if (target?.closest('[data-ambient-mobile-toggle]')) engine.toggleMute();
+    });
 
     const render = (s: PlayerState) => {
       const isAmbient = !!s.track && !s.visible;
@@ -172,6 +177,7 @@ const copy = {
       btn.dataset.muted = String(s.muted);
       btn.setAttribute('aria-pressed', String(s.muted));
       applyLabel(s.muted);
+      syncMobileControls(s);
     };
 
     engine.subscribe(render);

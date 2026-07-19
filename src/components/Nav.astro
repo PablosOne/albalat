@@ -4,6 +4,7 @@ import { useTranslations } from '@/i18n';
 import { site } from '@/data/site';
 import { localizedPagePath, siteConfig, type DetailPageId } from '@/config/site';
 import LangToggle from './LangToggle.astro';
+import MobileAmbientControl from './MobileAmbientControl.astro';
 import MobilePlaybackControl from './MobilePlaybackControl.astro';
 import Wordmark from './Wordmark.astro';
 
@@ -57,6 +58,7 @@ const homeHref = localizedPagePath('home', locale);
       <span>{site.fullName}</span>
       <span class="nav-mobile-brand__dot" aria-hidden="true"></span>
     </a>
+    <MobileAmbientControl locale={locale} />
     <MobilePlaybackControl locale={locale} />
     <button
       type="button"
@@ -481,7 +483,8 @@ const homeHref = localizedPagePath('home', locale);
   }
 
   @media (max-width: 767px) {
-    :global(html[data-now-playing-active]) .nav-mobile-bar {
+    :global(html[data-now-playing-active]) .nav-mobile-bar,
+    :global(html[data-ambient-active]) .nav-mobile-bar {
       width: 7.35rem;
     }
   }

@@ -1,5 +1,6 @@
 ---
 import LaneArrow from '@/components/LaneArrow.astro';
+import MobileAmbientControl from '@/components/MobileAmbientControl.astro';
 import MobilePlaybackControl from '@/components/MobilePlaybackControl.astro';
 import type { Locale } from '@/i18n';
 interface Props { id: string; title: string; locale: Locale; }
@@ -21,6 +22,7 @@ const nextCta = locale === 'en' ? 'Next' : 'Siguiente';
   <div class="detail-lane__scroll" data-detail-scroll tabindex="-1">
     <header class="detail-lane__header">
       <LaneArrow direction="up" label={back} cta={backCta} />
+      <MobileAmbientControl locale={locale} />
       <MobilePlaybackControl locale={locale} />
     </header>
     <div class="detail-lane__body">

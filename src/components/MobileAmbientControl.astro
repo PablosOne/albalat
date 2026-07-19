@@ -1,0 +1,107 @@
+---
+import type { Locale } from '@/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const muteLabel = locale === 'en' ? 'Mute music' : 'Silenciar música';
+---
+
+<button
+  type="button"
+  class="mobile-ambient-control"
+  data-ambient-mobile-toggle
+  data-muted="false"
+  aria-label={muteLabel}
+  aria-pressed="false"
+  hidden
+>
+  <span class="mobile-ambient-control__bars" aria-hidden="true">
+    <span></span><span></span><span></span><span></span>
+  </span>
+</button>
+
+<style>
+  .mobile-ambient-control {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .mobile-ambient-control {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.25rem;
+      height: 3.25rem;
+      flex: 0 0 3.25rem;
+      padding: 0;
+      border: 1px solid rgba(244, 239, 231, 0.2);
+      border-radius: 999px;
+      background: rgba(244, 239, 231, 0.06);
+      color: var(--color-accent, #d9a441);
+      cursor: pointer;
+      transition: border-color 180ms ease, box-shadow 240ms ease, transform 180ms ease;
+    }
+
+    .mobile-ambient-control[hidden] {
+      display: none;
+    }
+
+    .mobile-ambient-control:hover,
+    .mobile-ambient-control:focus-visible {
+      border-color: var(--color-accent, #d9a441);
+      box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--color-accent, #d9a441) 20%, transparent);
+      outline: none;
+      transform: scale(1.035);
+    }
+  }
+
+  .mobile-ambient-control__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.16rem;
+    height: 1rem;
+  }
+
+  .mobile-ambient-control__bars span {
+    width: 0.17rem;
+    height: 100%;
+    border-radius: 999px;
+    background: currentColor;
+    transform-origin: bottom;
+    animation: mobile-ambient-eq 900ms ease-in-out infinite;
+  }
+
+  .mobile-ambient-control__bars span:nth-child(1) { animation-delay: -200ms; }
+  .mobile-ambient-control__bars span:nth-child(2) { animation-delay: -520ms; }
+  .mobile-ambient-control__bars span:nth-child(3) { animation-delay: -80ms; }
+  .mobile-ambient-control__bars span:nth-child(4) { animation-delay: -360ms; }
+
+  .mobile-ambient-control[data-muted='true'] {
+    color: rgba(244, 239, 231, 0.5);
+  }
+
+  .mobile-ambient-control[data-muted='true'] .mobile-ambient-control__bars span {
+    animation: none;
+    transform: scaleY(0.22);
+  }
+
+  @keyframes mobile-ambient-eq {
+    0%, 100% { transform: scaleY(0.28); }
+    50% { transform: scaleY(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-ambient-control,
+    .mobile-ambient-control__bars span {
+      transition: none;
+      animation: none;
+    }
+
+    .mobile-ambient-control:not([data-muted='true']) .mobile-ambient-control__bars span {
+      transform: scaleY(0.7);
+    }
+  }
+</style>
