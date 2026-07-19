@@ -56,3 +56,39 @@ test('robots advertises the canonical sitemap', async ({ request }) => {
   expect(response.ok()).toBe(true);
   expect(await response.text()).toContain(`Sitemap: ${siteConfig.origin}/sitemap-index.xml`);
 });
+
+test.describe('mobile legal navigation', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  for (const path of ['/privacy/', '/cookies/']) {
+    test(`${path} keeps the standard navbar geometry`, async ({ page }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem('site-consent-v1', JSON.stringify({
+          version: 1,
+          necessary: true,
+          analytics: false,
+          externalMedia: false,
+          updatedAt: new Date().toISOString(),
+        }));
+      });
+      await page.goto('/');
+      const initialNav = await page.locator('.nav-mobile-bar').boundingBox();
+      expect(initialNav).not.toBeNull();
+
+      await page.evaluate((href) => {
+        const link = document.createElement('a');
+        link.href = href;
+        document.body.append(link);
+        link.click();
+      }, path);
+      await expect(page).toHaveURL(new RegExp(`${path.replaceAll('/', '\\/')}$`));
+
+      const legalNav = page.locator('[data-mobile-nav]');
+      await expect(legalNav).toBeVisible();
+      await expect(legalNav).not.toHaveAttribute('data-nav-variant', /.+/);
+      const legalNavBox = await legalNav.locator('.nav-mobile-bar').boundingBox();
+      expect(legalNavBox).not.toBeNull();
+      expect(Math.abs(legalNavBox!.width - initialNav!.width)).toBeLessThan(1);
+    });
+  }
+});

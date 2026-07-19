@@ -415,7 +415,7 @@ const homeHref = localizedPagePath('home', locale);
 
     .nav-bar[data-scrolled] .nav-mobile-bar,
     .nav-bar[data-open] .nav-mobile-bar {
-      justify-content: space-between;
+      justify-content: flex-end;
       width: calc(100% - 1.5rem);
       height: 4.5rem;
       margin-right: 0.75rem;
@@ -425,8 +425,14 @@ const homeHref = localizedPagePath('home', locale);
     .nav-bar[data-scrolled] .nav-mobile-brand,
     .nav-bar[data-open] .nav-mobile-brand {
       max-width: 12rem;
+      margin-right: auto;
       opacity: 1;
       transform: translateX(0);
+    }
+
+    .nav-bar[data-scrolled] .nav-trigger,
+    .nav-bar[data-open] .nav-trigger {
+      margin-left: 0.125rem;
     }
 
     .nav-bar[data-open] .nav-mobile-bar {
@@ -483,9 +489,16 @@ const homeHref = localizedPagePath('home', locale);
   }
 
   @media (max-width: 767px) {
-    :global(html[data-now-playing-active]) .nav-mobile-bar,
-    :global(html[data-ambient-active]) .nav-mobile-bar {
+    :global(html[data-now-playing-active]) .nav-bar:not([data-scrolled]):not([data-open]) .nav-mobile-bar,
+    :global(html[data-ambient-active]) .nav-bar:not([data-scrolled]):not([data-open]) .nav-mobile-bar {
+      justify-content: flex-end;
       width: 7.35rem;
+      padding: 0.3rem;
+    }
+
+    :global(html[data-now-playing-active]) .nav-bar:not([data-scrolled]):not([data-open]) .nav-trigger,
+    :global(html[data-ambient-active]) .nav-bar:not([data-scrolled]):not([data-open]) .nav-trigger {
+      margin-left: 0.125rem;
     }
   }
 

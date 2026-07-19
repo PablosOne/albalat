@@ -87,9 +87,40 @@ test.describe('mobile playback control', () => {
       return !!state?.track && state.visible === false;
     });
 
-    await expect(page.locator('.nav-mobile-bar [data-ambient-mobile-toggle]')).toBeVisible();
+    const navAudioControl = page.locator('.nav-mobile-bar [data-ambient-mobile-toggle]');
+    await expect(navAudioControl).toBeVisible();
     await expect(page.locator('#ambient-toggle')).toBeHidden();
+    await page.waitForTimeout(600);
 
+    const [navBox, audioBox, menuBox] = await Promise.all([
+      page.locator('.nav-mobile-bar').boundingBox(),
+      navAudioControl.boundingBox(),
+      page.locator('.nav-mobile-bar [data-nav-trigger]').boundingBox(),
+    ]);
+    expect(navBox).not.toBeNull();
+    expect(audioBox).not.toBeNull();
+    expect(menuBox).not.toBeNull();
+    const leftInset = audioBox!.x - navBox!.x;
+    const rightInset = navBox!.x + navBox!.width - (menuBox!.x + menuBox!.width);
+    expect(Math.abs(leftInset - rightInset)).toBeLessThan(1);
+
+    await page.locator('[data-nav-trigger]').click();
+    const [expandedAudioBox, expandedMenuBox] = await Promise.all([
+      navAudioControl.boundingBox(),
+      page.locator('.nav-mobile-bar [data-nav-trigger]').boundingBox(),
+    ]);
+    expect(expandedAudioBox).not.toBeNull();
+    expect(expandedMenuBox).not.toBeNull();
+    const expandedControlGap = expandedMenuBox!.x - (expandedAudioBox!.x + expandedAudioBox!.width);
+    expect(expandedControlGap).toBeLessThanOrEqual(3);
+
+    await page.locator('[data-nav-trigger]').click();
+    await page.waitForTimeout(120);
+    const collapsingAudioBox = await navAudioControl.boundingBox();
+    expect(collapsingAudioBox).not.toBeNull();
+    expect(collapsingAudioBox!.x).toBeGreaterThanOrEqual(expandedAudioBox!.x - 1);
+
+    await page.waitForTimeout(500);
     await page.locator('[data-nav-trigger]').click();
     await page.locator('[data-mobile-nav] [data-lane-open="music"]').click();
     const detailControl = page.locator('[data-detail-lane="music"] [data-ambient-mobile-toggle]');
