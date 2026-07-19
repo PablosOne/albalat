@@ -2,12 +2,13 @@
 interface Props {
   direction: 'down' | 'up';
   targetId?: string;   // required for direction="down" in the default (open-lane) mode
+  href?: string;       // real route fallback; JS still intercepts data-lane-open
   label: string;       // accessible label, already localized
   cta?: string;        // visible CTA text; must be contained in `label` (defaults to it)
   withString?: boolean; // render the vibrating threshold line (down only)
   next?: boolean;      // down variant that advances to the NEXT station (data-lane-next) rather than opening a lane
 }
-const { direction, targetId, label, cta, withString = false, next = false } = Astro.props;
+const { direction, targetId, href, label, cta, withString = false, next = false } = Astro.props;
 const isDown = direction === 'down';
 const chevron = `M8,20 L28,20 M28,20 L20,12 M28,20 L20,28`; // right-pointing base; rotated via CSS
 ---
@@ -30,7 +31,7 @@ const chevron = `M8,20 L28,20 M28,20 L20,12 M28,20 L20,28`; // right-pointing ba
   ) : (
     <a
       class="lane-arrow lane-arrow--down group"
-      href={`#${targetId}`}
+      href={href ?? `#${targetId}`}
       data-lane-open={targetId}
       aria-label={label}
     >

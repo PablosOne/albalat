@@ -1,0 +1,128 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import type { Locale } from '@/i18n';
+import { site } from '@/data/site';
+import { siteConfig } from '@/config/site';
+
+interface Props {
+  locale: Locale;
+  kind: 'privacy' | 'cookies';
+}
+
+const { locale, kind } = Astro.props;
+const isEnglish = locale === 'en';
+const homeHref = isEnglish ? '/en/' : '/';
+const privacyHref = isEnglish ? '/en/privacy/' : '/privacy/';
+const cookieHref = isEnglish ? '/en/cookies/' : '/cookies/';
+const email = siteConfig.identity.email;
+const updated = siteConfig.legal.updated[locale];
+
+const meta = {
+  es: {
+    privacy: { title: `Política de privacidad - ${site.fullName}`, description: siteConfig.legal.privacyDescription.es },
+    cookies: { title: `Política de cookies - ${site.fullName}`, description: siteConfig.legal.cookiesDescription.es },
+  },
+  en: {
+    privacy: { title: `Privacy policy - ${site.fullName}`, description: siteConfig.legal.privacyDescription.en },
+    cookies: { title: `Cookie policy - ${site.fullName}`, description: siteConfig.legal.cookiesDescription.en },
+  },
+}[locale][kind];
+---
+
+<Base locale={locale} title={meta.title} description={meta.description}>
+  <Nav locale={locale} />
+  <main id="main-content" class="legal-page">
+    <a class="legal-back" href={homeHref}>← {isEnglish ? 'Back to the website' : 'Volver al sitio web'}</a>
+
+    {kind === 'privacy' ? (
+      <article>
+        <header class="legal-hero">
+          <p>{isEnglish ? 'Legal · Privacy' : 'Legal · Privacidad'}</p>
+          <h1>{isEnglish ? 'Privacy policy' : 'Política de privacidad'}</h1>
+          <span>{isEnglish ? 'Last updated' : 'Última actualización'} · {updated}</span>
+        </header>
+
+        {isEnglish ? (
+          <div class="legal-content">
+            <section><h2>1. Data controller</h2><p>The controller for personal data processed through this website is <strong>{siteConfig.identity.name}</strong>, based at {siteConfig.identity.legalAddress.en}. Contact: <a href={`mailto:${email}`}>{email}</a>.</p></section>
+            <section><h2>2. Data we process and why</h2><p>When you use the contact form, we process your name, email address, inquiry type, message, and the technical data needed to deliver it. We use this information solely to answer your request and manage any relationship that follows from it.</p><p>If you consent to analytics, Google Analytics and Cloudflare Web Analytics may process online identifiers, device and browser information, approximate location, and usage data. If you consent to external content, YouTube, Spotify, or Apple Music may receive your IP address, browser details, and interaction data when their thumbnails or players load.</p></section>
+            <section><h2>3. Legal bases</h2><p>Contact requests are processed to take steps at your request before entering into a contract and, for general inquiries, on our legitimate interest in responding. Analytics and external media are processed only with your consent. You may withdraw consent at any time through the persistent “Privacy” button, without affecting prior lawful processing.</p></section>
+            <section><h2>4. Service providers and transfers</h2><p>Form submissions are delivered by Web3Forms. Subject to your choices, the site may also use Google Analytics, Cloudflare Web Analytics, YouTube, Spotify, and Apple Music. Some providers may process data outside the European Economic Area. Where applicable, they rely on an adequacy decision, the EU–US Data Privacy Framework, or European Commission Standard Contractual Clauses. Please consult each provider’s policy for current transfer safeguards.</p></section>
+            <section><h2>5. Retention</h2><p>Inquiry data is retained only as long as needed to answer and follow up, and afterwards for the limitation periods required by law. Consent choices remain in your browser until you clear them or this policy version changes. Analytics retention is governed by the configured provider settings and should be kept to the shortest period needed.</p></section>
+            <section><h2>6. Your rights</h2><p>You may request access, rectification, erasure, restriction, portability, or object to processing, and you may withdraw consent at any time. Send your request to <a href={`mailto:${email}`}>{email}</a>. We may ask for information necessary to verify your identity. You also have the right to lodge a complaint with the <a href="https://www.aepd.es/" target="_blank" rel="noreferrer">Spanish Data Protection Agency (AEPD)</a>.</p></section>
+            <section><h2>7. Security and changes</h2><p>We use proportionate technical and organisational safeguards, but no internet transmission is completely risk-free. We may update this policy when the website or legal requirements change; the revision date above identifies the current version.</p></section>
+          </div>
+        ) : (
+          <div class="legal-content">
+            <section><h2>1. Responsable del tratamiento</h2><p>El responsable de los datos personales tratados a través de este sitio es <strong>{siteConfig.identity.name}</strong>, con sede en {siteConfig.identity.legalAddress.es}. Contacto: <a href={`mailto:${email}`}>{email}</a>.</p></section>
+            <section><h2>2. Datos tratados y finalidades</h2><p>Al utilizar el formulario de contacto tratamos tu nombre, dirección de correo, tipo de consulta, mensaje y los datos técnicos necesarios para entregarlo. Utilizamos esta información únicamente para responder y gestionar la relación que pueda derivarse de tu solicitud.</p><p>Si autorizas las analíticas, Google Analytics y Cloudflare Web Analytics pueden tratar identificadores en línea, información del dispositivo y navegador, ubicación aproximada y datos de uso. Si autorizas el contenido externo, YouTube, Spotify o Apple Music pueden recibir tu dirección IP, datos del navegador e interacciones al cargar sus miniaturas o reproductores.</p></section>
+            <section><h2>3. Bases jurídicas</h2><p>Las consultas se tratan para aplicar medidas precontractuales solicitadas por ti y, en consultas generales, por nuestro interés legítimo en responder. Las analíticas y el contenido externo se tratan únicamente con tu consentimiento. Puedes retirarlo en cualquier momento desde el botón persistente «Privacidad», sin afectar al tratamiento lícito anterior.</p></section>
+            <section><h2>4. Proveedores y transferencias</h2><p>Web3Forms entrega los formularios. Según tus elecciones, el sitio también puede usar Google Analytics, Cloudflare Web Analytics, YouTube, Spotify y Apple Music. Algunos proveedores pueden tratar datos fuera del Espacio Económico Europeo. Cuando corresponde, se amparan en una decisión de adecuación, el Marco de Privacidad de Datos UE–EE. UU. o las Cláusulas Contractuales Tipo de la Comisión Europea. Consulta la política de cada proveedor para conocer sus garantías vigentes.</p></section>
+            <section><h2>5. Conservación</h2><p>Los datos de consultas se conservan solo durante el tiempo necesario para responder y realizar el seguimiento y, después, durante los plazos de prescripción legalmente exigidos. Tus preferencias permanecen en el navegador hasta que las borres o cambie la versión de esta política. La conservación analítica depende de la configuración de cada proveedor y debe limitarse al plazo mínimo necesario.</p></section>
+            <section><h2>6. Tus derechos</h2><p>Puedes solicitar acceso, rectificación, supresión, limitación, portabilidad u oposición, y retirar tu consentimiento en cualquier momento. Escribe a <a href={`mailto:${email}`}>{email}</a>. Podremos pedir la información necesaria para verificar tu identidad. También puedes reclamar ante la <a href="https://www.aepd.es/" target="_blank" rel="noreferrer">Agencia Española de Protección de Datos (AEPD)</a>.</p></section>
+            <section><h2>7. Seguridad y cambios</h2><p>Aplicamos medidas técnicas y organizativas proporcionadas, aunque ninguna transmisión por internet está libre de riesgo. Podemos actualizar esta política si cambia el sitio o la normativa; la fecha superior identifica la versión vigente.</p></section>
+          </div>
+        )}
+      </article>
+    ) : (
+      <article>
+        <header class="legal-hero">
+          <p>{isEnglish ? 'Legal · Storage' : 'Legal · Almacenamiento'}</p>
+          <h1>{isEnglish ? 'Cookie policy' : 'Política de cookies'}</h1>
+          <span>{isEnglish ? 'Last updated' : 'Última actualización'} · {updated}</span>
+        </header>
+
+        {isEnglish ? (
+          <div class="legal-content">
+            <section><h2>1. What this site stores</h2><p>This site uses browser storage and, only when you consent, services that may place cookies. Cookies are small text files; local storage is a similar browser mechanism that remains on your device. Non-essential services are disabled by default.</p></section>
+            <section><h2>2. Necessary storage</h2><div class="legal-table" role="region" aria-label="Necessary storage" tabindex="0"><table><thead><tr><th>Name</th><th>Purpose</th><th>Duration</th></tr></thead><tbody><tr><td><code>site-consent-v1</code></td><td>Stores analytics and external-media preferences and their update date.</td><td>Until removed or the consent version changes</td></tr></tbody></table></div><p>This storage is necessary to remember your request and prevent optional services from loading against your choice.</p></section>
+            <section><h2>3. Analytics (optional)</h2><p>With consent, Google Analytics may set cookies such as <code>_ga</code>, <code>_ga_*</code>, <code>_gid</code>, or <code>_gat</code>, usually lasting from a minute to up to two years. Cloudflare Web Analytics may process usage and device data; its storage behaviour can change with the provider configuration. Analytics is not loaded before consent.</p></section>
+            <section><h2>4. External media (optional)</h2><p>With consent, the site may request thumbnails and players from YouTube (privacy-enhanced mode), Spotify, and Apple Music. Those providers may store identifiers or cookies according to their own policies. Without consent, external frames and thumbnails remain blocked.</p></section>
+            <section><h2>5. Change or withdraw consent</h2><p>Use the “Privacy” button in the lower corner on any page to accept, reject, or change categories. Withdrawing analytics consent removes recognisable first-party analytics cookies and reloads the page to stop already loaded analytics code. You can also clear site data in your browser.</p><p>See the <a href={privacyHref}>privacy policy</a> for information about controllers, providers, transfers, and your rights.</p></section>
+          </div>
+        ) : (
+          <div class="legal-content">
+            <section><h2>1. Qué almacena este sitio</h2><p>Este sitio utiliza almacenamiento del navegador y, solo cuando lo autorizas, servicios que pueden instalar cookies. Las cookies son pequeños archivos de texto; el almacenamiento local es un mecanismo similar que permanece en tu dispositivo. Los servicios opcionales están desactivados por defecto.</p></section>
+            <section><h2>2. Almacenamiento necesario</h2><div class="legal-table" role="region" aria-label="Almacenamiento necesario" tabindex="0"><table><thead><tr><th>Nombre</th><th>Finalidad</th><th>Duración</th></tr></thead><tbody><tr><td><code>site-consent-v1</code></td><td>Guarda las preferencias de analíticas y contenido externo, y la fecha de actualización.</td><td>Hasta que se borre o cambie la versión del consentimiento</td></tr></tbody></table></div><p>Este almacenamiento es necesario para recordar tu solicitud e impedir que los servicios opcionales se carguen en contra de tu elección.</p></section>
+            <section><h2>3. Analíticas (opcionales)</h2><p>Con tu consentimiento, Google Analytics puede crear cookies como <code>_ga</code>, <code>_ga_*</code>, <code>_gid</code> o <code>_gat</code>, normalmente con duraciones desde un minuto hasta dos años. Cloudflare Web Analytics puede tratar datos de uso y dispositivo; su comportamiento de almacenamiento puede cambiar según la configuración del proveedor. Las analíticas no se cargan antes del consentimiento.</p></section>
+            <section><h2>4. Contenido externo (opcional)</h2><p>Con tu consentimiento, el sitio puede solicitar miniaturas y reproductores de YouTube (modo de privacidad mejorada), Spotify y Apple Music. Esos proveedores pueden guardar identificadores o cookies según sus propias políticas. Sin consentimiento, los marcos y miniaturas externos permanecen bloqueados.</p></section>
+            <section><h2>5. Cambiar o retirar el consentimiento</h2><p>Utiliza el botón «Privacidad» de la esquina inferior en cualquier página para aceptar, rechazar o cambiar las categorías. Al retirar las analíticas eliminamos las cookies propias de analítica reconocibles y recargamos la página para detener el código ya cargado. También puedes borrar los datos del sitio desde tu navegador.</p><p>Consulta la <a href={privacyHref}>política de privacidad</a> para conocer los responsables, proveedores, transferencias y tus derechos.</p></section>
+          </div>
+        )}
+      </article>
+    )}
+
+    <footer class="legal-footer">
+      <a href={privacyHref}>{isEnglish ? 'Privacy policy' : 'Política de privacidad'}</a>
+      <a href={cookieHref}>{isEnglish ? 'Cookie policy' : 'Política de cookies'}</a>
+      <span>© {new Date().getFullYear()} {site.fullName}</span>
+    </footer>
+  </main>
+</Base>
+
+<style>
+  .legal-page { min-height: 100dvh; padding: clamp(6.5rem, 12vw, 9rem) clamp(1.25rem, 7vw, 8rem) 4rem; background: radial-gradient(circle at 90% 5%, rgba(198,146,62,.12), transparent 25rem), var(--stage); }
+  .legal-back { display: inline-block; color: var(--ink-muted); font: .68rem var(--font-mono); letter-spacing: .08em; text-decoration: none; text-transform: uppercase; }
+  .legal-back:hover { color: var(--accent); }
+  article { width: min(100%, 72rem); margin: clamp(3rem, 8vw, 7rem) auto 0; }
+  .legal-hero { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1.5rem; align-items: end; padding-bottom: clamp(2rem, 5vw, 4rem); border-bottom: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); }
+  .legal-hero p { grid-column: 1 / -1; margin: 0; color: var(--accent); font: .68rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+  .legal-hero h1 { margin: 0; font-family: var(--font-display); font-size: clamp(3.2rem, 8vw, 7rem); font-weight: 320; letter-spacing: -.04em; line-height: .88; }
+  .legal-hero span { color: var(--ink-muted); font: .64rem var(--font-mono); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .legal-content { margin: 0 0 0 auto; width: min(100%, 49rem); }
+  .legal-content section { padding: clamp(2.2rem, 5vw, 4rem) 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
+  .legal-content h2 { margin: 0 0 1.2rem; font-family: var(--font-display); font-size: clamp(1.7rem, 3vw, 2.35rem); font-weight: 400; line-height: 1.1; }
+  .legal-content p { margin: .9rem 0 0; color: var(--ink-muted); font-size: clamp(.95rem, 1.4vw, 1.05rem); line-height: 1.8; }
+  .legal-content strong { color: var(--ink); }
+  .legal-content a, .legal-footer a { color: var(--ink); text-underline-offset: .25rem; }
+  .legal-content a:hover, .legal-footer a:hover { color: var(--accent); }
+  code { padding: .15em .35em; border: 1px solid color-mix(in srgb, var(--ink) 13%, transparent); border-radius: .25rem; color: var(--accent); font: .82em var(--font-mono); }
+  .legal-table { margin-top: 1.5rem; overflow-x: auto; }
+  table { width: 100%; min-width: 38rem; border-collapse: collapse; color: var(--ink-muted); font-size: .85rem; line-height: 1.5; }
+  th, td { padding: .9rem 1rem; border: 1px solid color-mix(in srgb, var(--ink) 13%, transparent); text-align: left; vertical-align: top; }
+  th { color: var(--ink); font: .62rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+  .legal-footer { display: flex; flex-wrap: wrap; gap: 1rem 2rem; width: min(100%, 72rem); margin: 4rem auto 0; padding-top: 2rem; border-top: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); color: var(--ink-muted); font-size: .75rem; }
+  .legal-footer span { margin-left: auto; }
+  @media (max-width: 640px) { .legal-hero { grid-template-columns: 1fr; } .legal-hero p { grid-column: auto; } .legal-footer span { width: 100%; margin-left: 0; } }
+</style>

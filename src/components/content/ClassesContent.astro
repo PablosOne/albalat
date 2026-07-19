@@ -1,5 +1,6 @@
 ---
 import { site } from '@/data/site';
+import { siteConfig } from '@/config/site';
 import type { Locale } from '@/i18n';
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 const { locale } = Astro.props;
 
 const profileLinks = site.socials.filter((social) => social.href.startsWith('http'));
-const email = site.socials.find((social) => social.href.startsWith('mailto:'))?.href.replace('mailto:', '') ?? 'hello@eulogioalbalat.com';
+const email = siteConfig.identity.email;
 const mailCharCount = email.length;
 
 const copy = {

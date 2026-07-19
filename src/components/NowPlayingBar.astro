@@ -84,25 +84,19 @@ const copy = {
   }
 
   @media (max-width: 767px) {
-    /* Let the bar wrap: row 1 = cover + title/seek, row 2 = controls. */
-    #now-playing-bar > .mx-auto { flex-wrap: wrap; }
-    /* Controls take their own full-width row and wrap centered, so they never
-       overflow 375px regardless of how many (up to 8) are visible. */
-    #now-playing-bar .np-controls {
-      width: 100%;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.4rem;
+    /* Phone controls live in the navbar/detail header, where they reserve
+       space instead of floating over the page. Keep this persisted desktop
+       bar mounted as the state owner, but remove its visual box entirely. */
+    #now-playing-bar {
+      display: none;
     }
-    /* ≥44px touch targets. */
-    .np-btn { width: 2.75rem; height: 2.75rem; }
-    .np-chip { height: 2.75rem; }
   }
 </style>
 
 <script>
   import { getNowPlaying, type PlayerState } from '@/lib/nowPlaying';
   import { applyTheme } from '@/lib/trackTheme';
+  import { hasConsent, requestConsent } from '@/lib/consent';
 
   const fmt = (s: number) => {
     if (!Number.isFinite(s)) s = 0;
@@ -180,6 +174,10 @@ const copy = {
     const full = q<HTMLButtonElement>('[data-np-full]');
 
     toggle.addEventListener('click', () => engine.toggle());
+    document.addEventListener('click', (event) => {
+      const target = event.target as Element | null;
+      if (target?.closest('[data-np-mobile-toggle]')) engine.toggle();
+    });
     q<HTMLButtonElement>('[data-np-prev]').addEventListener('click', () => engine.prev());
     q<HTMLButtonElement>('[data-np-next]').addEventListener('click', () => engine.next());
     q<HTMLButtonElement>('[data-np-close]').addEventListener('click', () => { engine.close(); embed.hidden = true; embed.replaceChildren(); });
@@ -188,6 +186,10 @@ const copy = {
       if (s.duration) engine.seek((Number(seek.value) / 1000) * s.duration);
     });
     full.addEventListener('click', () => {
+      if (!hasConsent('externalMedia')) {
+        requestConsent('externalMedia');
+        return;
+      }
       const s = engine.getState();
       if (!s.track) return;
       const provider: 'spotify' | 'apple' = s.track.appleEmbed ? 'apple' : 'spotify';
@@ -207,9 +209,16 @@ const copy = {
     const render = (s: PlayerState) => {
       bar.hidden = !s.visible;
       bar.dataset.visible = String(s.visible);
+      document.documentElement.toggleAttribute('data-now-playing-active', s.visible && !s.isPaused);
       applyTheme('nowplaying', s.visible && s.track ? s.track.theme : null);
       toggle.textContent = s.isPaused ? '▶' : '⏸';
       toggle.setAttribute('aria-label', s.isPaused ? (copy.play ?? 'Play') : (copy.pause ?? 'Pause'));
+      document.querySelectorAll<HTMLButtonElement>('[data-np-mobile-toggle]').forEach((control) => {
+        control.hidden = s.isPaused || !s.visible || !s.track;
+        control.setAttribute('aria-label', copy.pause ?? 'Pause');
+        const mobileCover = control.querySelector<HTMLImageElement>('[data-np-mobile-cover]');
+        if (mobileCover) mobileCover.src = s.track?.cover ?? '';
+      });
       if (!s.track) return;
       cover.src = s.track.cover;
       cover.alt = s.track.albumTitle;

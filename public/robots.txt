@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://albalat.pages.dev/sitemap-index.xml

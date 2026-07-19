@@ -66,3 +66,25 @@ test('english music page renders localized copy', async ({ page }) => {
   await page.goto('/en/music');
   await expect(page.getByRole('heading', { name: 'Discography as a living record shelf' })).toBeVisible();
 });
+
+test.describe('mobile playback control', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('joins the active header and disappears when paused', async ({ page }) => {
+    await page.goto('/music');
+    await page.locator('[data-play-track]').first().click();
+    await page.waitForFunction(() => (window as any).__nowPlaying?.getState()?.isPaused === false);
+
+    const detailControl = page.locator('[data-detail-lane="music"] [data-np-mobile-toggle]');
+    await expect(detailControl).toBeVisible();
+    await expect(page.locator('#now-playing-bar')).toBeHidden();
+
+    await page.locator('[data-detail-lane="music"] [data-lane-close]').click();
+    const navControl = page.locator('.nav-mobile-bar > [data-np-mobile-toggle]');
+    await expect(navControl).toBeVisible();
+
+    await navControl.click();
+    await expect(navControl).toBeHidden();
+    await expect.poll(() => page.evaluate(() => (window as any).__nowPlaying?.getState()?.isPaused)).toBe(true);
+  });
+});

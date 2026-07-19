@@ -1,0 +1,24 @@
+---
+import Base from '@/layouts/Base.astro';
+import Nav from '@/components/Nav.astro';
+import Showcase from '@/components/Showcase.astro';
+import { pageConfig, type CorePageId, type DetailPageId, type SiteLocale } from '@/config/site';
+import { buildStructuredData } from '@/lib/structuredData';
+import { laneSwitch } from '@/lib/transitions';
+
+interface Props {
+  locale: SiteLocale;
+  page: CorePageId;
+}
+
+const { locale, page } = Astro.props;
+const meta = pageConfig(page);
+const jsonLd = buildStructuredData(page, locale, Astro.site ?? new URL(Astro.url.origin));
+const detailIds = page === 'home' ? undefined : [page as DetailPageId];
+---
+<Base locale={locale} title={meta.title[locale]} description={meta.description[locale]} jsonLd={jsonLd}>
+  <Nav locale={locale} />
+  <main id="main-content" transition:name="page-lane" transition:animate={laneSwitch}>
+    <Showcase locale={locale} initialDetail={page === 'home' ? undefined : page} detailIds={detailIds} />
+  </main>
+</Base>

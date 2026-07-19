@@ -44,15 +44,16 @@ const copy = {
     data-media-facade
     data-youtube-id={youtubeId}
     data-title={title}
+    data-thumbnail-src={thumbnail}
+    data-thumbnail-fallback={fallbackThumbnail}
   >
     <img
-      src={thumbnail}
       alt=""
+      data-media-thumbnail
       class="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-[1.025] group-hover:opacity-95"
       loading="lazy"
       decoding="async"
       referrerpolicy="no-referrer"
-      onerror={`this.onerror=null;this.src='${fallbackThumbnail}'`}
     />
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(198,146,62,0.18),transparent_34%),linear-gradient(180deg,rgba(11,10,9,0.08),rgba(11,10,9,0.78))]"></div>
     <button
@@ -110,6 +111,20 @@ const copy = {
 
 <script>
   import { trackEvent } from '@/lib/analytics';
+  import { CONSENT_EVENT, hasConsent, requestConsent } from '@/lib/consent';
+
+  const loadAllowedThumbnails = () => {
+    if (!hasConsent('externalMedia')) return;
+    document.querySelectorAll<HTMLElement>('[data-media-facade][data-thumbnail-src]').forEach((facade) => {
+      const image = facade.querySelector<HTMLImageElement>('[data-media-thumbnail]');
+      if (!image || image.src) return;
+      image.onerror = () => {
+        image.onerror = null;
+        image.src = facade.dataset.thumbnailFallback ?? '';
+      };
+      image.src = facade.dataset.thumbnailSrc ?? '';
+    });
+  };
 
   const initMediaFacades = () => {
     document.querySelectorAll<HTMLElement>('[data-embed-facade], [data-media-facade]').forEach((facade) => {
@@ -117,8 +132,13 @@ const copy = {
       if (!button || facade.dataset.ready === 'true') return;
       facade.dataset.ready = 'true';
       button.addEventListener('click', () => {
+        if (!hasConsent('externalMedia')) {
+          requestConsent('externalMedia');
+          return;
+        }
         const src = facade.dataset.src;
-        if (!src) return;
+        if (!src || facade.dataset.embedLoaded === 'true') return;
+        facade.dataset.embedLoaded = 'true';
 
         const iframe = document.createElement('iframe');
         iframe.src = src;
@@ -131,16 +151,21 @@ const copy = {
         facade.textContent = '';
         facade.append(iframe);
         trackEvent('video_play', { provider: facade.dataset.provider ?? '', title: facade.dataset.title ?? '' });
-      }, { once: true });
+      });
     });
 
     document.querySelectorAll<HTMLElement>('[data-media-facade]:not([data-media-ready])').forEach((facade) => {
       facade.dataset.mediaReady = 'true';
       const button = facade.querySelector<HTMLButtonElement>('[data-media-play]');
       button?.addEventListener('click', () => {
+        if (!hasConsent('externalMedia')) {
+          requestConsent('externalMedia');
+          return;
+        }
         const id = facade.dataset.youtubeId;
         const title = facade.dataset.title ?? 'YouTube video';
-        if (!id) return;
+        if (!id || facade.dataset.embedLoaded === 'true') return;
+        facade.dataset.embedLoaded = 'true';
 
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
@@ -153,10 +178,13 @@ const copy = {
 
         facade.replaceChildren(iframe);
         trackEvent('video_play', { provider: 'youtube', title, youtube_id: id });
-      }, { once: true });
+      });
     });
+
+    loadAllowedThumbnails();
   };
 
   initMediaFacades();
   document.addEventListener('astro:page-load', initMediaFacades);
+  window.addEventListener(CONSENT_EVENT, loadAllowedThumbnails);
 </script>

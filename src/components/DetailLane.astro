@@ -1,5 +1,6 @@
 ---
 import LaneArrow from '@/components/LaneArrow.astro';
+import MobilePlaybackControl from '@/components/MobilePlaybackControl.astro';
 import type { Locale } from '@/i18n';
 interface Props { id: string; title: string; locale: Locale; }
 const { id, title, locale } = Astro.props;
@@ -13,11 +14,14 @@ const nextCta = locale === 'en' ? 'Next' : 'Siguiente';
   data-detail-lane={id}
   data-lenis-prevent
   aria-label={title}
+  aria-hidden="true"
+  inert
   hidden
 >
   <div class="detail-lane__scroll" data-detail-scroll tabindex="-1">
     <header class="detail-lane__header">
       <LaneArrow direction="up" label={back} cta={backCta} />
+      <MobilePlaybackControl locale={locale} />
     </header>
     <div class="detail-lane__body">
       <slot />
@@ -34,6 +38,15 @@ const nextCta = locale === 'en' ? 'Next' : 'Siguiente';
     background: var(--color-stage); color: var(--color-ink);
   }
   .detail-lane[hidden] { display: none; }
+  /* Motion lanes remain laid out while closed so their fixed geometry is ready
+     before the compositor transition. `hidden`, `inert` and `aria-hidden` keep
+     them out of interaction and the accessibility tree. */
+  @media (prefers-reduced-motion: no-preference) {
+    .detail-lane[hidden] {
+      display: block;
+      pointer-events: none;
+    }
+  }
   .detail-lane__scroll {
     height: 100dvh; overflow-y: auto; overflow-x: hidden;
     overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
@@ -67,9 +80,18 @@ const nextCta = locale === 'en' ? 'Next' : 'Siguiente';
      generous desktop clamp. */
   @media (max-width: 767px) {
     .detail-lane__header {
-      align-items: flex-start;
-      min-height: 3.5rem;
-      padding: max(0.5rem, env(safe-area-inset-top)) var(--detail-lane-edge) 0;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      min-height: calc(4.25rem + env(safe-area-inset-top));
+      padding: env(safe-area-inset-top) var(--detail-lane-edge) 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent);
+      background: color-mix(in srgb, var(--color-stage) 90%, transparent);
+      backdrop-filter: blur(16px) saturate(120%);
+      -webkit-backdrop-filter: blur(16px) saturate(120%);
     }
 
     .detail-lane__header :global(.lane-arrow) {

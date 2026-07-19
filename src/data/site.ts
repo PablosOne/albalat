@@ -1,3 +1,5 @@
+import { siteConfig, localizedPagePath } from '@/config/site';
+
 /**
  * Core content model for the site: the guitarist's identity, socials, and
  * the stations that populate the horizontal stage on Home.
@@ -59,6 +61,8 @@ export interface Panel {
   bullets?: readonly string[];
   stats?: PanelStat[];
   links?: PanelLink[];
+  /** Crawlable route for a panel that also opens an interactive detail lane. */
+  href?: string;
   tagline?: string;
   taglineHighlight?: string;
   accent?: string;
@@ -81,17 +85,12 @@ export interface AboutContent {
 }
 
 export const site = {
-  fullName: 'Eulogio Albalat',
-  role: {
-    es: 'Guitarrista clásico',
-    en: 'Classical guitarist',
-  } satisfies Bilingual,
+  fullName: siteConfig.identity.name,
+  role: siteConfig.identity.role satisfies Bilingual,
 
   socials: [
-    { label: 'Email', href: 'mailto:hello@eulogioalbalat.com' },
-    { label: 'YouTube', href: 'https://www.youtube.com/c/EulogioAlbalat' },
-    { label: 'Spotify', href: 'https://open.spotify.com/artist/2WrurcoEYPTTdAqWX2ulpe' },
-    { label: 'Apple Music', href: 'https://music.apple.com/us/artist/eulogio-albalat/1849308945' },
+    { label: 'Email', href: `mailto:${siteConfig.identity.email}` },
+    ...siteConfig.socials,
   ],
 
   about: {
@@ -114,10 +113,10 @@ export const site = {
       ],
     },
     portrait: {
-      src: '/images/eulo.webp',
+      src: siteConfig.assets.portrait,
       alt: {
-        es: 'Retrato de Eulogio Albalat.',
-        en: 'Portrait of Eulogio Albalat.',
+        es: `Retrato de ${siteConfig.identity.name}.`,
+        en: `Portrait of ${siteConfig.identity.name}.`,
       },
     },
   } satisfies AboutContent,
@@ -126,14 +125,8 @@ export const site = {
     {
       id: 'hero',
       kind: 'hero',
-      heading: {
-        es: 'Eulogio Albalat',
-        en: 'Eulogio Albalat',
-      },
-      tagline: {
-        es: 'Guitarrista clásico',
-        en: 'Classical guitarist',
-      },
+      heading: { es: siteConfig.identity.name, en: siteConfig.identity.name },
+      tagline: siteConfig.identity.role,
     },
     {
       id: 'about',
@@ -208,8 +201,7 @@ export type HomeLocale = 'es' | 'en';
 
 export function getHomePanels(locale: HomeLocale): Panel[] {
   const isEn = locale === 'en';
-  const prefix = isEn ? '/en' : '';
-  const email = site.socials.find((social) => social.label === 'Email')?.href ?? 'mailto:hello@eulogioalbalat.com';
+  const email = `mailto:${siteConfig.identity.email}`;
   const youtube = site.socials.find((social) => social.label === 'YouTube')?.href ?? '/videos';
   const spotify = site.socials.find((social) => social.label === 'Spotify')?.href ?? '/music';
   const appleMusic = site.socials.find((social) => social.label === 'Apple Music')?.href ?? '/music';
@@ -219,13 +211,13 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
       id: 'hero',
       index: 1,
       heading: site.fullName,
-      subheading: site.role[locale],
+      subheading: siteConfig.identity.shortBio[locale],
       role: isEn ? 'Classical guitar' : 'Guitarra clásica',
       body: [],
       visual: {
         kind: 'hero',
         image: '/images/bg2.webp',
-        imageAlt: isEn ? 'Mossy stone wall behind Eulogio Albalat' : 'Muro de piedra con musgo tras Eulogio Albalat',
+        imageAlt: isEn ? `Mossy stone wall behind ${siteConfig.identity.name}` : `Muro de piedra con musgo tras ${siteConfig.identity.name}`,
       },
     },
     {
@@ -241,6 +233,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         ? 'A life devoted to the classical guitar.'
         : 'Una vida dedicada a la guitarra clásica.',
       detail: true,
+      href: localizedPagePath('about', locale),
       openLabel: isEn ? 'Open the full biography' : 'Abrir la biografía completa',
       visual: { kind: 'about' },
     },
@@ -269,6 +262,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         { label: 'Spotify', href: spotify },
       ],
       detail: true,
+      href: localizedPagePath('music', locale),
       openLabel: isEn ? 'Open Music details' : 'Abrir Música',
       visual: {
         kind: 'photo',
@@ -292,6 +286,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         { label: 'YouTube', href: youtube },
       ],
       detail: true,
+      href: localizedPagePath('videos', locale),
       openLabel: isEn ? 'Open Videos details' : 'Abrir Vídeos',
       visual: {
         kind: 'photo',
@@ -317,6 +312,7 @@ export function getHomePanels(locale: HomeLocale): Panel[] {
         { label: 'Email', href: email },
       ],
       detail: true,
+      href: localizedPagePath('classes', locale),
       openLabel: isEn ? 'Open Masterclass & Concerts details' : 'Abrir Masterclass y conciertos',
       visual: { kind: 'services' },
     },

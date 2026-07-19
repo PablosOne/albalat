@@ -1,5 +1,6 @@
 import { featuredAlbum } from '@/data/discography';
 import { buildQueue, getNowPlaying } from '@/lib/nowPlaying';
+import { hasConsent } from '@/lib/consent';
 
 /**
  * Arms a first-user-gesture start of the featured (Torroba) album in ambient
@@ -24,6 +25,10 @@ export function initAmbientAutoplay(): void {
   w.__ambientAutoplayInit = true;
 
   const arm = () => {
+    // Audio previews are fetched from Apple/Spotify. A general page gesture is
+    // not consent to contact those providers, so keep the player armed but
+    // dormant until the visitor has enabled external media.
+    if (!hasConsent('externalMedia')) return;
     window.removeEventListener('pointerdown', arm, true);
     window.removeEventListener('keydown', arm, true);
     window.removeEventListener('touchstart', arm, true);
@@ -42,7 +47,7 @@ export function initAmbientAutoplay(): void {
   // and-suspenders fallback for older mobile Safari. keydown covers keyboard-
   // first visitors. (A wheel/scroll is not a user-activation gesture, so audio
   // cannot start from it — a real click/tap/key press is required.)
-  window.addEventListener('pointerdown', arm, { once: true, capture: true });
-  window.addEventListener('keydown', arm, { once: true, capture: true });
-  window.addEventListener('touchstart', arm, { once: true, capture: true });
+  window.addEventListener('pointerdown', arm, { capture: true });
+  window.addEventListener('keydown', arm, { capture: true });
+  window.addEventListener('touchstart', arm, { capture: true });
 }

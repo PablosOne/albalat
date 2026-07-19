@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { siteConfig } from '../../src/config/site';
 
-const site = 'https://eulogioalbalat.com';
+const site = siteConfig.origin;
 
 const routes = [
   { path: '/', canonical: '/', es: '/', en: '/en/' },
@@ -19,7 +20,7 @@ for (const route of routes) {
   test(`${route.path} has launch-ready metadata`, async ({ page }) => {
     await page.goto(route.path);
 
-    await expect(page).toHaveTitle(/Eulogio Albalat/);
+    await expect(page).toHaveTitle(new RegExp(siteConfig.identity.name));
 
     const description = page.locator('meta[name="description"]');
     await expect(description).toHaveAttribute('content', /.+/);
@@ -29,9 +30,29 @@ for (const route of routes) {
     await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute('href', `${site}${route.en}`);
     await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', `${site}${route.es}`);
 
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Eulogio Albalat/);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', new RegExp(siteConfig.identity.name));
     await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /.+/);
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /^https:\/\/eulogioalbalat\.com\//);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', new RegExp(`^${site.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`));
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
   });
 }
+
+test('homepage exposes crawlable links while retaining interactive lanes', async ({ page }) => {
+  await page.goto('/');
+  for (const id of ['about', 'music', 'videos', 'classes']) {
+    await expect(page.locator(`a[data-lane-open="${id}"]`).first()).toHaveAttribute('href', `/${id}/`);
+  }
+  await expect(page.locator('[data-detail-lane]')).toHaveCount(4);
+});
+
+test('a detail route emits only its own long-form detail', async ({ page }) => {
+  await page.goto('/about/');
+  await expect(page.locator('[data-detail-lane]')).toHaveCount(1);
+  await expect(page.locator('[data-detail-lane="about"]')).toHaveCount(1);
+});
+
+test('robots advertises the canonical sitemap', async ({ request }) => {
+  const response = await request.get('/robots.txt');
+  expect(response.ok()).toBe(true);
+  expect(await response.text()).toContain(`Sitemap: ${siteConfig.origin}/sitemap-index.xml`);
+});

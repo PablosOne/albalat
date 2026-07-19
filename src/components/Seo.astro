@@ -4,8 +4,11 @@ interface Props {
   description: string;
   ogImage?: string;
   jsonLd?: object | object[];
+  noIndex?: boolean;
 }
-const { title, description, ogImage = '/images/og.jpg', jsonLd } = Astro.props;
+import { siteConfig } from '@/config/site';
+
+const { title, description, ogImage = siteConfig.assets.socialImage.src, jsonLd, noIndex = false } = Astro.props;
 
 const pathname = Astro.url.pathname;
 
@@ -37,7 +40,8 @@ const ogLocale = isEnglish ? 'en_US' : 'es_ES';
 ---
 <title>{title}</title>
 <meta name="description" content={description} />
-<meta name="author" content="Eulogio Albalat" />
+<meta name="author" content={siteConfig.identity.name} />
+{noIndex && <meta name="robots" content="noindex, follow" />}
 <link rel="canonical" href={canonicalURL} />
 
 <!-- hreflang alternates -->
@@ -54,10 +58,10 @@ const ogLocale = isEnglish ? 'en_US' : 'es_ES';
 <meta property="og:image:secure_url" content={ogImageURL} />
 <meta property="og:image:type" content={ogImageType} />
 <meta property="og:image:alt" content={title} />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
+<meta property="og:image:width" content={String(siteConfig.assets.socialImage.width)} />
+<meta property="og:image:height" content={String(siteConfig.assets.socialImage.height)} />
 <meta property="og:locale" content={ogLocale} />
-<meta property="og:site_name" content="Eulogio Albalat" />
+<meta property="og:site_name" content={siteConfig.identity.name} />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />

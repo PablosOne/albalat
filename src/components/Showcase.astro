@@ -9,13 +9,17 @@ import AboutContent from './content/AboutContent.astro';
 import ClassesContent from './content/ClassesContent.astro';
 import { discography } from '@/data/discography';
 import { videos } from '@/data/videos';
+import type { DetailPageId } from '@/config/site';
 
 interface Props {
   locale: HomeLocale;
   initialDetail?: string | null;
+  /** Restrict route builds to their own detail; homepage defaults to all details. */
+  detailIds?: DetailPageId[];
 }
 
-const { locale, initialDetail = null } = Astro.props;
+const allDetailIds: DetailPageId[] = ['about', 'music', 'videos', 'classes'];
+const { locale, initialDetail = null, detailIds = allDetailIds } = Astro.props;
 const panels = getHomePanels(locale);
 ---
 {initialDetail && (
@@ -38,7 +42,7 @@ const panels = getHomePanels(locale);
       {panels.map((panel, i) => <Panel panel={panel} isLast={i === panels.length - 1} />)}
     </div>
   </div>
-  {['about', 'music', 'videos', 'classes'].map((id) => (
+  {detailIds.map((id) => (
     <DetailLane id={id} title={panels.find((p) => p.id === id)?.heading ?? id} locale={locale}>
       {id === 'about'   && <AboutContent locale={locale} />}
       {id === 'music'   && <AlbumStoryPlayer albums={discography} locale={locale} />}

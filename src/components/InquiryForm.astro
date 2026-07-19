@@ -1,5 +1,6 @@
 ---
 import type { Locale } from '@/i18n';
+import { siteConfig } from '@/config/site';
 
 interface Props {
   locale: Locale;
@@ -8,7 +9,7 @@ interface Props {
 
 const { locale, intent } = Astro.props;
 const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY;
-const email = 'hello@eulogioalbalat.com';
+const email = siteConfig.identity.email;
 const copy = {
   es: {
     name: 'Nombre',
@@ -24,6 +25,8 @@ const copy = {
     error: 'No se ha podido enviar el formulario. Puedes escribir directamente por email.',
     unavailable: 'El formulario se activara al configurar Web3Forms. Mientras tanto, puedes escribir directamente por email.',
     required: 'Completa los campos obligatorios antes de enviar.',
+    privacy: 'He leído la política de privacidad y comprendo cómo se tratarán mis datos para responder a esta consulta.',
+    privacyLink: 'política de privacidad',
     class: 'Consulta sobre clases y conciertos',
     concert: 'Consulta sobre conciertos',
     contact: 'Consulta general',
@@ -42,6 +45,8 @@ const copy = {
     error: 'The form could not be sent. You can write directly by email.',
     unavailable: 'The form will be active once Web3Forms is configured. In the meantime, you can write directly by email.',
     required: 'Please complete the required fields before sending.',
+    privacy: 'I have read the privacy policy and understand how my data will be processed to answer this inquiry.',
+    privacyLink: 'privacy policy',
     class: 'Classes and concerts inquiry',
     concert: 'Concert inquiry',
     contact: 'General inquiry',
@@ -62,7 +67,7 @@ const showInquiryType = intent === 'class';
   data-required={copy.required}
 >
   <input type="hidden" name="access_key" value={accessKey ?? ''} />
-  <input type="hidden" name="subject" value={`${subject} - Eulogio Albalat`} />
+  <input type="hidden" name="subject" value={`${subject} - ${siteConfig.identity.name}`} />
   {!showInquiryType && <input type="hidden" name="inquiry_type" value={copy[`${intent}Option` as 'concertOption' | 'contactOption']} />}
   <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off" />
 
@@ -108,6 +113,15 @@ const showInquiryType = intent === 'class';
       rows="4"
       placeholder={locale === 'es' ? 'Cuéntame brevemente el contexto.' : 'Briefly describe the context.'}
     ></textarea>
+  </label>
+
+  <label class="inquiry-privacy">
+    <input required type="checkbox" name="privacy_acknowledged" value="yes" />
+    <span>
+      {copy.privacy.split(copy.privacyLink)[0]}
+      <a href={locale === 'en' ? '/en/privacy/' : '/privacy/'} target="_blank" rel="noreferrer">{copy.privacyLink}</a>
+      {copy.privacy.split(copy.privacyLink)[1]}
+    </span>
   </label>
 
   <div class="flex flex-wrap items-center gap-6 pt-2">
@@ -247,5 +261,27 @@ const showInquiryType = intent === 'class';
     color: var(--ink-muted);
     font-size: 1rem;
     line-height: 1.7;
+  }
+
+  .inquiry-privacy {
+    display: grid;
+    grid-template-columns: 1.2rem minmax(0, 1fr);
+    gap: 0.7rem;
+    align-items: start;
+    color: var(--ink-muted);
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+
+  .inquiry-privacy input {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.12rem;
+    accent-color: var(--accent);
+  }
+
+  .inquiry-privacy a {
+    color: var(--ink);
+    text-underline-offset: 0.2rem;
   }
 </style>

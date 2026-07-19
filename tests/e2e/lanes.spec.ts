@@ -79,7 +79,7 @@ test('the about panel opens its biography detail lane', async ({ page }) => {
 
 test('nav entry opens the matching lane', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#videos"]').click();
+  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[data-lane-open="videos"]').click();
   await expect(page.locator('[data-detail-lane="videos"]')).toBeVisible();
 });
 

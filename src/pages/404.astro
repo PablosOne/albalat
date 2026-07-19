@@ -2,11 +2,12 @@
 import Base from '@/layouts/Base.astro';
 import Nav from '@/components/Nav.astro';
 import { site } from '@/data/site';
+import { siteConfig } from '@/config/site';
 
 const title = `${site.fullName} - Pagina no encontrada`;
-const description = 'La pagina solicitada no existe. Vuelve al escenario principal de Eulogio Albalat.';
+const description = `La pagina solicitada no existe. Vuelve al escenario principal de ${siteConfig.identity.name}.`;
 ---
-<Base locale="es" title={title} description={description}>
+<Base locale="es" title={title} description={description} noIndex>
   <Nav locale="es" />
   <main id="main-content" class="min-h-dvh bg-stage px-6 py-28 text-ink md:px-10 md:py-36">
     <section class="mx-auto flex min-h-[62dvh] max-w-5xl flex-col justify-center">

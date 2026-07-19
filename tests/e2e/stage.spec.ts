@@ -1,15 +1,16 @@
 import { expect, test } from '@playwright/test';
+import { siteConfig } from '../../src/config/site';
 
 test('home renders hero and nav', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('navigation', { name: 'Inicio' })).toBeVisible();
   await expect(page.locator('[data-showcase]')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Eulogio Albalat' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: siteConfig.identity.name })).toBeVisible();
 });
 
 test('About station opens its detail lane from the nav', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[href="#about"]').click();
+  await page.getByRole('navigation', { name: 'Inicio' }).locator('a[data-lane-open="about"]').click();
   await expect(page.locator('[data-detail-lane="about"]')).toBeVisible();
   await expect(page.locator('[data-detail-lane]')).toHaveCount(4); // about,music,videos,classes
 });

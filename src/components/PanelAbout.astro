@@ -34,7 +34,7 @@ const { panel } = Astro.props;
     </div>
     {panel.detail && panel.openLabel && (
       <div data-reveal="cta" class="mt-8">
-        <LaneArrow direction="down" targetId={panel.id} label={panel.openLabel} withString />
+        <LaneArrow direction="down" targetId={panel.id} href={panel.href} label={panel.openLabel} withString />
       </div>
     )}
   </div>

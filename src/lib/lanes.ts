@@ -113,8 +113,6 @@ function scrollToPanel(panelId: string): void {
   }
 }
 
-type GsapInstance = typeof import('gsap').gsap;
-
 interface LaneState { openId: string | null; restoreFocus: HTMLElement | null; detachY?: () => void; detachPull?: () => void; closing?: boolean; }
 
 export function initLanes(opts: { initialDetail?: string | null } = {}): () => void {
@@ -131,57 +129,66 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     window.setTimeout(() => svg?.dispatchEvent(new PointerEvent('pointerleave')), 260);
   };
 
-  // Coordinated slide shared by open and close so both directions stay in
-  // lockstep. The detail lane and the panel row (the [data-showcase-descent]
-  // layer, NOT the scrubbed track — decoupling them is what lets the descent
-  // slide on every open, not only the first) move as one. `axis` picks the
-  // motion: 'y' = desktop descent (rise from below), 'x' = mobile slide (enter
-  // from the right). gsap.killTweensOf(panelsLayer) clears any stale tween —
-  // including one left by a PRIOR initLanes() closure — so repeat cycles start
-  // from a clean 0 / -100.
-  const slide = (
-    gsap: GsapInstance,
-    lane: HTMLElement,
-    panelsLayer: HTMLElement | null,
-    axis: 'x' | 'y',
-    dir: 'open' | 'close',
-    onComplete?: () => void,
-  ) => {
-    const ease = dir === 'open' ? 'power3.out' : 'power3.in';
-    const prop = axis === 'x' ? 'xPercent' : 'yPercent';
-    const otherProp = axis === 'x' ? 'yPercent' : 'xPercent';
-    if (panelsLayer) {
-      // Kill by TARGET (not a closure-scoped tween handle) so a stale tween
-      // left by a PRIOR initLanes() closure — e.g. a breakpoint crossing
-      // re-init mid-open — is stopped too, not just tweens created within
-      // this closure's lifetime.
-      gsap.killTweensOf(panelsLayer);
-      // otherProp is force-reset to 0 alongside the animated prop so a stale
-      // off-axis value from a prior open on the OTHER axis (same scenario)
-      // can never combine into a diagonal transform.
-      gsap.to(panelsLayer, {
-        [prop]: dir === 'open' ? -100 : 0,
-        [otherProp]: 0,
-        duration: 0.6,
-        ease,
-        // Strip the inline transform once closed so the resting layer carries
-        // no lingering translate (which would leave a stray stacking context).
-        ...(dir === 'close' ? { clearProps: 'transform' } : {}),
-      });
-    }
-    // fromTo (not set+to) so start/end are captured atomically in one tween —
-    // a preceding set immediately followed by to left the open direction
-    // rendering with no visible motion. otherProp is pinned to 0 at both ends
-    // for the same stale-axis reason as the panelsLayer tween above.
-    if (dir === 'open') {
-      gsap.fromTo(
-        lane,
-        { [prop]: 100, [otherProp]: 0, autoAlpha: 1 },
-        { [prop]: 0, [otherProp]: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete },
-      );
-    } else {
-      gsap.to(lane, { [prop]: 100, [otherProp]: 0, autoAlpha: 1, duration: 0.6, ease, overwrite: 'auto', onComplete });
-    }
+  // The coordinated open/close slide (lane rises from below / enters from the
+  // right while the [data-showcase-descent] panel row moves away in lockstep)
+  // is CSS transitions in global.css, keyed off two switches maintained here:
+  //   html[data-open-lane]   → descent layer's off position
+  //   .detail-lane.is-open   → lane's on-screen position
+  // See the global.css comment for why this is deliberately NOT a JS tween:
+  // transform transitions run on the compositor, so a main-thread stall (the
+  // just-unhidden lane's first layout/paint) can no longer swallow the motion.
+  const SLIDE_MS = 600;
+
+  // Wait until the lane's transform transition finishes (or a fallback timeout,
+  // for the no-transition edge: reduced-motion flips mid-session, a close racing
+  // an open that never got .is-open, display:none interruptions).
+  const afterSlide = (lane: HTMLElement, done: () => void) => {
+    let settled = false;
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      lane.removeEventListener('transitionend', onEnd);
+      lane.removeEventListener('transitioncancel', onEnd);
+      window.clearTimeout(timer);
+      done();
+    };
+    const onEnd = (e: TransitionEvent) => {
+      if (e.target === lane && e.propertyName === 'transform') settle();
+    };
+    const timer = window.setTimeout(settle, SLIDE_MS + 200);
+    lane.addEventListener('transitionend', onEnd);
+    lane.addEventListener('transitioncancel', onEnd);
+  };
+
+  // Desktop detail lanes can be expensive to rasterise (the music lane in
+  // particular contains large gradients, artwork and a scroll surface). Paint
+  // that surface invisibly before moving either lane. Three animation frames
+  // guarantee two paint opportunities between revealing and parking it; the
+  // subsequent transform transition can then stay entirely on the compositor.
+  const prepareDesktopLane = async (lane: HTMLElement) => {
+    lane.hidden = false;
+    lane.setAttribute('aria-hidden', 'true');
+    lane.inert = true;
+    lane.classList.add('is-preparing');
+    await new Promise<void>((resolve) => {
+      let frames = 3;
+      const next = () => {
+        frames -= 1;
+        if (frames === 0) resolve();
+        else requestAnimationFrame(next);
+      };
+      requestAnimationFrame(next);
+    });
+    lane.classList.remove('is-preparing');
+    lane.classList.add('is-positioning');
+    lane.getBoundingClientRect();
+    lane.classList.remove('is-positioning');
+  };
+
+  const setLaneInteractive = (lane: HTMLElement, interactive: boolean) => {
+    lane.inert = !interactive;
+    if (interactive) lane.removeAttribute('aria-hidden');
+    else lane.setAttribute('aria-hidden', 'true');
   };
 
   async function openLane(id: string) {
@@ -195,16 +202,11 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     // A different lane is already open: close it fully before opening this one,
     // so we never end up with two lanes visible (hidden = false) at once.
     if (state.openId) await closeLane();
-    // Set synchronously (before the open-tween's `await import('gsap')`) so
-    // closeLane()/onKey's Escape guard and the re-entry guard above see the
-    // correct id immediately, not only after the ~0.7s slide-in finishes.
+    // Set synchronously so closeLane()/onKey's Escape guard and the re-entry
+    // guard above see the correct id immediately, not only after the slide-in
+    // finishes.
     state.openId = id;
     state.restoreFocus = trigger;
-    // Publish the navigation state before any dynamic import or reveal work.
-    // This hides the global mobile navbar synchronously, so it can never flash
-    // over the detail lane's Back control on direct routes or slower devices.
-    document.documentElement.setAttribute('data-open-lane', id);
-
     pluckThreshold(id);
 
     // reveal + slide
@@ -216,35 +218,27 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
     const motion = laneMotion();
     if (motion === 'descend' || motion === 'slide') {
-      const { gsap } = await import('gsap');
-      // Stalls longer than 100ms advance the tween clock by only one frame,
-      // so a mid-tween decode/raster hitch pauses the slide instead of
-      // teleporting it. (Scroll-scrubbed tweens are unaffected.)
-      gsap.ticker.lagSmoothing(100, 16);
-      // Drive the descent layer (panels), NOT the pinned [data-showcase] section
-      // and NOT the scrubbed track (whose x the horizontal scrub owns).
-      const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
-      const axis = motion === 'slide' ? 'x' : 'y';
-      const prop = axis === 'x' ? 'xPercent' : 'yPercent';
-      const otherProp = axis === 'x' ? 'yPercent' : 'xPercent';
-      gsap.killTweensOf(lane);
-      // Reveal the lane parked offscreen and pay its first layout + paint
-      // BEFORE the tweens start. Starting them in the same frame as the
-      // un-hide let that first paint (a large, previously display:none
-      // subtree) stall the main thread while the clock-based tweens kept
-      // running — by the first painted frame most of the slide was already
-      // over, so open read as a jump with no motion on either layer.
-      gsap.set(lane, { [prop]: 100, [otherProp]: 0, autoAlpha: 1 });
-      lane.hidden = false;
-      lane.getBoundingClientRect(); // force layout now, not inside the tween
-      // Double rAF: the first callback fires BEFORE that frame's (expensive)
-      // paint; only the second guarantees the paint has actually happened.
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-      );
-      // The wait yielded to other handlers — bail if a close raced in.
-      if (state.openId !== id || state.closing) return;
-      slide(gsap, lane, panelsLayer, axis, 'open');
+      // Mobile is already smooth. Desktop first pre-paints the detail without
+      // moving the main lane, avoiding the first-frame raster stall that made
+      // the reveal jump while the reverse transition remained smooth.
+      if (motion === 'descend') await prepareDesktopLane(lane);
+      else {
+        lane.hidden = false;
+        // Mobile does not need the desktop pre-paint, but it still needs its
+        // offscreen X start committed before .is-open removes that transform.
+        lane.getBoundingClientRect();
+      }
+
+      // A close may have raced the asynchronous desktop preparation.
+      if (state.openId !== id || state.closing) {
+        lane.classList.remove('is-preparing', 'is-positioning');
+        return;
+      }
+
+      setLaneInteractive(lane, true);
+      // These two switches start both inverse transforms in the same frame.
+      document.documentElement.setAttribute('data-open-lane', id);
+      lane.classList.add('is-open');
 
       // Vertical parallax for [data-parallax-y] descendants is a desktop-only
       // affordance (the pinned-lane read); mobile detail is a plain scroll.
@@ -268,6 +262,8 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     } else {
       // Reduced-motion: lane is inline in the native vertical stack — just reveal.
       lane.hidden = false;
+      setLaneInteractive(lane, true);
+      document.documentElement.setAttribute('data-open-lane', id);
     }
     // Overscroll-to-exit: at the very top of the detail, continuing to pull up
     // rubber-bands the content down and releases back to THIS station's main lane;
@@ -328,22 +324,24 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
 
   async function closeLane(realignTo?: string) {
     const id = state.openId;
-    // Re-entry guard: a close already in flight must run to completion. Without
-    // this, a second back-click restarts closeLane, whose gsap.killTweensOf(lane)
-    // kills the in-flight close tween BEFORE its onComplete (finish) fires — so
-    // rapid repeated clicks keep restarting the slide, finish() never runs,
-    // state.openId stays set, and the lane never actually closes ("back doesn't
-    // work"). Ignore re-entrant calls; the in-flight close will finish on its own.
+    // Re-entry guard: a close already in flight must run to completion —
+    // otherwise rapid repeated back-clicks re-arm afterSlide/finish and can
+    // leave state.openId set with the lane never actually closing.
+    // Ignore re-entrant calls; the in-flight close will finish on its own.
     if (!id || state.closing) return;
     state.closing = true;
     const lane = laneEl(id);
     state.detachPull?.();
     state.detachPull = undefined;
+    if (lane) setLaneInteractive(lane, false);
     const target = realignTo ?? id;
     const finish = () => {
       state.detachY?.();
       state.detachY = undefined;
-      if (lane) lane.hidden = true;
+      if (lane) {
+        lane.classList.remove('is-open', 'is-preparing', 'is-positioning');
+        lane.hidden = true;
+      }
       document.documentElement.removeAttribute('data-open-lane');
       history.replaceState(null, '', window.location.pathname + window.location.search);
       state.openId = null;
@@ -352,15 +350,16 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
       scrollToPanel(target); // re-align: this station, or the next one on a forward exit
     };
     const motion = laneMotion();
-    if (lane && motion !== 'inline') {
-      const { gsap } = await import('gsap');
-      const panelsLayer = document.querySelector<HTMLElement>('[data-showcase-descent]');
-      gsap.killTweensOf(lane);
-      // Await the tween's completion (not just its kickoff) so callers that
-      // `await closeLane()` before opening a different lane see state.openId
-      // cleared before they proceed.
+    if (lane && motion !== 'inline' && lane.classList.contains('is-open')) {
+      // Flip both CSS switches: the lane transitions back offscreen and the
+      // descent layer (keyed off html[data-open-lane]) returns in lockstep.
+      // Await the transition's completion (not just its kickoff) so callers
+      // that `await closeLane()` before opening a different lane see
+      // state.openId cleared before they proceed.
+      lane.classList.remove('is-open');
+      document.documentElement.removeAttribute('data-open-lane');
       await new Promise<void>((resolve) => {
-        slide(gsap, lane, panelsLayer, motion === 'slide' ? 'x' : 'y', 'close', () => {
+        afterSlide(lane, () => {
           finish();
           resolve();
         });
@@ -393,6 +392,11 @@ export function initLanes(opts: { initialDetail?: string | null } = {}): () => v
     if (!id) return;
     const panel = document.querySelector(`[data-showcase-panel-id="${CSS.escape(id)}"]`);
     if (!panel) return;
+    // On a route-specific build only that route's detail lane is present. The
+    // remaining controls retain real hrefs so browsers and crawlers can follow
+    // them; intercept only when the target lane exists in the current document.
+    const href = opener.getAttribute('href') ?? '';
+    if (!hasDetailLane(id) && href && !href.startsWith('#')) return;
     e.preventDefault();
     e.stopPropagation();
     if (hasDetailLane(id)) void openLane(id);

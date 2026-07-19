@@ -42,7 +42,7 @@ const copy = {
 }[locale];
 ---
 <section class="detail-section album-story relative overflow-hidden" data-album-story>
-  <script is:inline set:html={`window.__albalatAlbums = ${JSON.stringify(albums)}`}></script>
+  <script is:inline set:html={`window.__artistAlbums = ${JSON.stringify(albums)}`}></script>
   <div class="pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" data-parallax-y="0.3">
     <div class="absolute inset-x-0 top-0 h-[42rem] bg-[radial-gradient(circle_at_16%_10%,rgba(198,146,62,.24),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(26,103,95,.24),transparent_30%),linear-gradient(180deg,rgba(93,26,45,.16),transparent_72%)]"></div>
     <div class="album-story__rule absolute inset-x-0 top-0 h-px bg-ink/10"></div>
@@ -332,6 +332,9 @@ const copy = {
   .track-row[data-track-active="true"] {
     color: var(--accent);
   }
+  .track-row {
+    scroll-margin-block: 5rem;
+  }
   .track-row[data-track-active="true"] span:first-child::before {
     content: "▶ ";
     color: var(--accent);
@@ -339,6 +342,8 @@ const copy = {
 </style>
 
 <script>
+  import { hasConsent, requestConsent } from '@/lib/consent';
+
   let unsubscribeNowPlaying: (() => void) | null = null;
 
   const initAlbumStory = () => {
@@ -386,16 +391,24 @@ const copy = {
         import('@/lib/trackTheme').then(({ applyTheme, resolveTrackTheme }) => {
           const engine = getNowPlaying();
           const albumById = new Map<string, any>();
-          (window as any).__albalatAlbums?.forEach?.((a: any) => albumById.set(a.id, a));
+          (window as any).__artistAlbums?.forEach?.((a: any) => albumById.set(a.id, a));
 
           root.querySelectorAll<HTMLButtonElement>('[data-play-album]').forEach((btn) => {
             btn.addEventListener('click', () => {
+              if (!hasConsent('externalMedia')) {
+                requestConsent('externalMedia');
+                return;
+              }
               const album = albumById.get(btn.dataset.playAlbum!);
               if (album) engine.load(buildQueue(album), 0);
             });
           });
           root.querySelectorAll<HTMLButtonElement>('[data-play-track]').forEach((btn) => {
             btn.addEventListener('click', () => {
+              if (!hasConsent('externalMedia')) {
+                requestConsent('externalMedia');
+                return;
+              }
               const album = albumById.get(btn.dataset.albumId!);
               if (album) engine.load(buildQueue(album), Number(btn.dataset.trackIndex));
             });

@@ -2,7 +2,9 @@
 import type { Locale } from '@/i18n';
 import { useTranslations } from '@/i18n';
 import { site } from '@/data/site';
+import { localizedPagePath, siteConfig, type DetailPageId } from '@/config/site';
 import LangToggle from './LangToggle.astro';
+import MobilePlaybackControl from './MobilePlaybackControl.astro';
 import Wordmark from './Wordmark.astro';
 
 interface Props {
@@ -17,19 +19,23 @@ const toolbarAttrs = isHome
   ? { 'data-toolbar': true, style: 'opacity: 0; clip-path: inset(0% 0% 100% 0%)' }
   : {};
 
-function localizePath(path: string): string {
-  if (locale === 'es') return path;
-  return path === '/' ? '/en/' : `/en${path}`;
-}
-
-const navItems = ['about', 'music', 'videos', 'classes', 'contact'].map((id, index) => ({
+const detailPages: DetailPageId[] = ['about', 'music', 'videos', 'classes'];
+const navItems = [
+  ...detailPages.map((id) => ({
     id,
-    label: t(`nav.${id}`),
-    href: `${isHome ? '' : localizePath('/')}#${id}`,
-    number: String(index + 1).padStart(2, '0'),
-  }));
+    label: siteConfig.pages[id].label[locale],
+    href: localizedPagePath(id, locale),
+    laneId: isHome ? id : undefined,
+  })),
+  {
+    id: 'contact',
+    label: t('nav.contact'),
+    href: isHome ? '#contact' : `${localizedPagePath('home', locale)}#contact`,
+    laneId: undefined,
+  },
+].map((item, index) => ({ ...item, number: String(index + 1).padStart(2, '0') }));
 
-const homeHref = localizePath('/');
+const homeHref = localizedPagePath('home', locale);
 ---
 <a
   href="#main-content"
@@ -51,6 +57,7 @@ const homeHref = localizePath('/');
       <span>{site.fullName}</span>
       <span class="nav-mobile-brand__dot" aria-hidden="true"></span>
     </a>
+    <MobilePlaybackControl locale={locale} />
     <button
       type="button"
       class="nav-trigger"
@@ -89,7 +96,7 @@ const homeHref = localizePath('/');
       </li>
       {navItems.map((item, index) => (
         <li class="nav-item" style={`--nav-i: ${index + 1}`}>
-          <a href={item.href}>
+          <a href={item.href} data-lane-open={item.laneId} aria-current={pathname === item.href ? 'page' : undefined}>
             <span class="nav-item__number">{item.number}</span>
             <span>{item.label}</span>
             <svg class="nav-item__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"></path></svg>
@@ -102,7 +109,7 @@ const homeHref = localizePath('/');
       </li>
     </ul>
 
-    <p class="nav-drawer__footer">{locale === 'en' ? 'Classical guitarist' : 'Guitarrista clásico'} · Pazo de Souto, Lugo</p>
+    <p class="nav-drawer__footer">{siteConfig.identity.role[locale]} · {siteConfig.identity.location}</p>
   </div>
 </nav>
 
@@ -470,6 +477,12 @@ const homeHref = localizePath('/');
     .nav-bar {
       inset: 1.5rem 1.5rem auto auto;
       mix-blend-mode: difference;
+    }
+  }
+
+  @media (max-width: 767px) {
+    :global(html[data-now-playing-active]) .nav-mobile-bar {
+      width: 7.35rem;
     }
   }
 

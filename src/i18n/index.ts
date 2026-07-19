@@ -1,9 +1,10 @@
 import es from './es.json';
 import en from './en.json';
+import { siteConfig } from '@/config/site';
 
-export const LOCALES = ['es', 'en'] as const;
+export const LOCALES = siteConfig.locales;
 export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = 'es';
+export const DEFAULT_LOCALE: Locale = siteConfig.defaultLocale;
 
 const DICTS: Record<Locale, unknown> = { es, en };
 
