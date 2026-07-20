@@ -74,4 +74,17 @@ describe('ambient autoplay consent handoff', () => {
 
     expect(testWindow.__nowPlaying).toBeUndefined();
   });
+
+  it('starts muted on scroll and becomes audible on the next activation', () => {
+    saveConsent({ analytics: false, externalMedia: true });
+    initAmbientAutoplay();
+
+    testWindow.dispatchEvent(new Event('wheel'));
+    expect(testWindow.__nowPlaying?.getState().track).not.toBeNull();
+    expect(testWindow.__nowPlaying?.getState().visible).toBe(false);
+    expect(testWindow.__nowPlaying?.getState().muted).toBe(true);
+
+    testWindow.dispatchEvent(new Event('pointerdown'));
+    expect(testWindow.__nowPlaying?.getState().muted).toBe(false);
+  });
 });

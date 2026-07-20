@@ -76,7 +76,8 @@ export function buildQueue(album: Album): PlayerTrack[] {
   }));
 }
 
-export const CROSSFADE_MS = 1_800;
+/** Fade out fully, then fade the next track in. No audible track overlap. */
+export const CROSSFADE_MS = 4_000;
 
 export function createEngine(opts: {
   audio?: AudioLike;
@@ -116,11 +117,13 @@ export function createEngine(opts: {
         outgoingDeck === null &&
         Number.isFinite(remaining) &&
         remaining > 0 &&
-        remaining * 1_000 <= crossfadeMs &&
+        remaining * 1_000 <= crossfadeMs / 2 &&
         state.index + 1 < queue.length &&
         queue[state.index + 1]?.previewUrl
       ) {
-        playIndex(state.index + 1, Math.min(crossfadeMs, remaining * 1_000));
+        // The first half is the fade-out. If this timeupdate arrived late,
+        // shorten both halves equally so silence still lands at track end.
+        playIndex(state.index + 1, Math.min(crossfadeMs, Math.round(remaining * 2_000)));
       }
     });
     audio.addEventListener('play', () => {
@@ -134,7 +137,11 @@ export function createEngine(opts: {
       emit();
     });
     audio.addEventListener('ended', () => {
-      if (deck === activeDeck) next();
+      if (deck !== activeDeck || outgoingDeck !== null) return;
+      // Normally the early fade owns natural advancement. If the browser
+      // skipped its final timeupdate, change decks immediately without a gap.
+      if (state.index + 1 < queue.length) playIndex(state.index + 1, 0);
+      else { audio.pause(); state.isPaused = true; emit(); }
     });
   });
 
@@ -178,36 +185,20 @@ export function createEngine(opts: {
     incoming.currentTime = 0;
     incoming.muted = state.muted;
     incoming.volume = 0;
-    activeDeck = incomingDeck;
     outgoingDeck = previousDeck;
-    setTrack(i, track);
+    state.visible = !ambient;
     emit();
 
     const startedAt = Date.now();
-    const finish = () => {
-      if (generation !== fadeGeneration) return;
-      outgoing.pause();
-      outgoing.volume = 1;
-      incoming.volume = 1;
-      outgoingDeck = null;
-      if (fadeTimer !== null) clearInterval(fadeTimer);
-      fadeTimer = null;
-    };
-    const tick = () => {
-      const progress = Math.min(1, (Date.now() - startedAt) / durationMs);
-      // Equal-power curves avoid the audible dip caused by two linear fades.
-      outgoing.volume = Math.cos(progress * Math.PI / 2);
-      incoming.volume = Math.sin(progress * Math.PI / 2);
-      if (progress >= 1) finish();
-    };
-    tick();
-    if (outgoingDeck !== null) fadeTimer = setInterval(tick, 40);
+    const fadeOutMs = durationMs / 2;
+    const fadeInMs = durationMs - fadeOutMs;
+    let incomingStarted = false;
 
-    void incoming.play().catch(() => {
+    const failIncoming = () => {
       if (
         generation !== fadeGeneration ||
         activeDeck !== incomingDeck ||
-        outgoingDeck !== previousDeck
+        state.track !== track
       ) return;
       if (fadeTimer !== null) clearInterval(fadeTimer);
       fadeTimer = null;
@@ -218,7 +209,46 @@ export function createEngine(opts: {
       outgoing.volume = 1;
       state.isPaused = true;
       emit();
-    });
+    };
+
+    const startIncoming = () => {
+      if (incomingStarted) return;
+      incomingStarted = true;
+      outgoing.volume = 0;
+      activeDeck = incomingDeck;
+      outgoing.pause();
+      outgoing.volume = 1;
+      setTrack(i, track);
+      emit();
+      void incoming.play().catch(failIncoming);
+    };
+
+    const finish = () => {
+      if (generation !== fadeGeneration) return;
+      startIncoming();
+      incoming.volume = 1;
+      outgoingDeck = null;
+      if (fadeTimer !== null) clearInterval(fadeTimer);
+      fadeTimer = null;
+    };
+    const tick = () => {
+      const elapsed = Math.min(durationMs, Date.now() - startedAt);
+      if (elapsed < fadeOutMs) {
+        // First soften the current track all the way to silence. The incoming
+        // deck remains paused at its first frame, so the pieces never overlap.
+        const progress = elapsed / fadeOutMs;
+        outgoing.volume = 1 - progress * progress * (3 - 2 * progress);
+        incoming.volume = 0;
+      } else {
+        startIncoming();
+        // Only after the outgoing track is silent do we raise the next one.
+        const progress = Math.min(1, (elapsed - fadeOutMs) / fadeInMs);
+        incoming.volume = progress * progress * (3 - 2 * progress);
+      }
+      if (elapsed >= durationMs) finish();
+    };
+    tick();
+    if (outgoingDeck !== null) fadeTimer = setInterval(tick, 40);
   }
 
   function playIndex(i: number, durationMs = crossfadeMs) {

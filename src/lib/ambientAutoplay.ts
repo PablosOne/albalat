@@ -25,43 +25,76 @@ export function initAmbientAutoplay(): void {
   w.__ambientAutoplayInit = true;
 
   const disarm = () => {
-    window.removeEventListener('pointerdown', arm, true);
-    window.removeEventListener('keydown', arm, true);
-    window.removeEventListener('touchstart', arm, true);
+    window.removeEventListener('pointerdown', onActivation, true);
+    window.removeEventListener('keydown', onActivation, true);
+    window.removeEventListener('touchstart', onActivation, true);
+    window.removeEventListener('click', onClick);
+    window.removeEventListener('wheel', onScrollGesture);
+    window.removeEventListener('touchmove', onScrollGesture);
     window.removeEventListener(CONSENT_EVENT, onConsent);
   };
 
-  const arm = () => {
+  const startAmbient = (muted: boolean) => {
     // Audio previews are fetched from Apple/Spotify. A general page gesture is
     // not consent to contact those providers, so keep the player armed but
     // dormant until the visitor has enabled external media.
     if (!hasConsent('externalMedia')) return;
-    disarm();
+    const engine = getNowPlaying();
+    const state = engine.getState();
 
-    // Defer to the next tick so that if this very gesture was a click on a
-    // discography play button, that handler loads its album first and we bail
-    // instead of stomping the visitor's explicit choice with Torroba.
-    setTimeout(() => {
-      const engine = getNowPlaying();
-      if (engine.getState().track) return;
-      engine.load(buildQueue(featuredAlbum), 0, { ambient: true });
-    }, 0);
+    // A visible track is an explicit visitor choice and always wins.
+    if (state.track && state.visible) {
+      disarm();
+      return;
+    }
+
+    if (state.track) {
+      if (!muted) {
+        engine.setMuted(false);
+        if (state.isPaused) engine.toggle();
+        disarm();
+      }
+      return;
+    }
+
+    // Scrolling is not a browser user-activation gesture, so start muted in
+    // that case. Muted media may autoplay and can be unmuted by the next real
+    // activation without creating a second player or queue.
+    if (muted) engine.setMuted(true);
+    engine.load(buildQueue(featuredAlbum), 0, { ambient: true });
+    if (!muted) disarm();
   };
+
+  const isInteractive = (event: Event) => {
+    const target = event.target as Element | null;
+    return !!target?.closest?.('a, button, input, select, textarea, [role="button"]');
+  };
+
+  // Start synchronously so browsers retain the gesture's autoplay permission.
+  // Interactive controls wait for their click handler first, allowing an
+  // explicit track selection to take precedence over ambient playback.
+  const onActivation = (event: Event) => {
+    if (!isInteractive(event)) startAmbient(false);
+  };
+  const onClick = () => startAmbient(false);
+  const onScrollGesture = () => startAmbient(true);
 
   // The pointerdown for an Accept/Save button happens before its click handler
   // stores consent. React to that synchronous consent event too, while the same
   // user activation is still live, instead of requiring another page gesture.
   const onConsent = (event: Event) => {
     const consent = (event as CustomEvent<ConsentPreferences>).detail;
-    if (consent?.externalMedia) arm();
+    if (consent?.externalMedia) startAmbient(false);
   };
 
-  // pointerdown covers mouse + touch on modern browsers; touchstart is a belt-
-  // and-suspenders fallback for older mobile Safari. keydown covers keyboard-
-  // first visitors. (A wheel/scroll is not a user-activation gesture, so audio
-  // cannot start from it — a real click/tap/key press is required.)
-  window.addEventListener('pointerdown', arm, { capture: true });
-  window.addEventListener('keydown', arm, { capture: true });
-  window.addEventListener('touchstart', arm, { capture: true });
+  // pointerdown covers mouse + touch on modern browsers; touchstart is a
+  // fallback for older mobile Safari. Click runs after interactive controls,
+  // and wheel/touchmove provide the muted scroll fallback.
+  window.addEventListener('pointerdown', onActivation, { capture: true });
+  window.addEventListener('keydown', onActivation, { capture: true });
+  window.addEventListener('touchstart', onActivation, { capture: true });
+  window.addEventListener('click', onClick);
+  window.addEventListener('wheel', onScrollGesture, { passive: true });
+  window.addEventListener('touchmove', onScrollGesture, { passive: true });
   window.addEventListener(CONSENT_EVENT, onConsent);
 }

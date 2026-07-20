@@ -57,44 +57,51 @@ describe('createEngine', () => {
     const firstSrc = audio.src;
     audio.emit('ended');
     expect(engine.getState().index).toBe(1);
-    expect(secondaryAudio.src).not.toBe(firstSrc);
+    expect(audio.src).not.toBe(firstSrc);
   });
 
-  it('crossfades to the next track shortly before the current preview ends', async () => {
+  it('fades the current track out before gently fading the next track in', () => {
     vi.useFakeTimers();
     const audio = mockAudio();
     const secondaryAudio = mockAudio();
     const engine = createEngine({ audio, secondaryAudio, crossfadeMs: 1_000 });
     engine.load(buildQueue(torroba), 0);
     audio.duration = 30;
-    audio.currentTime = 29.2;
+    audio.currentTime = 29.6;
 
     audio.emit('timeupdate');
-    await Promise.resolve();
-
-    expect(engine.getState().index).toBe(1);
+    expect(engine.getState().index).toBe(0);
     expect(secondaryAudio.src).toContain('mzaf_');
     expect(secondaryAudio.volume).toBe(0);
-    vi.advanceTimersByTime(400);
+    expect(secondaryAudio.paused).toBe(true);
+
+    vi.advanceTimersByTime(200);
     expect(audio.volume).toBeLessThan(1);
-    expect(secondaryAudio.volume).toBeGreaterThan(0);
-    vi.advanceTimersByTime(600);
+    expect(audio.paused).toBe(false);
+    expect(secondaryAudio.volume).toBe(0);
+    vi.advanceTimersByTime(200);
+    expect(engine.getState().index).toBe(1);
     expect(audio.paused).toBe(true);
+    expect(secondaryAudio.paused).toBe(false);
+    expect(secondaryAudio.volume).toBe(0);
+    vi.advanceTimersByTime(200);
+    expect(secondaryAudio.volume).toBeGreaterThan(0);
+    expect(audio.paused).toBe(true);
+    vi.advanceTimersByTime(200);
     expect(secondaryAudio.volume).toBe(1);
   });
 
-  it('uses the same crossfade when ambient playback auto-advances', async () => {
+  it('uses the same crossfade when ambient playback auto-advances', () => {
     vi.useFakeTimers();
     const audio = mockAudio();
     const secondaryAudio = mockAudio();
     const engine = createEngine({ audio, secondaryAudio, crossfadeMs: 1_000 });
     engine.load(buildQueue(torroba), 0, { ambient: true });
     audio.duration = 30;
-    audio.currentTime = 29.2;
+    audio.currentTime = 29.6;
 
     audio.emit('timeupdate');
-    await Promise.resolve();
-    vi.advanceTimersByTime(1_000);
+    vi.advanceTimersByTime(800);
 
     expect(engine.getState().index).toBe(1);
     expect(engine.getState().visible).toBe(false);
