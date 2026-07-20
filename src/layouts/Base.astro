@@ -31,6 +31,45 @@ const themeCss = `:root{--stage:${siteConfig.theme.stage};--ink:${siteConfig.the
     <meta name="apple-mobile-web-app-title" content={siteConfig.identity.name} />
     <meta name="format-detection" content="telephone=no" />
 
+    <!-- Browsers, especially mobile Safari/Chrome, may restore window.scrollY
+         late during a reload after the responsive panels have laid out. Run
+         before the router and body so a plain refresh consistently starts at
+         the hero. Explicit hash deep links keep their native target behavior. -->
+    <script is:inline>
+      (() => {
+        const entry = performance.getEntriesByType?.('navigation')[0];
+        const isReload = entry?.type === 'reload';
+        if (!isReload || location.hash) return;
+
+        history.scrollRestoration = 'manual';
+        let active = true;
+        const reset = () => { if (active) window.scrollTo(0, 0); };
+        const cancel = () => { active = false; cleanup(); };
+        const cleanup = () => {
+          window.removeEventListener('pointerdown', cancel, true);
+          window.removeEventListener('touchstart', cancel, true);
+          window.removeEventListener('wheel', cancel, true);
+          window.removeEventListener('keydown', cancel, true);
+        };
+
+        window.addEventListener('pointerdown', cancel, { capture: true, passive: true });
+        window.addEventListener('touchstart', cancel, { capture: true, passive: true });
+        window.addEventListener('wheel', cancel, { capture: true, passive: true });
+        window.addEventListener('keydown', cancel, { capture: true });
+        document.addEventListener('DOMContentLoaded', reset, { once: true });
+        window.addEventListener('pageshow', reset, { once: true });
+        window.addEventListener('load', () => {
+          reset();
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            reset();
+            cleanup();
+            history.scrollRestoration = 'auto';
+          }));
+        }, { once: true });
+        reset();
+      })();
+    </script>
+
     <Seo {...Astro.props} />
     <style is:inline set:html={themeCss}></style>
     <ClientRouter />

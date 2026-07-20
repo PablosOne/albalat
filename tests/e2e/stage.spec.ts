@@ -8,6 +8,32 @@ test('home renders hero and nav', async ({ page }) => {
   await expect(page.getByRole('heading', { name: siteConfig.identity.name })).toBeVisible();
 });
 
+test('mobile reload returns a plain URL to the first section', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+
+  await page.goto('/');
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+  await page.reload();
+
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(2);
+  await expect(page.locator('[data-showcase-panel-id="hero"]')).toBeInViewport();
+  await context.close();
+});
+
+test('reload preserves an explicit section hash', async ({ page }) => {
+  await page.goto('/#about');
+  await page.reload();
+
+  await expect(page).toHaveURL(/\/#about$/);
+  await expect(page.locator('[data-detail-lane="about"]')).toBeVisible();
+});
+
 test('About station opens its detail lane from the nav', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation', { name: 'Inicio' }).locator('a[data-lane-open="about"]').click();

@@ -76,8 +76,8 @@ export function buildQueue(album: Album): PlayerTrack[] {
   }));
 }
 
-/** Fade out fully, then fade the next track in. No audible track overlap. */
-export const CROSSFADE_MS = 4_000;
+/** Three seconds down, then three seconds up. No audible track overlap. */
+export const CROSSFADE_MS = 6_000;
 
 export function createEngine(opts: {
   audio?: AudioLike;
