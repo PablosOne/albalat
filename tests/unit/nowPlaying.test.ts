@@ -1,11 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildQueue, createEngine, type AudioLike } from '@/lib/nowPlaying';
 import { discography } from '@/data/discography';
 
 function mockAudio(): AudioLike & { emit: (t: string) => void } {
   const listeners: Record<string, Array<() => void>> = {};
   return {
-    src: '', currentTime: 0, duration: 0, paused: true, muted: false,
+    src: '', currentTime: 0, duration: 0, paused: true, muted: false, volume: 1,
     play: vi.fn(async function (this: AudioLike) { this.paused = false; }),
     pause: vi.fn(function (this: AudioLike) { this.paused = true; }),
     addEventListener: (t: string, cb: () => void) => { (listeners[t] ??= []).push(cb); },
@@ -14,6 +14,8 @@ function mockAudio(): AudioLike & { emit: (t: string) => void } {
 }
 
 const torroba = discography.find((a) => a.id === 'torroba-guitar-music')!;
+
+afterEach(() => vi.useRealTimers());
 
 describe('buildQueue', () => {
   it('maps an album to player tracks carrying resolved themes', () => {
@@ -49,12 +51,55 @@ describe('createEngine', () => {
 
   it('auto-advances to the next track when the clip ends', () => {
     const audio = mockAudio();
-    const engine = createEngine({ audio });
+    const secondaryAudio = mockAudio();
+    const engine = createEngine({ audio, secondaryAudio });
     engine.load(buildQueue(torroba), 0);
     const firstSrc = audio.src;
     audio.emit('ended');
     expect(engine.getState().index).toBe(1);
-    expect(audio.src).not.toBe(firstSrc);
+    expect(secondaryAudio.src).not.toBe(firstSrc);
+  });
+
+  it('crossfades to the next track shortly before the current preview ends', async () => {
+    vi.useFakeTimers();
+    const audio = mockAudio();
+    const secondaryAudio = mockAudio();
+    const engine = createEngine({ audio, secondaryAudio, crossfadeMs: 1_000 });
+    engine.load(buildQueue(torroba), 0);
+    audio.duration = 30;
+    audio.currentTime = 29.2;
+
+    audio.emit('timeupdate');
+    await Promise.resolve();
+
+    expect(engine.getState().index).toBe(1);
+    expect(secondaryAudio.src).toContain('mzaf_');
+    expect(secondaryAudio.volume).toBe(0);
+    vi.advanceTimersByTime(400);
+    expect(audio.volume).toBeLessThan(1);
+    expect(secondaryAudio.volume).toBeGreaterThan(0);
+    vi.advanceTimersByTime(600);
+    expect(audio.paused).toBe(true);
+    expect(secondaryAudio.volume).toBe(1);
+  });
+
+  it('uses the same crossfade when ambient playback auto-advances', async () => {
+    vi.useFakeTimers();
+    const audio = mockAudio();
+    const secondaryAudio = mockAudio();
+    const engine = createEngine({ audio, secondaryAudio, crossfadeMs: 1_000 });
+    engine.load(buildQueue(torroba), 0, { ambient: true });
+    audio.duration = 30;
+    audio.currentTime = 29.2;
+
+    audio.emit('timeupdate');
+    await Promise.resolve();
+    vi.advanceTimersByTime(1_000);
+
+    expect(engine.getState().index).toBe(1);
+    expect(engine.getState().visible).toBe(false);
+    expect(audio.paused).toBe(true);
+    expect(secondaryAudio.volume).toBe(1);
   });
 
   it('notifies subscribers on state change', () => {
@@ -97,7 +142,7 @@ describe('createEngine', () => {
   it('load resets mute so explicit playback is never silently muted by a prior ambient mute', () => {
     const audio = mockAudio();
     const engine = createEngine({ audio });
-    engine.loadAmbient(buildQueue(torroba), 0);
+    engine.load(buildQueue(torroba), 0, { ambient: true });
     engine.toggleMute();
     expect(engine.getState().muted).toBe(true);
     engine.load(buildQueue(torroba), 1);
@@ -105,10 +150,10 @@ describe('createEngine', () => {
     expect(audio.muted).toBe(false);
   });
 
-  it('loadAmbient plays the track but keeps the bar hidden', () => {
+  it('ambient load plays the track but keeps the bar hidden', () => {
     const audio = mockAudio();
     const engine = createEngine({ audio });
-    engine.loadAmbient(buildQueue(torroba), 0);
+    engine.load(buildQueue(torroba), 0, { ambient: true });
     const s = engine.getState();
     expect(s.visible).toBe(false);
     expect(s.track?.title).toContain('Turégano');
@@ -118,7 +163,7 @@ describe('createEngine', () => {
   it('ambient playback stays hidden across auto-advance', () => {
     const audio = mockAudio();
     const engine = createEngine({ audio });
-    engine.loadAmbient(buildQueue(torroba), 0);
+    engine.load(buildQueue(torroba), 0, { ambient: true });
     audio.emit('ended');
     expect(engine.getState().index).toBe(1);
     expect(engine.getState().visible).toBe(false);
@@ -127,7 +172,7 @@ describe('createEngine', () => {
   it('a normal load after ambient reveals the bar', () => {
     const audio = mockAudio();
     const engine = createEngine({ audio });
-    engine.loadAmbient(buildQueue(torroba), 0);
+    engine.load(buildQueue(torroba), 0, { ambient: true });
     engine.load(buildQueue(torroba), 1);
     expect(engine.getState().visible).toBe(true);
   });
@@ -135,7 +180,7 @@ describe('createEngine', () => {
   it('setMuted and toggleMute flip state.muted and audio.muted', () => {
     const audio = mockAudio();
     const engine = createEngine({ audio });
-    engine.loadAmbient(buildQueue(torroba), 0);
+    engine.load(buildQueue(torroba), 0, { ambient: true });
     expect(engine.getState().muted).toBe(false);
     engine.toggleMute();
     expect(engine.getState().muted).toBe(true);

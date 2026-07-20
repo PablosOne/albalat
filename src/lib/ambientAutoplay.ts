@@ -39,7 +39,7 @@ export function initAmbientAutoplay(): void {
     setTimeout(() => {
       const engine = getNowPlaying();
       if (engine.getState().track) return;
-      engine.loadAmbient(buildQueue(featuredAlbum), 0);
+      engine.load(buildQueue(featuredAlbum), 0, { ambient: true });
     }, 0);
   };
 
