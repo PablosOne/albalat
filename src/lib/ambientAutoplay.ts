@@ -1,6 +1,6 @@
 import { featuredAlbum } from '@/data/discography';
 import { buildQueue, getNowPlaying } from '@/lib/nowPlaying';
-import { hasConsent } from '@/lib/consent';
+import { CONSENT_EVENT, hasConsent, type ConsentPreferences } from '@/lib/consent';
 
 /**
  * Arms a first-user-gesture start of the featured (Torroba) album in ambient
@@ -24,14 +24,19 @@ export function initAmbientAutoplay(): void {
   if (w.__ambientAutoplayInit) return;
   w.__ambientAutoplayInit = true;
 
+  const disarm = () => {
+    window.removeEventListener('pointerdown', arm, true);
+    window.removeEventListener('keydown', arm, true);
+    window.removeEventListener('touchstart', arm, true);
+    window.removeEventListener(CONSENT_EVENT, onConsent);
+  };
+
   const arm = () => {
     // Audio previews are fetched from Apple/Spotify. A general page gesture is
     // not consent to contact those providers, so keep the player armed but
     // dormant until the visitor has enabled external media.
     if (!hasConsent('externalMedia')) return;
-    window.removeEventListener('pointerdown', arm, true);
-    window.removeEventListener('keydown', arm, true);
-    window.removeEventListener('touchstart', arm, true);
+    disarm();
 
     // Defer to the next tick so that if this very gesture was a click on a
     // discography play button, that handler loads its album first and we bail
@@ -43,6 +48,14 @@ export function initAmbientAutoplay(): void {
     }, 0);
   };
 
+  // The pointerdown for an Accept/Save button happens before its click handler
+  // stores consent. React to that synchronous consent event too, while the same
+  // user activation is still live, instead of requiring another page gesture.
+  const onConsent = (event: Event) => {
+    const consent = (event as CustomEvent<ConsentPreferences>).detail;
+    if (consent?.externalMedia) arm();
+  };
+
   // pointerdown covers mouse + touch on modern browsers; touchstart is a belt-
   // and-suspenders fallback for older mobile Safari. keydown covers keyboard-
   // first visitors. (A wheel/scroll is not a user-activation gesture, so audio
@@ -50,4 +63,5 @@ export function initAmbientAutoplay(): void {
   window.addEventListener('pointerdown', arm, { capture: true });
   window.addEventListener('keydown', arm, { capture: true });
   window.addEventListener('touchstart', arm, { capture: true });
+  window.addEventListener(CONSENT_EVENT, onConsent);
 }
