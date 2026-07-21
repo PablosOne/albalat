@@ -143,7 +143,7 @@ const copy = {
     const applyLabel = (muted: boolean) =>
       btn.setAttribute('aria-label', muted ? copy.unmute : copy.mute);
     const syncMobileControls = (s: PlayerState) => {
-      const isAmbient = !!s.track && !s.visible;
+      const isAmbient = !!s.track && !s.visible && !s.isPaused;
       document.documentElement.toggleAttribute('data-ambient-active', isAmbient);
       document.querySelectorAll<HTMLButtonElement>('[data-ambient-mobile-toggle]').forEach((control) => {
         control.hidden = !isAmbient;
@@ -171,7 +171,7 @@ const copy = {
     });
 
     const render = (s: PlayerState) => {
-      const isAmbient = !!s.track && !s.visible;
+      const isAmbient = !!s.track && !s.visible && !s.isPaused;
       btn.hidden = !isAmbient;
       btn.dataset.active = String(isAmbient);
       btn.dataset.muted = String(s.muted);

@@ -1,6 +1,7 @@
 import { featuredAlbum } from '@/data/discography';
 import { buildQueue, getNowPlaying } from '@/lib/nowPlaying';
 import { CONSENT_EVENT, hasConsent, type ConsentPreferences } from '@/lib/consent';
+import { PLAYBACK_CHANGE_EVENT } from '@/lib/mediaPlayback';
 
 /**
  * Arms a first-user-gesture start of the featured (Torroba) album in ambient
@@ -32,6 +33,7 @@ export function initAmbientAutoplay(): void {
     window.removeEventListener('wheel', onScrollGesture);
     window.removeEventListener('touchmove', onScrollGesture);
     window.removeEventListener(CONSENT_EVENT, onConsent);
+    window.removeEventListener(PLAYBACK_CHANGE_EVENT, onPlaybackChange);
   };
 
   const startAmbient = (muted: boolean) => {
@@ -87,6 +89,14 @@ export function initAmbientAutoplay(): void {
     if (consent?.externalMedia) startAmbient(false);
   };
 
+  // An explicit video choice owns playback just like an explicit music choice.
+  // In particular, do not let the ambient window click handler start music
+  // immediately after the video facade's own click handler has started video.
+  const onPlaybackChange = (event: Event) => {
+    const kind = (event as CustomEvent<{ kind?: string }>).detail?.kind;
+    if (kind === 'video') disarm();
+  };
+
   // pointerdown covers mouse + touch on modern browsers; touchstart is a
   // fallback for older mobile Safari. Click runs after interactive controls,
   // and wheel/touchmove provide the muted scroll fallback.
@@ -97,4 +107,5 @@ export function initAmbientAutoplay(): void {
   window.addEventListener('wheel', onScrollGesture, { passive: true });
   window.addEventListener('touchmove', onScrollGesture, { passive: true });
   window.addEventListener(CONSENT_EVENT, onConsent);
+  window.addEventListener(PLAYBACK_CHANGE_EVENT, onPlaybackChange);
 }

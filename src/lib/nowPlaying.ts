@@ -45,6 +45,7 @@ export interface AudioLike {
 
 export interface NowPlayingEngine {
   load(queue: PlayerTrack[], index: number, options?: { ambient?: boolean }): void;
+  pause(): void;
   setMuted(m: boolean): void;
   toggleMute(): void;
   toggle(): void;
@@ -300,7 +301,17 @@ export function createEngine(opts: {
       }
       queue = q;
       state.queueLength = q.length;
-      playIndex(index);
+      // A load is an explicit source selection (a track/album button or the
+      // ambient bootstrap), not queue progression. Replace whatever is on the
+      // decks immediately; crossfading here made a manual choice feel delayed
+      // and could briefly expose the ambient track's fade state in the player.
+      playIndex(index, 0);
+    },
+    pause() {
+      stopFade();
+      decks.forEach((audio) => audio.pause());
+      state.isPaused = true;
+      emit();
     },
     setMuted(m) { decks.forEach((audio) => { audio.muted = m; }); state.muted = m; emit(); },
     toggleMute() {

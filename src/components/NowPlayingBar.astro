@@ -97,6 +97,7 @@ const copy = {
   import { getNowPlaying, type PlayerState } from '@/lib/nowPlaying';
   import { applyTheme } from '@/lib/trackTheme';
   import { hasConsent, requestConsent } from '@/lib/consent';
+  import { activateMusicPlayback, PLAYBACK_CHANGE_EVENT } from '@/lib/mediaPlayback';
 
   const fmt = (s: number) => {
     if (!Number.isFinite(s)) s = 0;
@@ -173,13 +174,23 @@ const copy = {
     const youtube = q<HTMLAnchorElement>('[data-np-youtube]');
     const full = q<HTMLButtonElement>('[data-np-full]');
 
-    toggle.addEventListener('click', () => engine.toggle());
+    const togglePlayback = () => {
+      if (engine.getState().isPaused) activateMusicPlayback();
+      engine.toggle();
+    };
+    toggle.addEventListener('click', togglePlayback);
     document.addEventListener('click', (event) => {
       const target = event.target as Element | null;
-      if (target?.closest('[data-np-mobile-toggle]')) engine.toggle();
+      if (target?.closest('[data-np-mobile-toggle]')) togglePlayback();
     });
-    q<HTMLButtonElement>('[data-np-prev]').addEventListener('click', () => engine.prev());
-    q<HTMLButtonElement>('[data-np-next]').addEventListener('click', () => engine.next());
+    q<HTMLButtonElement>('[data-np-prev]').addEventListener('click', () => {
+      activateMusicPlayback();
+      engine.prev();
+    });
+    q<HTMLButtonElement>('[data-np-next]').addEventListener('click', () => {
+      activateMusicPlayback();
+      engine.next();
+    });
     q<HTMLButtonElement>('[data-np-close]').addEventListener('click', () => { engine.close(); embed.hidden = true; embed.replaceChildren(); });
     seek.addEventListener('input', () => {
       const s = engine.getState();
@@ -196,6 +207,7 @@ const copy = {
       const src = s.track.appleEmbed
         ?? (s.track.spotifyUri ? `https://open.spotify.com/embed/${s.track.spotifyUri.split(':').slice(1).join('/')}` : null);
       if (!src) return;
+      activateMusicPlayback();
       const iframe = document.createElement('iframe');
       iframe.src = src;
       iframe.loading = 'lazy';
@@ -206,10 +218,22 @@ const copy = {
       engine.expandFull(provider);
     });
 
+    window.addEventListener(PLAYBACK_CHANGE_EVENT, (event) => {
+      const kind = (event as CustomEvent<{ kind?: string }>).detail?.kind;
+      if (kind !== 'music' && kind !== 'video') return;
+      embed.hidden = true;
+      embed.replaceChildren();
+      if (engine.getState().mode === 'full') engine.collapse();
+    });
+
     const render = (s: PlayerState) => {
       bar.hidden = !s.visible;
       bar.dataset.visible = String(s.visible);
       document.documentElement.toggleAttribute('data-now-playing-active', s.visible && !s.isPaused);
+      if (s.mode !== 'full' && !embed.hidden) {
+        embed.hidden = true;
+        embed.replaceChildren();
+      }
       applyTheme('nowplaying', s.visible && s.track ? s.track.theme : null);
       toggle.textContent = s.isPaused ? '▶' : '⏸';
       toggle.setAttribute('aria-label', s.isPaused ? (copy.play ?? 'Play') : (copy.pause ?? 'Pause'));

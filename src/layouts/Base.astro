@@ -97,8 +97,10 @@ const themeCss = `:root{--stage:${siteConfig.theme.stage};--ink:${siteConfig.the
       import { initLanes } from '@/lib/lanes';
       import { initSignature } from '@/lib/string';
       import { initAmbientAutoplay } from '@/lib/ambientAutoplay';
+      import { initMediaPlayback } from '@/lib/mediaPlayback';
       import { SITE_CONTENT_READY_EVENT } from '@/lib/consent';
 
+      initMediaPlayback();
       initAmbientAutoplay();
 
       // This script's text is identical on every route, so Astro's ClientRouter

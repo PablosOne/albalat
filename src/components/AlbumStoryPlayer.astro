@@ -343,6 +343,7 @@ const copy = {
 
 <script>
   import { hasConsent, requestConsent } from '@/lib/consent';
+  import { activateMusicPlayback } from '@/lib/mediaPlayback';
 
   let unsubscribeNowPlaying: (() => void) | null = null;
 
@@ -400,7 +401,10 @@ const copy = {
                 return;
               }
               const album = albumById.get(btn.dataset.playAlbum!);
-              if (album) engine.load(buildQueue(album), 0);
+              if (album) {
+                activateMusicPlayback();
+                engine.load(buildQueue(album), 0);
+              }
             });
           });
           root.querySelectorAll<HTMLButtonElement>('[data-play-track]').forEach((btn) => {
@@ -410,7 +414,10 @@ const copy = {
                 return;
               }
               const album = albumById.get(btn.dataset.albumId!);
-              if (album) engine.load(buildQueue(album), Number(btn.dataset.trackIndex));
+              if (album) {
+                activateMusicPlayback();
+                engine.load(buildQueue(album), Number(btn.dataset.trackIndex));
+              }
             });
           });
 

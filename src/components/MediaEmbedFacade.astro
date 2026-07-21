@@ -112,6 +112,7 @@ const copy = {
 <script>
   import { trackEvent } from '@/lib/analytics';
   import { CONSENT_EVENT, hasConsent, requestConsent } from '@/lib/consent';
+  import { activateMusicPlayback, activateVideoPlayback, prepareYouTubeEmbed } from '@/lib/mediaPlayback';
 
   const loadAllowedThumbnails = () => {
     if (!hasConsent('externalMedia')) return;
@@ -140,13 +141,18 @@ const copy = {
         if (!src || facade.dataset.embedLoaded === 'true') return;
         facade.dataset.embedLoaded = 'true';
 
+        const isVideo = facade.dataset.provider === 'youtube';
+        if (isVideo) activateVideoPlayback();
+        else activateMusicPlayback();
+
         const iframe = document.createElement('iframe');
-        iframe.src = src;
+        iframe.src = isVideo ? prepareYouTubeEmbed(src) : src;
         iframe.title = facade.dataset.title ?? 'External media player';
         iframe.loading = 'lazy';
         iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
         iframe.setAttribute('allowfullscreen', '');
         iframe.className = 'absolute inset-0 h-full w-full border-0';
+        if (isVideo) iframe.dataset.playbackVideo = '';
 
         facade.textContent = '';
         facade.append(iframe);
@@ -167,14 +173,17 @@ const copy = {
         if (!id || facade.dataset.embedLoaded === 'true') return;
         facade.dataset.embedLoaded = 'true';
 
+        activateVideoPlayback();
+
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+        iframe.src = prepareYouTubeEmbed(`https://www.youtube-nocookie.com/embed/${id}`);
         iframe.title = title;
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
         iframe.allowFullscreen = true;
         iframe.loading = 'lazy';
         iframe.referrerPolicy = 'strict-origin-when-cross-origin';
         iframe.className = 'absolute inset-0 h-full w-full border-0';
+        iframe.dataset.playbackVideo = '';
 
         facade.replaceChildren(iframe);
         trackEvent('video_play', { provider: 'youtube', title, youtube_id: id });

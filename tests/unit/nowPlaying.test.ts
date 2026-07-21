@@ -49,6 +49,33 @@ describe('createEngine', () => {
     expect(audio.play).toHaveBeenCalledTimes(2);
   });
 
+  it('pauses playback through the explicit pause API', () => {
+    const audio = mockAudio();
+    const engine = createEngine({ audio });
+    engine.load(buildQueue(torroba), 0);
+    engine.pause();
+    expect(audio.paused).toBe(true);
+    expect(engine.getState().isPaused).toBe(true);
+  });
+
+  it('switches an explicitly selected track immediately without crossfading', () => {
+    vi.useFakeTimers();
+    const audio = mockAudio();
+    const secondaryAudio = mockAudio();
+    const engine = createEngine({ audio, secondaryAudio, crossfadeMs: 1_000 });
+    const queue = buildQueue(torroba);
+    engine.load(queue, 0, { ambient: true });
+    const firstSrc = audio.src;
+
+    engine.load(queue, 1);
+
+    expect(engine.getState().index).toBe(1);
+    expect(audio.src).not.toBe(firstSrc);
+    expect(audio.volume).toBe(1);
+    expect(secondaryAudio.src).toBe('');
+    expect(secondaryAudio.play).not.toHaveBeenCalled();
+  });
+
   it('auto-advances to the next track when the clip ends', () => {
     const audio = mockAudio();
     const secondaryAudio = mockAudio();
